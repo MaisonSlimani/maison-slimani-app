@@ -8,10 +8,14 @@ const nextConfig = {
         hostname: '**.supabase.co',
       },
     ],
+    // Permettre les images locales non optimisées si nécessaire
+    unoptimized: false,
   },
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  // Assurer que les assets statiques sont correctement servis
+  trailingSlash: false,
   // Ignorer les fichiers Supabase Edge Functions (Deno) - déjà exclus dans tsconfig.json
   webpack: (config, { isServer }) => {
     if (!isServer) {
