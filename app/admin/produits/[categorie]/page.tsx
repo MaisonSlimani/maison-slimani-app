@@ -191,7 +191,7 @@ export default function AdminCategorieProduitsPage() {
     }
     acc[cat].push(produit)
     return acc
-  }, {} as Record<string, typeof produits>)
+  }, {} as Record<string, any[]>)
 
   return (
     <div className="space-y-8">
@@ -358,7 +358,7 @@ export default function AdminCategorieProduitsPage() {
             <div key={cat}>
               <h2 className="text-2xl font-serif mb-4">{cat}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {prods.map((produit: any) => (
+                {(prods as any[]).map((produit: any) => (
                   <Card key={produit.id} className="p-4">
                     <div className="flex gap-4">
                       {produit.image_url && (

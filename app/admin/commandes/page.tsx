@@ -188,10 +188,11 @@ export default function AdminCommandesPage() {
         </div>
       </div>
 
-      {/* Groupement par statut */}
-      {filtreStatut === 'tous' ? (
-        <div className="space-y-8">
-          {statutsAffiches.map((statut) => (
+      {/* Groupement par statut - Toujours afficher par catégorie */}
+      <div className="space-y-8">
+        {filtreStatut === 'tous' ? (
+          // Afficher toutes les catégories
+          statutsAffiches.map((statut) => (
             <div key={statut}>
               <div className="flex items-center gap-3 mb-6">
                 {getStatutIcon(statut)}
@@ -371,14 +372,23 @@ export default function AdminCommandesPage() {
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {commandes.map((commande) => (
-            <Card key={commande.id} className={`p-6 bg-card border-2 transition-all hover:shadow-lg ${
-              commande.statut === 'En attente' ? 'border-yellow-400/50 bg-yellow-50/30' : 'border-border'
-            }`}>
+          ))
+        ) : (
+          // Afficher uniquement la catégorie filtrée
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              {getStatutIcon(filtreStatut)}
+              <h2 className="text-2xl font-serif">{filtreStatut}</h2>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatutColor(filtreStatut)}`}>
+                {commandes.length} commande{commandes.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            
+            <div className="grid gap-4">
+              {commandes.map((commande) => (
+                <Card key={commande.id} className={`p-6 bg-card border-2 transition-all hover:shadow-lg ${
+                  commande.statut === 'En attente' ? 'border-yellow-400/50 bg-yellow-50/30' : 'border-border'
+                }`}>
               <div className="flex gap-6">
                 {/* Produits avec images */}
                 <div className="flex gap-2 flex-shrink-0">
@@ -543,7 +553,9 @@ export default function AdminCommandesPage() {
             </Card>
           ))}
         </div>
-      )}
+      </div>
+        )}
+      </div>
     </div>
   )
 }

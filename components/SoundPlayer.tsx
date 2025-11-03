@@ -11,6 +11,9 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
   const successSoundRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
+    // Les sons sont optionnels - le composant fonctionne sans les fichiers
+    if (!enabled) return
+
     // Créer les éléments audio pour les sons
     try {
       clickSoundRef.current = new Audio('/sounds/click-leather.mp3')
@@ -21,23 +24,30 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
       if (successSoundRef.current) successSoundRef.current.volume = 0.3
       
       // Précharger les sons avec gestion d'erreur
+      // Note: load() peut ne pas retourner une Promise dans tous les navigateurs
       if (clickSoundRef.current) {
-        clickSoundRef.current.load().catch(() => {
+        try {
+          clickSoundRef.current.load()
+        } catch {
           // Fichier n'existe pas, on continue silencieusement
           clickSoundRef.current = null
-        })
+        }
       }
       if (successSoundRef.current) {
-        successSoundRef.current.load().catch(() => {
+        try {
+          successSoundRef.current.load()
+        } catch {
           // Fichier n'existe pas, on continue silencieusement
           successSoundRef.current = null
-        })
+        }
       }
     } catch (error) {
       // Fallback silencieux si les fichiers n'existent pas encore
       // Ne pas logger pour éviter les erreurs dans la console
+      clickSoundRef.current = null
+      successSoundRef.current = null
     }
-  }, [])
+  }, [enabled])
 
   const playClick = () => {
     if (enabled && clickSoundRef.current) {

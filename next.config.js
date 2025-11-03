@@ -12,6 +12,16 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  // Ignorer les fichiers Supabase Edge Functions (Deno) - déjà exclus dans tsconfig.json
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      }
+    }
+    return config
+  },
 }
 
 export default nextConfig
