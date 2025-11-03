@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Package, ArrowRight } from 'lucide-react'
+import { Package, ArrowRight, Settings } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 const categories = [
   {
@@ -53,9 +54,17 @@ export default function AdminProduitsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-serif mb-2">Gestion des produits</h1>
-        <p className="text-muted-foreground">Sélectionnez une catégorie pour gérer les produits</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-serif mb-2">Gestion des produits</h1>
+          <p className="text-muted-foreground">Sélectionnez une catégorie pour gérer les produits</p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/admin/categories">
+            <Settings className="w-4 h-4 mr-2" />
+            Gérer les catégories
+          </Link>
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

@@ -12,25 +12,35 @@ const MenuBasNavigation = () => {
   const { items, isLoaded } = useCart()
   const [cartCount, setCartCount] = useState(0)
 
-  // Calculer le nombre total d'articles dans le panier
+  // Calculer le nombre d'éléments différents dans le panier (pas la quantité totale)
   useEffect(() => {
     if (isLoaded) {
-      const total = items.reduce((acc, item) => acc + item.quantite, 0)
-      setCartCount(total)
+      setCartCount(items.length)
     }
   }, [items, isLoaded])
 
-  // Écouter les changements du panier
+  // Écouter les changements du panier depuis localStorage
   useEffect(() => {
     const handleCartUpdate = () => {
-      if (isLoaded) {
-        const total = items.reduce((acc, item) => acc + item.quantite, 0)
-        setCartCount(total)
+      if (typeof window !== 'undefined') {
+        const savedCart = localStorage.getItem('cart')
+        if (savedCart) {
+          try {
+            const cartItems = JSON.parse(savedCart)
+            // Compter le nombre d'éléments différents, pas la quantité totale
+            setCartCount(cartItems.length)
+          } catch (error) {
+            console.error('Erreur lors de la lecture du panier:', error)
+          }
+        } else {
+          setCartCount(0)
+        }
       }
     }
+
     window.addEventListener('cartUpdated', handleCartUpdate)
     return () => window.removeEventListener('cartUpdated', handleCartUpdate)
-  }, [items, isLoaded])
+  }, [])
 
   const navItems = [
     { href: '/', icon: Home, label: 'Accueil' },

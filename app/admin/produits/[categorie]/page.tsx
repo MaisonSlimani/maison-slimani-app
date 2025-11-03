@@ -42,6 +42,7 @@ export default function AdminCategorieProduitsPage() {
     categorie: categorieSlug === 'tous' ? '' : categorieNom,
     vedette: false,
     image_url: '',
+    taille: '',
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -147,6 +148,7 @@ export default function AdminCategorieProduitsPage() {
         categorie: categorieSlug === 'tous' ? '' : categorieNom,
         vedette: false,
         image_url: '',
+        taille: '',
       })
       setImageFile(null)
       setImagePreview(null)
@@ -225,6 +227,7 @@ export default function AdminCategorieProduitsPage() {
                   categorie: categorieSlug === 'tous' ? '' : categorieNom,
                   vedette: false,
                   image_url: '',
+                  taille: '',
                 })
                 setImageFile(null)
                 setImagePreview(null)
@@ -285,6 +288,19 @@ export default function AdminCategorieProduitsPage() {
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                   />
                 </div>
+              </div>
+              <div>
+                <Label htmlFor="taille">Tailles disponibles (séparées par des virgules, ex: 40, 41, 42, 43)</Label>
+                <Input
+                  id="taille"
+                  type="text"
+                  placeholder="40, 41, 42, 43"
+                  value={formData.taille}
+                  onChange={(e) => setFormData({ ...formData, taille: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Laissez vide si le produit n'a pas de tailles. Format: tailles séparées par des virgules.
+                </p>
               </div>
               {categorieSlug === 'tous' && (
                 <div>
@@ -392,9 +408,10 @@ export default function AdminCategorieProduitsPage() {
                                 categorie: produit.categorie || '',
                                 vedette: produit.vedette || false,
                                 image_url: produit.image_url || '',
+                                taille: produit.taille || '',
                               })
                               setImageFile(null)
-                              setImagePreview(null)
+                              setImagePreview(produit.image_url || null)
                               setDialogOpen(true)
                             }}
                           >
@@ -452,9 +469,10 @@ export default function AdminCategorieProduitsPage() {
                           categorie: produit.categorie || categorieNom,
                           vedette: produit.vedette || false,
                           image_url: produit.image_url || '',
+                          taille: produit.taille || '',
                         })
                         setImageFile(null)
-                        setImagePreview(null)
+                        setImagePreview(produit.image_url || null)
                         setDialogOpen(true)
                       }}
                     >

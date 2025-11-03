@@ -9,6 +9,7 @@ export interface CartItem {
   quantite: number
   image_url?: string
   image?: string
+  taille?: string
 }
 
 export function useCart() {

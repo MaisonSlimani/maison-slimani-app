@@ -65,13 +65,14 @@ export default function CheckoutPage() {
       const supabase = createClient()
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-      // Préparer les produits pour la commande (inclure l'image)
+      // Préparer les produits pour la commande (inclure l'image et la taille)
       const produits = items.map((item) => ({
         id: item.id,
         nom: item.nom,
         prix: item.prix,
         quantite: item.quantite,
         image_url: item.image_url || item.image || null,
+        taille: item.taille || null,
       }))
 
       // Appeler l'Edge Function pour créer la commande

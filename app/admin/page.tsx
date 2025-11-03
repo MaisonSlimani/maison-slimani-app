@@ -160,6 +160,11 @@ export default function AdminDashboardPage() {
     }
   }
 
+  // Grouper les métriques par catégorie
+  const metricsArgent = metrics.filter(m => m.label.includes('Revenus') || m.label.includes('DH'))
+  const metricsCommandes = metrics.filter(m => m.label.includes('Commande') || m.label.includes('Livrée') || m.label.includes('attente'))
+  const metricsAutres = metrics.filter(m => !metricsArgent.includes(m) && !metricsCommandes.includes(m))
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -183,54 +188,88 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Statistiques principales */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.slice(0, 4).map((metric, index) => {
-          const Icon = metric.icon
-          return (
-            <motion.div
-              key={metric.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${metric.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${metric.color}`} />
+      {/* Rangée 1: Indicateurs financiers */}
+      <div>
+        <h2 className="text-xl font-serif mb-4 text-foreground/80">Revenus et finances</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {metricsArgent.map((metric, index) => {
+            const Icon = metric.icon
+            return (
+              <motion.div
+                key={metric.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                      <Icon className={`w-6 h-6 ${metric.color}`} />
+                    </div>
                   </div>
-                </div>
-                <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
-                <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
-              </Card>
-            </motion.div>
-          )
-        })}
+                  <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Statistiques secondaires */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {metrics.slice(4).map((metric, index) => {
-          const Icon = metric.icon
-          return (
-            <motion.div
-              key={metric.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-            >
-              <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${metric.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${metric.color}`} />
+      {/* Rangée 2: Indicateurs de commandes */}
+      <div>
+        <h2 className="text-xl font-serif mb-4 text-foreground/80">Commandes et livraisons</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {metricsCommandes.map((metric, index) => {
+            const Icon = metric.icon
+            return (
+              <motion.div
+                key={metric.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+              >
+                <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                      <Icon className={`w-6 h-6 ${metric.color}`} />
+                    </div>
                   </div>
-                </div>
-                <p className="text-2xl font-serif mb-1 font-bold">{metric.value}</p>
-                <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
-              </Card>
-            </motion.div>
-          )
-        })}
+                  <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Rangée 3: Autres informations */}
+      <div>
+        <h2 className="text-xl font-serif mb-4 text-foreground/80">Autres informations</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {metricsAutres.map((metric, index) => {
+            const Icon = metric.icon
+            return (
+              <motion.div
+                key={metric.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + index * 0.1 }}
+              >
+                <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                      <Icon className={`w-6 h-6 ${metric.color}`} />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Dernières commandes et alertes */}

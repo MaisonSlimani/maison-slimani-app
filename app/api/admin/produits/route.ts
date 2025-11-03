@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { nom, description, prix, stock, categorie, vedette, image_url } = body
+    const { nom, description, prix, stock, categorie, vedette, image_url, taille } = body
 
     if (!nom || !description || prix === undefined || stock === undefined || !categorie) {
       return NextResponse.json(
@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
         categorie,
         vedette: vedette || false,
         image_url: image_url || null,
+        taille: taille || null,
       })
       .select()
       .single()
@@ -150,7 +151,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, nom, description, prix, stock, categorie, vedette, image_url } = body
+    const { id, nom, description, prix, stock, categorie, vedette, image_url, taille } = body
 
     if (!id) {
       return NextResponse.json(
@@ -180,6 +181,7 @@ export async function PUT(request: NextRequest) {
     if (categorie) updateData.categorie = categorie
     if (vedette !== undefined) updateData.vedette = vedette
     if (image_url !== undefined) updateData.image_url = image_url || null
+    if (taille !== undefined) updateData.taille = taille || null
 
     const { data, error } = await supabase
       .from('produits')

@@ -247,6 +247,11 @@ export default function CommandePage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium">{produit.nom}</p>
+                        {produit.taille && (
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Taille : {produit.taille}
+                          </p>
+                        )}
                         <p className="text-sm text-muted-foreground">
                           Quantité : {produit.quantite} × {produit.prix.toLocaleString('fr-MA')} DH
                         </p>

@@ -28,6 +28,7 @@ interface Produit {
   categorie: string
   vedette: boolean
   date_ajout: string
+  taille?: string | null
 }
 
 export default function ProduitPage() {
@@ -37,6 +38,7 @@ export default function ProduitPage() {
   const [produit, setProduit] = useState<Produit | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantite, setQuantite] = useState(1)
+  const [taille, setTaille] = useState<string>('')
   const [imageLoaded, setImageLoaded] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
 
@@ -83,12 +85,19 @@ export default function ProduitPage() {
       return
     }
 
+    // Vérifier que la taille est sélectionnée si le produit a une taille
+    if (produit.taille && !taille) {
+      toast.error('Veuillez sélectionner une taille')
+      return
+    }
+
     addItem({
       id: produit.id,
       nom: produit.nom,
       prix: produit.prix,
       quantite,
       image_url: produit.image_url,
+      taille: produit.taille ? taille : undefined,
     })
 
     // Afficher le message de succès dans le bouton
@@ -304,6 +313,34 @@ export default function ProduitPage() {
                 </span>
               </div>
             </motion.div>
+
+            {/* Sélecteur de taille */}
+            {produit.taille && produit.stock > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.75 }}
+                className="space-y-2"
+              >
+                <label htmlFor="taille" className="text-sm font-medium">
+                  Taille:
+                </label>
+                <select
+                  id="taille"
+                  value={taille}
+                  onChange={(e) => setTaille(e.target.value)}
+                  className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-dore"
+                  required
+                >
+                  <option value="">Sélectionnez une taille</option>
+                  {produit.taille.split(',').map((t) => (
+                    <option key={t.trim()} value={t.trim()}>
+                      {t.trim()}
+                    </option>
+                  ))}
+                </select>
+              </motion.div>
+            )}
 
             {/* Sélecteur de quantité */}
             {produit.stock > 0 && (

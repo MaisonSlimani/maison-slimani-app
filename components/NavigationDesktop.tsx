@@ -23,25 +23,43 @@ const NavigationDesktop = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Calculer le nombre total d'articles dans le panier
+  // Calculer le nombre d'éléments différents dans le panier (pas la quantité totale)
   useEffect(() => {
     if (isLoaded) {
-      const total = items.reduce((acc, item) => acc + item.quantite, 0)
-      setCartCount(total)
+      setCartCount(items.length)
     }
   }, [items, isLoaded])
 
-  // Écouter les changements du panier
+  // Écouter les changements du panier depuis localStorage (pour les mises à jour en temps réel)
   useEffect(() => {
     const handleCartUpdate = () => {
-      if (isLoaded) {
-        const total = items.reduce((acc, item) => acc + item.quantite, 0)
-        setCartCount(total)
+      if (typeof window !== 'undefined') {
+        const savedCart = localStorage.getItem('cart')
+        if (savedCart) {
+          try {
+            const cartItems = JSON.parse(savedCart)
+            // Compter le nombre d'éléments différents, pas la quantité totale
+            setCartCount(cartItems.length)
+          } catch (error) {
+            console.error('Erreur lors de la lecture du panier:', error)
+          }
+        } else {
+          setCartCount(0)
+        }
       }
     }
+
+    // Écouter l'événement personnalisé
     window.addEventListener('cartUpdated', handleCartUpdate)
-    return () => window.removeEventListener('cartUpdated', handleCartUpdate)
-  }, [items, isLoaded])
+    
+    // Écouter aussi les événements de storage (au cas où le panier est modifié depuis un autre onglet)
+    window.addEventListener('storage', handleCartUpdate)
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate)
+      window.removeEventListener('storage', handleCartUpdate)
+    }
+  }, [])
 
   const menuItems = [
     { href: '/', label: 'Accueil' },

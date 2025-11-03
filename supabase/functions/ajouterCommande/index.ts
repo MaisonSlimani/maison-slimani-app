@@ -13,6 +13,7 @@ const schemaCommande = z.object({
     prix: z.number().positive(),
     quantite: z.number().int().positive(),
     image_url: z.string().optional().nullable(),
+    taille: z.string().optional().nullable(),
   })).min(1, 'Au moins un produit est requis'),
 })
 
@@ -96,6 +97,8 @@ serve(async (req) => {
         prix: produit.prix,
         // Préserver l'image_url si fournie, sinon récupérer depuis le produit
         image_url: produitCommande.image_url || produit.image_url || null,
+        // Préserver la taille si fournie
+        taille: produitCommande.taille || null,
       })
     }
 

@@ -10,9 +10,10 @@ interface CarteCategorieProps {
   tagline: string
   image: string
   lien: string
+  priority?: boolean
 }
 
-const CarteCategorie = ({ titre, tagline, image, lien }: CarteCategorieProps) => {
+const CarteCategorie = ({ titre, tagline, image, lien, priority = false }: CarteCategorieProps) => {
   return (
     <motion.div
       className="group relative overflow-hidden rounded-lg shadow-lg"
@@ -33,7 +34,8 @@ const CarteCategorie = ({ titre, tagline, image, lien }: CarteCategorieProps) =>
               alt={titre}
               fill
               className="object-cover"
-              loading="lazy"
+              loading={priority ? undefined : "lazy"}
+              priority={priority}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </motion.div>

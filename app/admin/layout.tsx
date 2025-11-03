@@ -61,6 +61,9 @@ export default function AdminLayout({
     if (pathname?.startsWith('/admin/commandes/')) {
       setCommandesExpanded(true)
     }
+    if (pathname === '/admin/categories' || pathname?.startsWith('/admin/categories/')) {
+      setProduitsExpanded(true) // Expander Produits car Catégories est accessible depuis là
+    }
   }, [pathname])
 
   const handleLogout = async () => {
@@ -219,7 +222,7 @@ export default function AdminLayout({
                 onClick={() => setProduitsExpanded(!produitsExpanded)}
                 className={cn(
                   'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors',
-                  pathname?.startsWith('/admin/produits')
+                  pathname?.startsWith('/admin/produits') || pathname === '/admin/categories'
                     ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
                     : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
                 )}
@@ -244,17 +247,17 @@ export default function AdminLayout({
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="ml-4 space-y-1 border-l border-border pl-4">
+                    <div className="pl-4 space-y-1 pt-2">
                       <Link
                         href="/admin/produits"
                         className={cn(
-                          'flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm',
+                          'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
                           pathname === '/admin/produits'
                             ? 'bg-dore/10 text-dore font-medium'
                             : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
                         )}
                       >
-                        <span>Toutes les catégories</span>
+                        <span>Tous les produits</span>
                       </Link>
                       {categories.map((categorie) => {
                         const isActive = pathname === `/admin/produits/${categorie.slug}`
@@ -263,7 +266,7 @@ export default function AdminLayout({
                             key={categorie.slug}
                             href={`/admin/produits/${categorie.slug}`}
                             className={cn(
-                              'flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm',
+                              'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
                               isActive
                                 ? 'bg-dore/10 text-dore font-medium'
                                 : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'

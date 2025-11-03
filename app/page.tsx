@@ -201,7 +201,7 @@ export default function AccueilPage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
               >
-                <CarteCategorie {...categorie} />
+                <CarteCategorie {...categorie} priority={index === 0} />
               </motion.div>
             ))}
           </div>

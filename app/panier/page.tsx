@@ -79,6 +79,11 @@ export default function PanierPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium mb-2">{article.nom}</h3>
+                      {article.taille && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Taille: {article.taille}
+                        </p>
+                      )}
                       <p className="font-medium text-primary mb-4">
                         {article.prix.toLocaleString('fr-MA')} DH
                       </p>
