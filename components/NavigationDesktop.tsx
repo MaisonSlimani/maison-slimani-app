@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -66,7 +67,25 @@ const NavigationDesktop = () => {
     >
       <nav className="container mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo à gauche */}
-        <Link href="/" className="flex items-center group">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 flex-shrink-0">
+            <Image
+              src="/assets/logos/logo_nobg.png"
+              alt="Maison Slimani"
+              fill
+              className="object-contain"
+              sizes="40px"
+              priority
+              unoptimized
+              onError={(e) => {
+                // Fallback silencieux si le logo n'existe pas encore
+                const target = e.target as HTMLImageElement
+                if (target.parentElement) {
+                  target.parentElement.style.display = 'none'
+                }
+              }}
+            />
+          </div>
           <h1 className={cn(
             "text-2xl font-serif tracking-tight transition-colors",
             isHomePage && !scrolled 

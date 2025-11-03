@@ -14,32 +14,28 @@ export async function POST(request: Request) {
     const body = await request.json()
     const validatedData = schemaContact.parse(body)
 
-    // Sauvegarder dans Supabase (optionnel - pour historique)
-    const supabase = await createClient()
-    
-    // TODO: Créer une table 'contacts' si nécessaire
-    // Pour l'instant, on envoie juste l'email
-
     // Appeler l'Edge Function pour envoyer l'email
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     
-    try {
-      const emailUrl = new URL('/functions/v1/envoyerEmailCommande', supabaseUrl)
-      await fetch(emailUrl.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({
-          type: 'contact',
-          ...validatedData,
-        }),
-      })
-    } catch (emailError) {
-      console.error('Erreur lors de l\'envoi de l\'email:', emailError)
-      // Ne pas faire échouer la requête si l'email échoue
+    if (supabaseUrl && supabaseKey) {
+      try {
+        const emailUrl = new URL('/functions/v1/envoyerEmailCommande', supabaseUrl)
+        await fetch(emailUrl.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            type: 'contact',
+            ...validatedData,
+          }),
+        })
+      } catch (emailError) {
+        console.error('Erreur lors de l\'envoi de l\'email:', emailError)
+        // Ne pas faire échouer la requête si l'email échoue
+      }
     }
 
     return NextResponse.json({ success: true })

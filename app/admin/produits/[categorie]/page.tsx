@@ -47,11 +47,6 @@ export default function AdminCategorieProduitsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
-  useEffect(() => {
-    window.scrollTo(0, 0)
-    chargerProduits()
-  }, [categorieSlug])
-
   const chargerProduits = async () => {
     try {
       const response = await fetch('/api/admin/produits')
@@ -73,6 +68,12 @@ export default function AdminCategorieProduitsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    chargerProduits()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorieSlug, categorieNom])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

@@ -12,6 +12,10 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  AlertCircle,
+  Truck,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -25,6 +29,7 @@ export default function AdminLayout({
   const pathname = usePathname()
   const [loading, setLoading] = useState(true)
   const [produitsExpanded, setProduitsExpanded] = useState(false)
+  const [commandesExpanded, setCommandesExpanded] = useState(false)
 
   useEffect(() => {
     // Vérifier la session au chargement
@@ -53,6 +58,9 @@ export default function AdminLayout({
     if (pathname?.startsWith('/admin/produits/')) {
       setProduitsExpanded(true)
     }
+    if (pathname?.startsWith('/admin/commandes/')) {
+      setCommandesExpanded(true)
+    }
   }, [pathname])
 
   const handleLogout = async () => {
@@ -74,8 +82,14 @@ export default function AdminLayout({
 
   const menuItems = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/admin/commandes', label: 'Commandes', icon: ShoppingBag },
     { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
+  ]
+
+  const statutsCommandes = [
+    { slug: 'en-attente', nom: 'En attente', icon: AlertCircle },
+    { slug: 'expediee', nom: 'Expédiée', icon: Truck },
+    { slug: 'livree', nom: 'Livrée', icon: CheckCircle },
+    { slug: 'annulee', nom: 'Annulée', icon: XCircle },
   ]
 
   if (loading) {
@@ -119,6 +133,85 @@ export default function AdminLayout({
                 </Link>
               )
             })}
+
+            {/* Menu Commandes avec sous-catégories */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setCommandesExpanded(!commandesExpanded)}
+                className={cn(
+                  'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors',
+                  pathname?.startsWith('/admin/commandes')
+                    ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Commandes</span>
+                </div>
+                {commandesExpanded ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {commandesExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pl-4 space-y-1 pt-2">
+                      <Link
+                        href="/admin/commandes"
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
+                          pathname === '/admin/commandes'
+                            ? 'bg-dore/10 text-dore font-medium'
+                            : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                        )}
+                      >
+                        <span>Toutes les catégories</span>
+                      </Link>
+                      {statutsCommandes.map((statut) => {
+                        const StatutIcon = statut.icon
+                        const isActive = pathname === `/admin/commandes/${statut.slug}`
+                        return (
+                          <Link
+                            key={statut.slug}
+                            href={`/admin/commandes/${statut.slug}`}
+                            className={cn(
+                              'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
+                              isActive
+                                ? 'bg-dore/10 text-dore font-medium'
+                                : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                            )}
+                          >
+                            <StatutIcon className="w-4 h-4" />
+                            <span>{statut.nom}</span>
+                          </Link>
+                        )
+                      })}
+                      <Link
+                        href="/admin/commandes/toutes"
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
+                          pathname === '/admin/commandes/toutes'
+                            ? 'bg-dore/10 text-dore font-medium'
+                            : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                        )}
+                      >
+                        <span>Toutes les commandes</span>
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Menu Produits avec sous-catégories */}
             <div className="space-y-1">
