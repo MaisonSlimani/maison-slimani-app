@@ -1,0 +1,141 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import Image from 'next/image'
+import EnteteMobile from '@/components/EnteteMobile'
+import NavigationDesktop from '@/components/NavigationDesktop'
+import MenuBasNavigation from '@/components/MenuBasNavigation'
+import Footer from '@/components/Footer'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { ShoppingBag, Trash2, Plus, Minus } from 'lucide-react'
+import { useCart } from '@/lib/hooks/useCart'
+
+export default function PanierPage() {
+  const router = useRouter()
+  const { items, removeItem, updateQuantity, total, isLoaded } = useCart()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen pb-24">
+        <NavigationDesktop />
+        <EnteteMobile />
+        <div className="container px-6 py-8 mx-auto">
+          <div className="text-center py-12">Chargement...</div>
+        </div>
+        <MenuBasNavigation />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen pb-24 pt-0 md:pt-20">
+      <NavigationDesktop />
+      <EnteteMobile />
+
+      <div className="container px-6 py-8 mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-serif mb-8 flex items-center gap-3">
+            <ShoppingBag className="w-8 h-8" />
+            Mon Panier
+          </h1>
+
+          {items.length === 0 ? (
+            <Card className="p-12 text-center">
+              <div className="mb-6">
+                <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground" />
+              </div>
+              <h2 className="text-2xl font-serif mb-4">Votre panier est vide</h2>
+              <p className="text-muted-foreground mb-8">
+                Découvrez notre collection de chaussures haut de gamme
+              </p>
+              <Button asChild size="lg">
+                <Link href="/boutique">Voir la collection</Link>
+              </Button>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {items.map((article) => (
+                <Card key={article.id} className="p-6">
+                  <div className="flex gap-6">
+                    <div className="relative w-24 h-24 rounded overflow-hidden">
+                      <Image
+                        src={article.image_url || article.image || '/placeholder.jpg'}
+                        alt={article.nom}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium mb-2">{article.nom}</h3>
+                      <p className="font-medium text-primary mb-4">
+                        {article.prix.toLocaleString('fr-MA')} DH
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQuantity(article.id, article.quantite - 1)}
+                          className="h-8 w-8"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <span className="w-12 text-center">{article.quantite}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQuantity(article.id, article.quantite + 1)}
+                          className="h-8 w-8"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeItem(article.id)}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+
+              <Card className="p-6 bg-muted/30">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-xl font-medium">Total</span>
+                  <span className="text-2xl font-serif text-primary">
+                    {total.toLocaleString('fr-MA')} DH
+                  </span>
+                </div>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => router.push('/checkout')}
+                >
+                  Passer la commande
+                </Button>
+              </Card>
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      <Footer />
+      <MenuBasNavigation />
+    </div>
+  )
+}
+

@@ -1,0 +1,120 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { ShoppingBag } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+const NavigationDesktop = () => {
+  const pathname = usePathname()
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const menuItems = [
+    { href: '/', label: 'Accueil' },
+    { href: '/boutique', label: 'Boutique' },
+    { href: '/maison', label: 'La Maison' },
+    { href: '/contact', label: 'Contact' },
+  ]
+
+  // Sur la page d'accueil, on garde la nav transparente avec texte clair
+  // Sur les autres pages, on utilise un fond solide avec meilleur contraste
+  const isHomePage = pathname === '/'
+
+  return (
+    <header
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-500 hidden md:block',
+        isHomePage
+          ? scrolled
+            ? 'bg-background/98 backdrop-blur-md border-b shadow-sm'
+            : 'bg-transparent'
+          : 'bg-background/98 backdrop-blur-md border-b shadow-sm'
+      )}
+    >
+      <nav className="container mx-auto px-6 h-20 flex items-center justify-between">
+        {/* Logo à gauche */}
+        <Link href="/" className="flex items-center group">
+          <h1 className={cn(
+            "text-2xl font-serif tracking-tight transition-colors",
+            isHomePage && !scrolled 
+              ? "text-[#f8f5f0] drop-shadow-lg" 
+              : "text-foreground"
+          )}>
+            Maison <span className={cn(
+              "transition-colors",
+              isHomePage
+                ? "text-[#d4a574] drop-shadow-lg" // Reste doré sur la page d'accueil même après scroll
+                : "text-[#d4a574] group-hover:text-[#c9975e]"
+            )}>Slimani</span>
+          </h1>
+        </Link>
+
+        {/* Menu centre */}
+        <div className="flex items-center gap-8">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'relative text-sm font-medium transition-all duration-300 group px-2 py-1',
+                  isHomePage && !scrolled
+                    ? isActive
+                      ? 'text-[#f8f5f0] drop-shadow-md'
+                      : 'text-[#f8f5f0]/90 hover:text-[#f8f5f0] drop-shadow-md'
+                    : isActive
+                      ? 'text-foreground font-semibold'
+                      : 'text-foreground/80 hover:text-foreground' // Changé de muted-foreground à foreground/80 pour meilleure visibilité
+                )}
+                onClick={() => {
+                  if ((window as any).playClickSound) {
+                    ;(window as any).playClickSound()
+                  }
+                }}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute -bottom-1 left-2 right-2 h-0.5 bg-[#d4a574] transition-all duration-300" />
+                )}
+                {!isActive && (
+                  <span className="absolute -bottom-1 left-2 right-2 h-0.5 bg-[#d4a574] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center" />
+                )}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Panier à droite */}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            asChild
+            className={cn(
+              "transition-colors",
+              isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
+            )}
+          >
+            <Link href="/panier">
+              <ShoppingBag className="w-5 h-5" />
+              <span className="sr-only">Panier</span>
+            </Link>
+          </Button>
+        </div>
+      </nav>
+    </header>
+  )
+}
+
+export default NavigationDesktop

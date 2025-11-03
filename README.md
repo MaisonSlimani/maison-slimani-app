@@ -1,73 +1,168 @@
-# Welcome to your Lovable project
+# Maison Slimani - Site E-commerce
 
-## Project info
+Site e-commerce haut de gamme pour chaussures homme en cuir, développé avec Next.js 15 et Supabase.
 
-**URL**: https://lovable.dev/projects/5ae4060d-5165-422e-bd9f-64437a0e0643
+## Technologies
 
-## How can I edit this code?
+- **Next.js 15** (App Router, TypeScript)
+- **Supabase** (Base de données, Edge Functions, Storage, Authentification)
+- **Resend** (Emails transactionnels)
+- **TailwindCSS** + **Framer Motion** + **shadcn/ui**
+- **Vercel** (Hébergement)
 
-There are several ways of editing your application.
+## Structure du projet
 
-**Use Lovable**
+```
+maison-slimani-experience/
+├── app/                    # Pages Next.js (App Router)
+│   ├── admin/             # Dashboard admin
+│   ├── api/               # API Routes
+│   ├── boutique/          # Page boutique
+│   ├── contact/           # Page contact
+│   ├── maison/            # Page "La Maison"
+│   ├── panier/            # Page panier
+│   ├── checkout/           # Page checkout
+│   └── commande/           # Confirmation commande
+├── components/             # Composants React
+├── lib/                    # Utilitaires et configurations
+│   ├── auth/              # Authentification admin
+│   ├── hooks/             # Hooks React (useCart)
+│   ├── supabase/          # Configuration Supabase
+│   └── resend/            # Configuration Resend
+├── supabase/               # Configuration Supabase
+│   ├── functions/         # Edge Functions
+│   └── migrations/        # Migrations SQL
+└── public/                 # Assets statiques
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5ae4060d-5165-422e-bd9f-64437a0e0643) and start prompting.
+## Installation
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Installer les dépendances :
+```bash
+npm install
+```
 
-**Use your preferred IDE**
+2. Configurer les variables d'environnement :
+Créer un fichier `.env.local` avec :
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Resend
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=noreply@maisonslimani.com
+ADMIN_EMAIL=admin@maisonslimani.com
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Admin
+ADMIN_SESSION_SECRET=your_random_secret_key_here_min_32_chars
+```
 
-Follow these steps:
+3. Initialiser Supabase :
+```bash
+supabase init
+supabase start
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+4. Appliquer les migrations :
+```bash
+supabase db reset
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+5. Déployer les Edge Functions :
+```bash
+supabase functions deploy recupererProduits
+supabase functions deploy ajouterCommande
+supabase functions deploy recupererCommandes
+supabase functions deploy changerStatutCommande
+supabase functions deploy envoyerEmailCommande
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+6. Configurer Supabase Storage :
+- Créer un bucket `produits-images` (public)
+- Configurer les politiques d'accès
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+7. Lancer le serveur de développement :
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Configuration Supabase
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Tables
 
-**Use GitHub Codespaces**
+- `produits` : Catalogue des produits
+- `commandes` : Commandes clients (COD)
+- `admins` : Administrateurs du site
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Edge Functions
 
-## What technologies are used for this project?
+- `recupererProduits` : Récupère les produits (avec filtres)
+- `ajouterCommande` : Crée une commande et vérifie le stock
+- `recupererCommandes` : Récupère les commandes (admin)
+- `changerStatutCommande` : Met à jour le statut d'une commande
+- `envoyerEmailCommande` : Envoie les emails (client + admin)
 
-This project is built with:
+## Configuration Admin
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Créer un admin dans la table `admins` :
+```sql
+INSERT INTO admins (email, hash_mdp, role)
+VALUES (
+  'admin@maisonslimani.com',
+  '$2a$12$...', -- Hash bcrypt du mot de passe
+  'super-admin'
+);
+```
 
-## How can I deploy this project?
+Pour générer le hash :
+```javascript
+const bcrypt = require('bcryptjs');
+const hash = await bcrypt.hash('votre_mot_de_passe', 12);
+```
 
-Simply open [Lovable](https://lovable.dev/projects/5ae4060d-5165-422e-bd9f-64437a0e0643) and click on Share -> Publish.
+2. Se connecter sur `/login`
 
-## Can I connect a custom domain to my Lovable project?
+## Fonctionnalités
 
-Yes, you can!
+### Client
+- Navigation responsive (desktop + mobile)
+- Catalogue produits avec filtres
+- Panier (localStorage)
+- Checkout COD (Cash on Delivery)
+- Confirmation de commande
+- Formulaire de contact
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Admin
+- Authentification sécurisée
+- Dashboard avec statistiques
+- Gestion produits (CRUD)
+- Gestion commandes (statuts, export CSV)
+- Paramètres
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Emails
+
+Les emails sont envoyés via Resend :
+- Confirmation de commande (client)
+- Notification nouvelle commande (admin)
+- Notification changement de statut (client)
+
+## Notes
+
+- Tous les commentaires et messages sont en français
+- Pas de compte client requis (approche COD)
+- Images optimisées (WebP)
+- SEO optimisé
+- Architecture scalable
+
+## Déploiement
+
+Le projet est prêt pour le déploiement sur Vercel :
+1. Connecter le repo GitHub à Vercel
+2. Configurer les variables d'environnement
+3. Déployer
+
+## Support
+
+Pour toute question, contactez l'équipe de développement.

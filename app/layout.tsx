@@ -1,0 +1,68 @@
+import type { Metadata } from 'next'
+import { Inter, Playfair_Display } from 'next/font/google'
+import './globals.css'
+import { Toaster } from '@/components/ui/toaster'
+import { Toaster as Sonner } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Maison Slimani - Chaussures Homme Luxe Maroc',
+    template: '%s | Maison Slimani',
+  },
+  description: 'Découvrez Maison Slimani, marque marocaine de chaussures homme haut de gamme. Livraison gratuite sur tout le Maroc.',
+  keywords: ['chaussures homme', 'luxe', 'Maroc', 'cuir', 'Maison Slimani', 'chaussures maroc', 'cuir marocain'],
+  authors: [{ name: 'Maison Slimani' }],
+  openGraph: {
+    title: 'Maison Slimani - Chaussures Homme Luxe',
+    description: 'Marque marocaine de chaussures homme haut de gamme. Livraison gratuite.',
+    type: 'website',
+    locale: 'fr_FR',
+    siteName: 'Maison Slimani',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Maison Slimani - Chaussures Homme Luxe',
+    description: 'Marque marocaine de chaussures homme haut de gamme.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'),
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+        <TooltipProvider>
+          {children}
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </body>
+    </html>
+  )
+}
