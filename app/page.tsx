@@ -100,7 +100,7 @@ export default function AccueilPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="overflow-x-hidden">
       <SoundPlayer enabled={true} />
       <NavigationDesktop />
       <EnteteMobile />

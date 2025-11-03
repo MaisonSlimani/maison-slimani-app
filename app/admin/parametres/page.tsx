@@ -26,10 +26,10 @@ export default function AdminParametresPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-serif mb-2">Paramètres</h1>
-        <p className="text-ecru/70">Gérez les paramètres de votre site</p>
+        <p className="text-muted-foreground">Gérez les paramètres de votre site</p>
       </div>
 
-      <Card className="p-6 bg-ecru/5 border-ecru/20">
+      <Card className="p-6 bg-card border-border">
         <h2 className="text-xl font-serif mb-6">Coordonnées de l'entreprise</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

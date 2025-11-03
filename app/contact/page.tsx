@@ -56,7 +56,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24 pt-0 md:pt-20">
+    <div className="pb-24 md:pb-0 pt-0 md:pt-20">
       <NavigationDesktop />
       <EnteteMobile />
 
@@ -147,9 +147,9 @@ export default function ContactPage() {
                 {envoiEnCours ? 'Envoi en cours...' : 'Envoyer le message'}
               </Button>
             </form>
-          </Card>
-        </motion.div>
-      </div>
+        </Card>
+      </motion.div>
+    </div>
 
       <Footer />
       <MenuBasNavigation />

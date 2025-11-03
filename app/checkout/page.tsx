@@ -65,12 +65,13 @@ export default function CheckoutPage() {
       const supabase = createClient()
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-      // Préparer les produits pour la commande
+      // Préparer les produits pour la commande (inclure l'image)
       const produits = items.map((item) => ({
         id: item.id,
         nom: item.nom,
         prix: item.prix,
         quantite: item.quantite,
+        image_url: item.image_url || item.image || null,
       }))
 
       // Appeler l'Edge Function pour créer la commande
@@ -92,9 +93,8 @@ export default function CheckoutPage() {
         throw new Error(data?.error || 'Erreur lors de la création de la commande')
       }
 
-      // Succès
+      // Succès - Rediriger vers la page de confirmation (pas de toast, la page s'en charge)
       clearCart()
-      toast.success('Commande créée avec succès !')
       router.push(`/commande/${data.data.id}`)
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error)
@@ -118,7 +118,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen pb-24 pt-0 md:pt-20">
+    <div className="pb-24 md:pb-0 pt-0 md:pt-20">
       <NavigationDesktop />
       <EnteteMobile />
 

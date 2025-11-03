@@ -1,21 +1,26 @@
 /**
  * Script pour créer un administrateur dans la base de données
- * Usage: npx tsx scripts/create-admin.ts email@example.com password123
+ * Usage: node scripts/create-admin.js
  */
 
 import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 import * as readline from 'readline'
 import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Charger les variables d'environnement depuis .env.local ou .env
 function loadEnv() {
   const envFiles = ['.env.local', '.env']
+  const projectRoot = resolve(__dirname, '..')
   
   for (const file of envFiles) {
     try {
-      const envPath = resolve(process.cwd(), file)
+      const envPath = resolve(projectRoot, file)
       const envContent = readFileSync(envPath, 'utf-8')
       const envLines = envContent.split('\n')
       
@@ -39,13 +44,14 @@ function loadEnv() {
 
 loadEnv()
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Variables d\'environnement manquantes :')
   console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅' : '❌')
   console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅' : '❌')
+  console.error('\nAssurez-vous que le fichier .env existe dans la racine du projet avec ces variables.')
   process.exit(1)
 }
 
@@ -57,7 +63,7 @@ async function createAdmin() {
     output: process.stdout,
   })
 
-  const question = (prompt: string): Promise<string> => {
+  const question = (prompt) => {
     return new Promise((resolve) => {
       rl.question(prompt, resolve)
     })
@@ -95,7 +101,7 @@ async function createAdmin() {
       console.log('\n⚠️  Un administrateur avec cet email existe déjà.')
       const update = await question('Voulez-vous mettre à jour le mot de passe ? (o/n): ')
       
-      if (update.toLowerCase() === 'o') {
+      if (update.toLowerCase() === 'o' || update.toLowerCase() === 'oui') {
         const { error } = await supabase
           .from('admins')
           .update({ hash_mdp: hashMdp })

@@ -12,6 +12,7 @@ const schemaCommande = z.object({
     nom: z.string(),
     prix: z.number().positive(),
     quantite: z.number().int().positive(),
+    image_url: z.string().optional().nullable(),
   })).min(1, 'Au moins un produit est requis'),
 })
 
@@ -22,7 +23,19 @@ const villesMaroc = [
   'Autre'
 ]
 
+// Headers CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 serve(async (req) => {
+  // Gérer les requêtes OPTIONS (preflight)
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders, status: 204 })
+  }
+
   try {
     // Initialiser le client Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -30,7 +43,27 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Parser et valider le body
-    const body = await req.json()
+    let body
+    try {
+      const bodyText = await req.text()
+      if (!bodyText || bodyText.trim() === '') {
+        throw new Error('Body vide')
+      }
+      body = JSON.parse(bodyText)
+    } catch (parseError) {
+      console.error('Erreur de parsing JSON:', parseError)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Format JSON invalide',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
+    }
+
     const validatedData = schemaCommande.parse(body)
 
     // Vérifier que la ville est valide
@@ -61,6 +94,8 @@ serve(async (req) => {
       produitsAvecStock.push({
         ...produitCommande,
         prix: produit.prix,
+        // Préserver l'image_url si fournie, sinon récupérer depuis le produit
+        image_url: produitCommande.image_url || produit.image_url || null,
       })
     }
 
@@ -85,10 +120,14 @@ serve(async (req) => {
 
     // Décrémenter le stock
     for (const produitCommande of validatedData.produits) {
-      await supabase.rpc('decrementer_stock', {
+      const { error: rpcError } = await supabase.rpc('decrementer_stock', {
         produit_id: produitCommande.id,
         quantite: produitCommande.quantite,
       })
+      if (rpcError) {
+        console.error(`Erreur lors de la décrémentation du stock pour ${produitCommande.id}:`, rpcError)
+        // Ne pas faire échouer la commande si la décrémentation échoue
+      }
     }
 
     // Appeler la fonction d'envoi d'email (webhook interne)
@@ -116,7 +155,7 @@ serve(async (req) => {
         data: commande,
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 201,
       }
     )
@@ -128,7 +167,7 @@ serve(async (req) => {
         error: error instanceof Error ? error.message : 'Erreur inconnue',
       }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       }
     )

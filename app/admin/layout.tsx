@@ -3,13 +3,15 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
   Package,
   ShoppingBag,
   Settings,
   LogOut,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -22,6 +24,7 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [loading, setLoading] = useState(true)
+  const [produitsExpanded, setProduitsExpanded] = useState(false)
 
   useEffect(() => {
     // Vérifier la session au chargement
@@ -45,6 +48,13 @@ export default function AdminLayout({
     verifierSession()
   }, [router])
 
+  // Auto-expand si on est sur une page de catégorie
+  useEffect(() => {
+    if (pathname?.startsWith('/admin/produits/')) {
+      setProduitsExpanded(true)
+    }
+  }, [pathname])
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
@@ -54,6 +64,20 @@ export default function AdminLayout({
     }
   }
 
+  // Définir les constantes avant le return conditionnel
+  const categories = [
+    { slug: 'classiques', nom: 'Classiques', icon: Package },
+    { slug: 'cuirs-exotiques', nom: 'Cuirs Exotiques', icon: Package },
+    { slug: 'editions-limitees', nom: 'Éditions Limitées', icon: Package },
+    { slug: 'nouveautes', nom: 'Nouveautés', icon: Package },
+  ]
+
+  const menuItems = [
+    { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
+    { href: '/admin/commandes', label: 'Commandes', icon: ShoppingBag },
+    { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
+  ]
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -62,26 +86,19 @@ export default function AdminLayout({
     )
   }
 
-  const menuItems = [
-    { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/admin/produits', label: 'Produits', icon: Package },
-    { href: '/admin/commandes', label: 'Commandes', icon: ShoppingBag },
-    { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
-  ]
-
   return (
-    <div className="min-h-screen bg-charbon text-ecru">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <aside className="w-64 bg-charbon border-r border-ecru/20 flex flex-col">
-          <div className="p-6 border-b border-ecru/20">
+        <aside className="w-64 bg-card border-r border-border flex flex-col shadow-lg">
+          <div className="p-6 border-b border-border">
             <h1 className="text-2xl font-serif">
               Maison <span className="text-dore">Slimani</span>
             </h1>
-            <p className="text-sm text-ecru/70 mt-1">Administration</p>
+            <p className="text-sm text-muted-foreground mt-1">Administration</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -93,8 +110,8 @@ export default function AdminLayout({
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                     isActive
-                      ? 'bg-dore/20 text-dore border border-dore/30'
-                      : 'text-ecru/80 hover:text-ecru hover:bg-ecru/10'
+                      ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
+                      : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -102,13 +119,79 @@ export default function AdminLayout({
                 </Link>
               )
             })}
+
+            {/* Menu Produits avec sous-catégories */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setProduitsExpanded(!produitsExpanded)}
+                className={cn(
+                  'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors',
+                  pathname?.startsWith('/admin/produits')
+                    ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5" />
+                  <span>Produits</span>
+                </div>
+                {produitsExpanded ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {produitsExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="ml-4 space-y-1 border-l border-border pl-4">
+                      <Link
+                        href="/admin/produits"
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm',
+                          pathname === '/admin/produits'
+                            ? 'bg-dore/10 text-dore font-medium'
+                            : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                        )}
+                      >
+                        <span>Toutes les catégories</span>
+                      </Link>
+                      {categories.map((categorie) => {
+                        const isActive = pathname === `/admin/produits/${categorie.slug}`
+                        return (
+                          <Link
+                            key={categorie.slug}
+                            href={`/admin/produits/${categorie.slug}`}
+                            className={cn(
+                              'flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm',
+                              isActive
+                                ? 'bg-dore/10 text-dore font-medium'
+                                : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                            )}
+                          >
+                            <span>{categorie.nom}</span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
 
-          <div className="p-4 border-t border-ecru/20">
+          <div className="p-4 border-t border-border">
             <Button
               variant="ghost"
               onClick={handleLogout}
-              className="w-full justify-start text-ecru/80 hover:text-ecru"
+              className="w-full justify-start text-foreground/80 hover:text-foreground hover:bg-accent/50"
             >
               <LogOut className="w-5 h-5 mr-3" />
               Déconnexion
@@ -117,7 +200,7 @@ export default function AdminLayout({
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-background">
           <div className="p-8">{children}</div>
         </main>
       </div>

@@ -50,12 +50,11 @@ export default function CategoriePage() {
   const [loading, setLoading] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('pertinence')
-
-  const categorieInfo = categoriesConfig[categorieSlug] || {
+  const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string }>({
     nom: 'Collection',
     image: '/assets/hero-chaussures.jpg',
     description: 'Découvrez notre collection exclusive.',
-  }
+  })
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -74,8 +73,7 @@ export default function CategoriePage() {
       setLoading(true)
       try {
         const supabase = createClient()
-        let query = supabase.from('produits').select('*')
-
+        
         // Mapper le slug vers le nom de catégorie
         const categorieMap: Record<string, string> = {
           'classiques': 'Classiques',
@@ -84,8 +82,17 @@ export default function CategoriePage() {
           'nouveautes': 'Nouveautés',
         }
 
-        if (categorieSlug !== 'tous' && categorieMap[categorieSlug]) {
-          query = query.eq('categorie', categorieMap[categorieSlug])
+        let query = supabase.from('produits').select('*')
+
+        // Déterminer le nom de catégorie et filtrer
+        let categorieNom: string | null = null
+        
+        if (categorieSlug !== 'tous') {
+          // Essayer d'abord le mapping direct
+          if (categorieMap[categorieSlug]) {
+            categorieNom = categorieMap[categorieSlug]
+            query = query.eq('categorie', categorieNom)
+          }
         }
 
         // Appliquer le tri
@@ -100,6 +107,33 @@ export default function CategoriePage() {
         const { data } = await query
 
         setProduits(data || [])
+        
+        // Mettre à jour les infos de catégorie - PRIORITÉ: utiliser la catégorie réelle des produits
+        if (data && data.length > 0) {
+          const firstProductCategorie = data[0]?.categorie
+          if (firstProductCategorie) {
+            // Si on a une config pour ce slug, l'utiliser, sinon utiliser la catégorie réelle
+            if (categoriesConfig[categorieSlug]) {
+              setCategorieInfo(categoriesConfig[categorieSlug])
+            } else {
+              setCategorieInfo({
+                nom: firstProductCategorie,
+                image: data[0]?.image_url || '/assets/hero-chaussures.jpg',
+                description: `Découvrez notre collection ${firstProductCategorie.toLowerCase()}.`,
+              })
+            }
+          }
+        } else if (categoriesConfig[categorieSlug]) {
+          // Si pas de produits mais config existe, utiliser la config
+          setCategorieInfo(categoriesConfig[categorieSlug])
+        } else if (categorieNom) {
+          // Fallback: utiliser le nom de catégorie mappé
+          setCategorieInfo({
+            nom: categorieNom,
+            image: '/assets/hero-chaussures.jpg',
+            description: `Découvrez notre collection ${categorieNom.toLowerCase()}.`,
+          })
+        }
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error)
       } finally {
@@ -115,7 +149,7 @@ export default function CategoriePage() {
   }
 
   return (
-    <div className="min-h-screen pb-24 pt-0 md:pt-20">
+    <div className="pb-24 md:pb-0 pt-0 md:pt-20">
       <NavigationDesktop />
       <EnteteMobile />
 

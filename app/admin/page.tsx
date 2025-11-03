@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { Card } from '@/components/ui/card'
-import { ShoppingBag, DollarSign, MapPin, TrendingUp } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { ShoppingBag, DollarSign, MapPin, TrendingUp, Package, Clock, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -12,8 +14,13 @@ export default function AdminDashboardPage() {
     totalRevenus: 0,
     commandesEnAttente: 0,
     villesUniques: 0,
+    commandesLivrees: 0,
+    revenusMois: 0,
+    produitsTotal: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [dernieresCommandes, setDernieresCommandes] = useState<any[]>([])
+  const [produits, setProduits] = useState<any[]>([])
 
   useEffect(() => {
     chargerStats()
@@ -21,27 +28,60 @@ export default function AdminDashboardPage() {
 
   const chargerStats = async () => {
     try {
-      const supabase = createClient()
+      // Charger les commandes via l'API admin
+      const [commandesResponse, produitsResponse] = await Promise.all([
+        fetch('/api/admin/commandes?statut=tous'),
+        fetch('/api/admin/produits'),
+      ])
       
-      // Charger les commandes
-      const { data: commandes, error } = await supabase
-        .from('commandes')
-        .select('*')
+      if (!commandesResponse.ok) {
+        throw new Error('Erreur lors du chargement des commandes')
+      }
 
-      if (error) throw error
+      const commandesResult = await commandesResponse.json()
+      const commandes = commandesResult.data || []
+
+      // Charger les produits
+      let produitsData: any[] = []
+      if (produitsResponse.ok) {
+        const produitsResult = await produitsResponse.json()
+        produitsData = produitsResult.data || []
+      }
 
       // Calculer les statistiques
-      const totalCommandes = commandes?.length || 0
-      const totalRevenus = commandes?.reduce((acc, c) => acc + parseFloat(c.total || 0), 0) || 0
-      const commandesEnAttente = commandes?.filter((c) => c.statut === 'En attente').length || 0
-      const villesUniques = new Set(commandes?.map((c) => c.ville)).size || 0
+      const totalCommandes = commandes.length || 0
+      const totalRevenus = commandes.reduce((acc: number, c: any) => acc + parseFloat(c.total || 0), 0) || 0
+      const commandesEnAttente = commandes.filter((c: any) => c.statut === 'En attente').length || 0
+      const commandesLivrees = commandes.filter((c: any) => c.statut === 'Livrée').length || 0
+      const villesUniques = new Set(commandes.map((c: any) => c.ville)).size || 0
+      const produitsTotal = produitsData.length || 0
+
+      // Revenus du mois actuel
+      const maintenant = new Date()
+      const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1)
+      const revenusMois = commandes
+        .filter((c: any) => {
+          const dateCommande = new Date(c.date_commande)
+          return dateCommande >= debutMois && c.statut === 'Livrée'
+        })
+        .reduce((acc: number, c: any) => acc + parseFloat(c.total || 0), 0) || 0
+
+      // Dernières commandes (5 plus récentes)
+      const dernieres = commandes
+        .sort((a: any, b: any) => new Date(b.date_commande).getTime() - new Date(a.date_commande).getTime())
+        .slice(0, 5)
 
       setStats({
         totalCommandes,
         totalRevenus,
         commandesEnAttente,
         villesUniques,
+        commandesLivrees,
+        revenusMois,
+        produitsTotal,
       })
+      setDernieresCommandes(dernieres)
+      setProduits(produitsData)
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error)
     } finally {
@@ -58,37 +98,94 @@ export default function AdminDashboardPage() {
       label: 'Commandes totales',
       value: stats.totalCommandes,
       icon: ShoppingBag,
-      color: 'text-blue-400',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-50',
     },
     {
       label: 'Revenus totaux',
       value: `${stats.totalRevenus.toLocaleString('fr-MA')} DH`,
       icon: DollarSign,
-      color: 'text-green-400',
+      color: 'text-green-500',
+      bgColor: 'bg-green-50',
+    },
+    {
+      label: 'Revenus ce mois',
+      value: `${stats.revenusMois.toLocaleString('fr-MA')} DH`,
+      icon: TrendingUp,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-50',
     },
     {
       label: 'En attente',
       value: stats.commandesEnAttente,
-      icon: TrendingUp,
-      color: 'text-yellow-400',
+      icon: Clock,
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-50',
+    },
+    {
+      label: 'Livrées',
+      value: stats.commandesLivrees,
+      icon: CheckCircle,
+      color: 'text-emerald-500',
+      bgColor: 'bg-emerald-50',
+    },
+    {
+      label: 'Produits',
+      value: stats.produitsTotal,
+      icon: Package,
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-50',
     },
     {
       label: 'Villes',
       value: stats.villesUniques,
       icon: MapPin,
-      color: 'text-purple-400',
+      color: 'text-pink-500',
+      bgColor: 'bg-pink-50',
     },
   ]
 
+  const getStatutBadge = (statut: string) => {
+    switch (statut) {
+      case 'En attente':
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">En attente</span>
+      case 'Expédiée':
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Expédiée</span>
+      case 'Livrée':
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Livrée</span>
+      case 'Annulée':
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Annulée</span>
+      default:
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{statut}</span>
+    }
+  }
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-serif mb-2">Tableau de bord</h1>
-        <p className="text-ecru/70">Vue d'ensemble de votre activité</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-serif mb-2">Tableau de bord</h1>
+          <p className="text-muted-foreground">Vue d'ensemble de votre activité</p>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/produits">
+              <Package className="w-4 h-4 mr-2" />
+              Produits
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/commandes">
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Commandes
+            </Link>
+          </Button>
+        </div>
       </div>
 
+      {/* Statistiques principales */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => {
+        {metrics.slice(0, 4).map((metric, index) => {
           const Icon = metric.icon
           return (
             <motion.div
@@ -97,24 +194,160 @@ export default function AdminDashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="p-6 bg-ecru/5 border-ecru/20">
+              <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
                 <div className="flex items-center justify-between mb-4">
-                  <Icon className={`w-8 h-8 ${metric.color}`} />
+                  <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                    <Icon className={`w-6 h-6 ${metric.color}`} />
+                  </div>
                 </div>
-                <p className="text-2xl font-serif mb-1">{metric.value}</p>
-                <p className="text-sm text-ecru/70">{metric.label}</p>
+                <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
+                <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
               </Card>
             </motion.div>
           )
         })}
       </div>
 
-      <Card className="p-6 bg-ecru/5 border-ecru/20">
-        <h2 className="text-xl font-serif mb-4">Bienvenue</h2>
-        <p className="text-ecru/80">
-          Utilisez le menu de navigation pour gérer vos produits et commandes.
-        </p>
-      </Card>
+      {/* Statistiques secondaires */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {metrics.slice(4).map((metric, index) => {
+          const Icon = metric.icon
+          return (
+            <motion.div
+              key={metric.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 + index * 0.1 }}
+            >
+              <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                    <Icon className={`w-6 h-6 ${metric.color}`} />
+                  </div>
+                </div>
+                <p className="text-2xl font-serif mb-1 font-bold">{metric.value}</p>
+                <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
+              </Card>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Dernières commandes et alertes */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Dernières commandes */}
+        <Card className="p-6 bg-card border-border">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-serif">Dernières commandes</h2>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/admin/commandes">
+                Voir tout <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+          {dernieresCommandes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucune commande récente</p>
+          ) : (
+            <div className="space-y-3">
+              {dernieresCommandes.map((commande: any, index: number) => (
+                <motion.div
+                  key={commande.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">#{commande.id.substring(0, 8)}</p>
+                      {getStatutBadge(commande.statut)}
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{commande.nom_client}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(commande.date_commande).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-dore">{commande.total.toLocaleString('fr-MA')} DH</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(commande.produits || []).length} article{(commande.produits || []).length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Alertes */}
+        <Card className="p-6 bg-card border-border">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-serif">Alertes</h2>
+            <AlertCircle className="w-5 h-5 text-yellow-500" />
+          </div>
+          <div className="space-y-3">
+            {stats.commandesEnAttente > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+              >
+                <Clock className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-yellow-900">
+                    {stats.commandesEnAttente} commande{stats.commandesEnAttente > 1 ? 's' : ''} en attente
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Nécessite votre attention
+                  </p>
+                </div>
+              </motion.div>
+            )}
+            {stats.produitsTotal === 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+                className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+              >
+                <Package className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-blue-900">
+                    Aucun produit enregistré
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Commencez par ajouter vos premiers produits
+                  </p>
+                </div>
+              </motion.div>
+            )}
+            {stats.commandesEnAttente === 0 && stats.produitsTotal > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg"
+              >
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-green-900">
+                    Tout est à jour
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    Aucune action requise
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -21,7 +21,7 @@ interface CarteProduitProps {
 
 const CarteProduit = ({ produit }: CarteProduitProps) => {
   const imageUrl = produit.image_url || produit.image
-  const href = `/boutique/${produit.slug || produit.id}`
+  const href = `/produit/${produit.id}`
 
   return (
     <Link href={href}>

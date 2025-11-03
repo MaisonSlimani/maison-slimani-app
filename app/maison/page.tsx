@@ -16,7 +16,7 @@ export default function MaisonPage() {
   }, [])
 
   return (
-    <div className="min-h-screen pb-24 pt-0 md:pt-20">
+    <div className="pb-24 md:pb-0 pt-0 md:pt-20">
       <NavigationDesktop />
       <EnteteMobile />
 

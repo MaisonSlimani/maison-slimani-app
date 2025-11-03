@@ -6,10 +6,13 @@ import { usePathname } from 'next/navigation'
 import { ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useCart } from '@/lib/hooks/useCart'
 
 const NavigationDesktop = () => {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
+  const { items, isLoaded } = useCart()
+  const [cartCount, setCartCount] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +21,26 @@ const NavigationDesktop = () => {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Calculer le nombre total d'articles dans le panier
+  useEffect(() => {
+    if (isLoaded) {
+      const total = items.reduce((acc, item) => acc + item.quantite, 0)
+      setCartCount(total)
+    }
+  }, [items, isLoaded])
+
+  // Écouter les changements du panier
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      if (isLoaded) {
+        const total = items.reduce((acc, item) => acc + item.quantite, 0)
+        setCartCount(total)
+      }
+    }
+    window.addEventListener('cartUpdated', handleCartUpdate)
+    return () => window.removeEventListener('cartUpdated', handleCartUpdate)
+  }, [items, isLoaded])
 
   const menuItems = [
     { href: '/', label: 'Accueil' },
@@ -102,12 +125,22 @@ const NavigationDesktop = () => {
             size="icon" 
             asChild
             className={cn(
-              "transition-colors",
+              "transition-colors relative",
               isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
             )}
           >
             <Link href="/panier">
               <ShoppingBag className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className={cn(
+                  "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                  isHomePage && !scrolled
+                    ? "bg-[#d4a574] text-[#f8f5f0]"
+                    : "bg-dore text-charbon"
+                )}>
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
               <span className="sr-only">Panier</span>
             </Link>
           </Button>

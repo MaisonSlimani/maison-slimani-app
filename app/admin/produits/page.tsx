@@ -1,308 +1,129 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Edit, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Package, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { cn } from '@/lib/utils'
+
+const categories = [
+  {
+    slug: 'classiques',
+    nom: 'Classiques',
+    description: 'L\'essence de l\'élégance quotidienne. Nos modèles classiques allient tradition et modernité.',
+    image: '/assets/categorie-classiques.jpg',
+    color: 'from-blue-50 to-blue-100',
+    borderColor: 'border-blue-200',
+  },
+  {
+    slug: 'cuirs-exotiques',
+    nom: 'Cuirs Exotiques',
+    description: 'Le luxe dans sa forme la plus rare. Des cuirs précieux et exotiques pour des créations d\'exception.',
+    image: '/assets/categorie-exotiques.jpg',
+    color: 'from-amber-50 to-amber-100',
+    borderColor: 'border-amber-200',
+  },
+  {
+    slug: 'editions-limitees',
+    nom: 'Éditions Limitées',
+    description: 'Des pièces uniques pour les connaisseurs. Chaque édition limitée raconte une histoire unique.',
+    image: '/assets/categorie-limitees.jpg',
+    color: 'from-purple-50 to-purple-100',
+    borderColor: 'border-purple-200',
+  },
+  {
+    slug: 'nouveautes',
+    nom: 'Nouveautés',
+    description: 'Les dernières créations de nos ateliers. Découvrez nos nouveautés qui célèbrent l\'innovation.',
+    image: '/assets/categorie-nouveautes.jpg',
+    color: 'from-green-50 to-green-100',
+    borderColor: 'border-green-200',
+  },
+]
 
 export default function AdminProduitsPage() {
-  const [produits, setProduits] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingProduit, setEditingProduit] = useState<any>(null)
-  const [formData, setFormData] = useState({
-    nom: '',
-    description: '',
-    prix: '',
-    stock: '',
-    categorie: '',
-    vedette: false,
-    image_url: '',
-  })
+  const router = useRouter()
 
   useEffect(() => {
-    chargerProduits()
+    window.scrollTo(0, 0)
   }, [])
-
-  const chargerProduits = async () => {
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('produits')
-        .select('*')
-        .order('date_ajout', { ascending: false })
-
-      if (error) throw error
-      setProduits(data || [])
-    } catch (error) {
-      console.error('Erreur lors du chargement des produits:', error)
-      toast.error('Erreur lors du chargement des produits')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const supabase = createClient()
-      
-      const produitData = {
-        ...formData,
-        prix: parseFloat(formData.prix),
-        stock: parseInt(formData.stock),
-        vedette: formData.vedette,
-      }
-
-      if (editingProduit) {
-        const { error } = await supabase
-          .from('produits')
-          .update(produitData)
-          .eq('id', editingProduit.id)
-
-        if (error) throw error
-        toast.success('Produit mis à jour')
-      } else {
-        const { error } = await supabase
-          .from('produits')
-          .insert(produitData)
-
-        if (error) throw error
-        toast.success('Produit créé')
-      }
-
-      setDialogOpen(false)
-      setEditingProduit(null)
-      setFormData({
-        nom: '',
-        description: '',
-        prix: '',
-        stock: '',
-        categorie: '',
-        vedette: false,
-        image_url: '',
-      })
-      chargerProduits()
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
-      toast.error('Erreur lors de la sauvegarde')
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return
-
-    try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('produits')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-      toast.success('Produit supprimé')
-      chargerProduits()
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
-      toast.error('Erreur lors de la suppression')
-    }
-  }
-
-  if (loading) {
-    return <div>Chargement...</div>
-  }
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-serif mb-2">Gestion des produits</h1>
-          <p className="text-ecru/70">Créez et gérez vos produits</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setEditingProduit(null)
-              setFormData({
-                nom: '',
-                description: '',
-                prix: '',
-                stock: '',
-                categorie: '',
-                vedette: false,
-                image_url: '',
-              })
-            }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau produit
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingProduit ? 'Modifier le produit' : 'Nouveau produit'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="nom">Nom *</Label>
-                <Input
-                  id="nom"
-                  required
-                  value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  required
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="prix">Prix (DH) *</Label>
-                  <Input
-                    id="prix"
-                    type="number"
-                    step="0.01"
-                    required
-                    value={formData.prix}
-                    onChange={(e) => setFormData({ ...formData, prix: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="stock">Stock *</Label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    required
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="categorie">Catégorie *</Label>
-                <Select
-                  value={formData.categorie}
-                  onValueChange={(value) => setFormData({ ...formData, categorie: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Classiques">Classiques</SelectItem>
-                    <SelectItem value="Cuirs Exotiques">Cuirs Exotiques</SelectItem>
-                    <SelectItem value="Éditions Limitées">Éditions Limitées</SelectItem>
-                    <SelectItem value="Nouveautés">Nouveautés</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="image_url">URL de l'image</Label>
-                <Input
-                  id="image_url"
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="vedette"
-                  checked={formData.vedette}
-                  onChange={(e) => setFormData({ ...formData, vedette: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                <Label htmlFor="vedette">Produit en vedette</Label>
-              </div>
-              <div className="flex gap-4">
-                <Button type="submit" className="flex-1">
-                  {editingProduit ? 'Mettre à jour' : 'Créer'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                  className="flex-1"
-                >
-                  Annuler
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <div>
+        <h1 className="text-3xl font-serif mb-2">Gestion des produits</h1>
+        <p className="text-muted-foreground">Sélectionnez une catégorie pour gérer les produits</p>
       </div>
 
-      <div className="grid gap-4">
-        {produits.map((produit) => (
-          <Card key={produit.id} className="p-6 bg-ecru/5 border-ecru/20">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-xl font-serif mb-2">{produit.nom}</h3>
-                <p className="text-ecru/70 text-sm mb-4">{produit.description}</p>
-                <div className="flex gap-6 text-sm">
-                  <span className="text-ecru/70">
-                    Prix: <span className="text-ecru">{produit.prix.toLocaleString('fr-MA')} DH</span>
-                  </span>
-                  <span className="text-ecru/70">
-                    Stock: <span className="text-ecru">{produit.stock}</span>
-                  </span>
-                  <span className="text-ecru/70">
-                    Catégorie: <span className="text-ecru">{produit.categorie}</span>
-                  </span>
-                  {produit.vedette && (
-                    <span className="text-dore font-medium">⭐ Vedette</span>
-                  )}
+      <div className="grid md:grid-cols-2 gap-6">
+        {categories.map((categorie, index) => (
+          <motion.div
+            key={categorie.slug}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card
+              className={cn(
+                'p-6 cursor-pointer transition-all hover:shadow-xl border-2 overflow-hidden group',
+                `bg-gradient-to-br ${categorie.color} ${categorie.borderColor} hover:scale-105`
+              )}
+              onClick={() => router.push(`/admin/produits/${categorie.slug}`)}
+            >
+              <div className="flex gap-6 items-start">
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-white/50 flex-shrink-0 shadow-lg">
+                  <Image
+                    src={categorie.image}
+                    alt={categorie.nom}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    sizes="96px"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <h3 className="text-2xl font-serif mb-2 text-charbon">{categorie.nom}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {categorie.description}
+                      </p>
+                    </div>
+                    <Package className="w-6 h-6 text-dore flex-shrink-0 mt-1" />
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="mt-4 group-hover:bg-white group-hover:text-charbon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/admin/produits/${categorie.slug}`)
+                    }}
+                  >
+                    Gérer les produits
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    setEditingProduit(produit)
-                    setFormData({
-                      nom: produit.nom,
-                      description: produit.description,
-                      prix: produit.prix.toString(),
-                      stock: produit.stock.toString(),
-                      categorie: produit.categorie,
-                      vedette: produit.vedette,
-                      image_url: produit.image_url || '',
-                    })
-                    setDialogOpen(true)
-                  }}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDelete(produit.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </motion.div>
         ))}
       </div>
+
+      <Card className="p-6 bg-muted/30 border-dashed">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">
+            Vous souhaitez voir tous les produits en même temps ?
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/admin/produits/tous')}
+          >
+            Voir tous les produits
+          </Button>
+        </div>
+      </Card>
     </div>
   )
 }
-

@@ -1,18 +1,38 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Package, ShoppingBag, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useCart } from '@/lib/hooks/useCart'
 
 const MenuBasNavigation = () => {
   const pathname = usePathname()
-  // La barre reste toujours visible pour un accès rapide
-  // C'est une pratique courante sur mobile de cacher la barre lors du scroll vers le bas
-  // pour économiser de l'espace écran, mais pour un e-commerce, il vaut mieux la garder
-  // visible pour un accès rapide au panier et à la navigation
+  const { items, isLoaded } = useCart()
+  const [cartCount, setCartCount] = useState(0)
 
-  const items = [
+  // Calculer le nombre total d'articles dans le panier
+  useEffect(() => {
+    if (isLoaded) {
+      const total = items.reduce((acc, item) => acc + item.quantite, 0)
+      setCartCount(total)
+    }
+  }, [items, isLoaded])
+
+  // Écouter les changements du panier
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      if (isLoaded) {
+        const total = items.reduce((acc, item) => acc + item.quantite, 0)
+        setCartCount(total)
+      }
+    }
+    window.addEventListener('cartUpdated', handleCartUpdate)
+    return () => window.removeEventListener('cartUpdated', handleCartUpdate)
+  }, [items, isLoaded])
+
+  const navItems = [
     { href: '/', icon: Home, label: 'Accueil' },
     { href: '/boutique', icon: Package, label: 'Boutique' },
     { href: '/panier', icon: ShoppingBag, label: 'Panier' },
@@ -27,16 +47,17 @@ const MenuBasNavigation = () => {
       )}
     >
       <div className="container px-4 h-16 flex items-center justify-around">
-        {items.map((item) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href
           const Icon = item.icon
+          const isPanier = item.href === '/panier'
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all duration-200 min-w-[70px]',
+                'flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all duration-200 min-w-[70px] relative',
                 isActive
                   ? 'text-dore scale-105'
                   : 'text-muted-foreground hover:text-foreground active:scale-95'
@@ -47,7 +68,14 @@ const MenuBasNavigation = () => {
                 }
               }}
             >
-              <Icon className={cn('w-5 h-5 transition-transform', isActive && 'scale-110')} />
+              <div className="relative">
+                <Icon className={cn('w-5 h-5 transition-transform', isActive && 'scale-110')} />
+                {isPanier && cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full text-xs font-bold bg-dore text-charbon">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </div>
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
           )

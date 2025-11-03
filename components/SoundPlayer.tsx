@@ -20,12 +20,22 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
       if (clickSoundRef.current) clickSoundRef.current.volume = 0.3
       if (successSoundRef.current) successSoundRef.current.volume = 0.3
       
-      // Précharger les sons
-      if (clickSoundRef.current) clickSoundRef.current.load()
-      if (successSoundRef.current) successSoundRef.current.load()
+      // Précharger les sons avec gestion d'erreur
+      if (clickSoundRef.current) {
+        clickSoundRef.current.load().catch(() => {
+          // Fichier n'existe pas, on continue silencieusement
+          clickSoundRef.current = null
+        })
+      }
+      if (successSoundRef.current) {
+        successSoundRef.current.load().catch(() => {
+          // Fichier n'existe pas, on continue silencieusement
+          successSoundRef.current = null
+        })
+      }
     } catch (error) {
       // Fallback silencieux si les fichiers n'existent pas encore
-      console.warn('Sons non disponibles:', error)
+      // Ne pas logger pour éviter les erreurs dans la console
     }
   }, [])
 
@@ -33,7 +43,9 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
     if (enabled && clickSoundRef.current) {
       try {
         clickSoundRef.current.currentTime = 0
-        clickSoundRef.current.play().catch(() => {})
+        clickSoundRef.current.play().catch(() => {
+          // Fichier n'existe pas ou erreur de lecture, on ignore silencieusement
+        })
       } catch (error) {
         // Ignorer les erreurs de lecture
       }
@@ -44,7 +56,9 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
     if (enabled && successSoundRef.current) {
       try {
         successSoundRef.current.currentTime = 0
-        successSoundRef.current.play().catch(() => {})
+        successSoundRef.current.play().catch(() => {
+          // Fichier n'existe pas ou erreur de lecture, on ignore silencieusement
+        })
       } catch (error) {
         // Ignorer les erreurs de lecture
       }
