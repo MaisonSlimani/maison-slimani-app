@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Heart, Check } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
@@ -37,7 +38,15 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [selectedTaille, setSelectedTaille] = useState<string>('')
+  const [quantite, setQuantite] = useState(1)
   const inWishlist = isInWishlist(produit.id)
+
+  // Parse les tailles disponibles
+  const taillesDisponibles = produit.taille && produit.taille.trim() 
+    ? produit.taille.split(',').map(t => t.trim()).filter(t => t)
+    : []
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -45,33 +54,67 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     
     if (isAddingToCart) return
     
-    setIsAddingToCart(true)
+    // Si le produit a des tailles, ouvrir le modal
+    if (taillesDisponibles.length > 0) {
+      setShowModal(true)
+      return
+    }
+
+    // Vérifier le stock
+    if (produit.stock !== undefined && produit.stock <= 0) {
+      toast.error('Produit en rupture de stock')
+      return
+    }
+
+    // Ajouter directement au panier
+    addToCart({
+      id: produit.id,
+      nom: produit.nom,
+      prix: produit.prix,
+      quantite: 1,
+      image_url: imageUrl,
+      image: imageUrl,
+    })
+
+    // Afficher le succès dans le bouton
+    setAddedToCart(true)
     
+    // Revenir au texte normal après 2 secondes
+    setTimeout(() => {
+      setAddedToCart(false)
+    }, 2000)
+  }
+
+  const handleConfirmAddToCart = () => {
+    if (taillesDisponibles.length > 0 && !selectedTaille) {
+      toast.error('Veuillez sélectionner une taille')
+      return
+    }
+
+    // Vérifier le stock
+    if (produit.stock !== undefined && produit.stock < quantite) {
+      toast.error('Stock insuffisant')
+      return
+    }
+
+    setIsAddingToCart(true)
+
     try {
-      // Si le produit a une taille, rediriger vers la page produit
-      if (produit.taille && produit.taille.trim()) {
-        toast.info('Veuillez sélectionner une taille sur la page du produit')
-        window.location.href = href
-        return
-      }
-
-      // Vérifier le stock
-      if (produit.stock !== undefined && produit.stock <= 0) {
-        toast.error('Produit en rupture de stock')
-        return
-      }
-
       addToCart({
         id: produit.id,
         nom: produit.nom,
         prix: produit.prix,
-        quantite: 1,
+        quantite,
         image_url: imageUrl,
         image: imageUrl,
+        taille: selectedTaille || undefined,
       })
 
-      // Afficher le succès dans le bouton
+      // Fermer le modal et afficher le succès
+      setShowModal(false)
       setAddedToCart(true)
+      setSelectedTaille('')
+      setQuantite(1)
       
       // Revenir au texte normal après 2 secondes
       setTimeout(() => {
@@ -208,6 +251,98 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
           </Button>
         </div>
       )}
+
+      {/* Modal pour sélectionner taille et quantité */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{produit.nom}</DialogTitle>
+            <DialogDescription>
+              Sélectionnez la taille et la quantité souhaitées
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Sélecteur de taille */}
+            {taillesDisponibles.length > 0 && (
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Taille</label>
+                <div className="flex flex-wrap gap-2">
+                  {taillesDisponibles.map((taille) => {
+                    const isSelected = selectedTaille === taille
+                    return (
+                      <button
+                        key={taille}
+                        type="button"
+                        onClick={() => setSelectedTaille(taille)}
+                        className={cn(
+                          'w-12 h-12 rounded-lg border-2 font-medium transition-all hover:scale-105',
+                          isSelected
+                            ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
+                            : 'bg-background text-foreground border-border hover:border-dore'
+                        )}
+                      >
+                        {taille}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Sélecteur de quantité */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Quantité</label>
+              <div className="flex items-center gap-2 border border-border rounded-lg w-fit">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={() => setQuantite(Math.max(1, quantite - 1))}
+                  disabled={quantite <= 1}
+                >
+                  −
+                </Button>
+                <span className="w-12 text-center font-medium">{quantite}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={() => setQuantite(Math.min(produit.stock || 999, quantite + 1))}
+                  disabled={produit.stock !== undefined && quantite >= produit.stock}
+                >
+                  +
+                </Button>
+              </div>
+              {produit.stock !== undefined && (
+                <p className="text-sm text-muted-foreground">
+                  Stock disponible: {produit.stock}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowModal(false)
+                setSelectedTaille('')
+                setQuantite(1)
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleConfirmAddToCart}
+              disabled={isAddingToCart || (taillesDisponibles.length > 0 && !selectedTaille)}
+              className="bg-dore text-charbon hover:bg-dore/90"
+            >
+              {isAddingToCart ? 'Ajout...' : 'Ajouter au panier'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
