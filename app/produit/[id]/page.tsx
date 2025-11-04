@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -46,18 +46,7 @@ export default function ProduitPage() {
     window.scrollTo(0, 0)
   }, [])
 
-  useEffect(() => {
-    chargerProduit()
-  }, [params.id])
-
-  // Mettre à jour le titre de la page
-  useEffect(() => {
-    if (produit) {
-      document.title = `${produit.nom} | Maison Slimani`
-    }
-  }, [produit])
-
-  const chargerProduit = async () => {
+  const chargerProduit = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data, error } = await supabase
@@ -75,7 +64,18 @@ export default function ProduitPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, router])
+
+  useEffect(() => {
+    chargerProduit()
+  }, [chargerProduit])
+
+  // Mettre à jour le titre de la page
+  useEffect(() => {
+    if (produit) {
+      document.title = `${produit.nom} | Maison Slimani`
+    }
+  }, [produit])
 
   const handleAddToCart = () => {
     if (!produit) return

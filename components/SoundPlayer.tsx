@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 
 interface SoundPlayerProps {
   enabled?: boolean
@@ -49,7 +49,7 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
     }
   }, [enabled])
 
-  const playClick = () => {
+  const playClick = useCallback(() => {
     if (enabled && clickSoundRef.current) {
       try {
         clickSoundRef.current.currentTime = 0
@@ -60,9 +60,9 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
         // Ignorer les erreurs de lecture
       }
     }
-  }
+  }, [enabled])
 
-  const playSuccess = () => {
+  const playSuccess = useCallback(() => {
     if (enabled && successSoundRef.current) {
       try {
         successSoundRef.current.currentTime = 0
@@ -73,7 +73,7 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
         // Ignorer les erreurs de lecture
       }
     }
-  }
+  }, [enabled])
 
   // Exposer les méthodes via window pour accès global
   useEffect(() => {
@@ -81,7 +81,7 @@ const SoundPlayer = ({ enabled = true }: SoundPlayerProps) => {
       ;(window as any).playClickSound = playClick
       ;(window as any).playSuccessSound = playSuccess
     }
-  }, [enabled])
+  }, [playClick, playSuccess])
 
   return null
 }

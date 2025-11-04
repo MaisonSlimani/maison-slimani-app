@@ -375,7 +375,10 @@ export default function AdminCategoriesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDelete(categorie.id)}
+                  onClick={() => {
+                    setCategorieToDelete(categorie.id)
+                    setDeleteDialogOpen(true)
+                  }}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="w-4 h-4" />
