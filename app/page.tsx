@@ -13,6 +13,8 @@ import CarteCategorie from '@/components/CarteCategorie'
 import CarteProduit from '@/components/CarteProduit'
 import SoundPlayer from '@/components/SoundPlayer'
 import { Truck, RefreshCcw, Award } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 
 // Chemins des images (Next.js Image nécessite des chemins relatifs depuis public/)
 const heroImage = '/assets/hero-chaussures.jpg'
@@ -24,13 +26,37 @@ const categorieNouveautes = '/assets/categorie-nouveautes.jpg'
 const lookbookLifestyle1 = '/assets/lookbook-lifestyle-1.jpg'
 const lookbookAtelier = '/assets/lookbook-atelier.jpg'
 const lookbookLifestyle2 = '/assets/lookbook-lifestyle-2.jpg'
-const produitMocassin = '/assets/produit-mocassin.jpg'
-const produitRichelieu = '/assets/produit-richelieu.jpg'
-const produitBoots = '/assets/produit-boots.jpg'
 
 export default function AccueilPage() {
+  const [produitsVedette, setProduitsVedette] = useState<any[]>([])
+  const [loadingVedette, setLoadingVedette] = useState(true)
+
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
+    const chargerProduitsVedette = async () => {
+      try {
+        const supabase = createClient()
+        
+        // Charger produits vedette depuis la base de données
+        const { data: vedette } = await supabase
+          .from('produits')
+          .select('*')
+          .eq('vedette', true)
+          .limit(6)
+          .order('date_ajout', { ascending: false })
+
+        setProduitsVedette(vedette || [])
+      } catch (error) {
+        console.error('Erreur lors du chargement des produits vedette:', error)
+      } finally {
+        setLoadingVedette(false)
+      }
+    }
+
+    chargerProduitsVedette()
   }, [])
 
   const categories = [
@@ -60,32 +86,6 @@ export default function AccueilPage() {
     },
   ]
 
-  const produitsVedette = [
-    {
-      id: '1',
-      nom: 'Mocassin Fès',
-      slug: 'mocassin-fes',
-      prix: 2800,
-      image: produitMocassin,
-      matiere: 'Cuir de veau premium',
-    },
-    {
-      id: '2',
-      nom: 'Richelieu Marrakech',
-      slug: 'richelieu-marrakech',
-      prix: 3200,
-      image: produitRichelieu,
-      matiere: 'Cuir italien',
-    },
-    {
-      id: '3',
-      nom: 'Boots Casablanca',
-      slug: 'boots-casablanca',
-      prix: 3600,
-      image: produitBoots,
-      matiere: 'Cuir grainé',
-    },
-  ]
 
   const lookbookImages = [
     { src: lookbookLifestyle1, caption: "L'élégance marocaine contemporaine" },
@@ -209,57 +209,64 @@ export default function AccueilPage() {
       </section>
 
       {/* Produits en Vedette */}
-      <section className="py-20 px-6">
-        <div className="container max-w-6xl mx-auto">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-serif mb-4">
-              Produits en Vedette
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Nos créations les plus prisées, alliant tradition et modernité
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {produitsVedette.map((produit, index) => (
-              <motion.div
-                key={produit.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.15, duration: 0.6 }}
-                className="group"
-              >
-                <motion.div 
-                  className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300"
-                  whileHover={{ y: -8 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                >
-                  <CarteProduit produit={produit} />
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button 
-              asChild 
-              size="lg" 
-              variant="outline"
-              className="border-dore text-dore hover:bg-dore hover:text-charbon"
-              onClick={handleButtonClick}
+      {!loadingVedette && produitsVedette.length > 0 && (
+        <section className="py-20 px-6 bg-ecru">
+          <div className="container max-w-6xl mx-auto">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
             >
-              <Link href="/boutique">Voir toute la collection</Link>
-            </Button>
+              <h2 className="text-4xl md:text-5xl font-serif mb-4">
+                Produits en Vedette
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Découvrez nos créations les plus emblématiques, sélectionnées pour leur excellence
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {produitsVedette.map((produit, index) => (
+                <motion.div
+                  key={produit.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    delay: index * 0.1,
+                    duration: 0.6,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  whileHover={{ y: -8 }}
+                  className="transition-transform duration-500"
+                >
+                  <CarteProduit produit={{
+                    id: produit.id,
+                    nom: produit.nom,
+                    prix: produit.prix,
+                    image_url: produit.image_url,
+                    image: produit.image_url,
+                  }} />
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <Button 
+                asChild 
+                size="lg" 
+                variant="outline"
+                className="border-dore text-dore hover:bg-dore hover:text-charbon"
+                onClick={handleButtonClick}
+              >
+                <Link href="/boutique">Voir toute la collection</Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Notre Savoir-Faire */}
       <section className="py-20 px-6 bg-ecru">

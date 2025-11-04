@@ -91,6 +91,15 @@ export default function ProduitPage() {
       return
     }
 
+    // Vérifier que la taille est valide
+    if (produit.taille && taille) {
+      const taillesDisponibles = produit.taille.split(',').map(t => t.trim())
+      if (!taillesDisponibles.includes(taille)) {
+        toast.error('Taille invalide')
+        return
+      }
+    }
+
     addItem({
       id: produit.id,
       nom: produit.nom,
@@ -322,23 +331,30 @@ export default function ProduitPage() {
                 transition={{ delay: 0.75 }}
                 className="space-y-2"
               >
-                <label htmlFor="taille" className="text-sm font-medium">
+                <label className="text-sm font-medium">
                   Taille:
                 </label>
-                <select
-                  id="taille"
-                  value={taille}
-                  onChange={(e) => setTaille(e.target.value)}
-                  className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-dore"
-                  required
-                >
-                  <option value="">Sélectionnez une taille</option>
-                  {produit.taille.split(',').map((t) => (
-                    <option key={t.trim()} value={t.trim()}>
-                      {t.trim()}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {produit.taille.split(',').map((t) => {
+                    const tailleValue = t.trim()
+                    const isSelected = taille === tailleValue
+                    return (
+                      <button
+                        key={tailleValue}
+                        type="button"
+                        onClick={() => setTaille(tailleValue)}
+                        className={cn(
+                          'w-12 h-12 rounded-lg border-2 font-medium transition-all hover:scale-105',
+                          isSelected
+                            ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
+                            : 'bg-background text-foreground border-border hover:border-dore'
+                        )}
+                      >
+                        {tailleValue}
+                      </button>
+                    )
+                  })}
+                </div>
               </motion.div>
             )}
 

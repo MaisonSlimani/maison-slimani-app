@@ -4,16 +4,19 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/lib/hooks/useCart'
+import { useWishlist } from '@/lib/hooks/useWishlist'
 
 const NavigationDesktop = () => {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const { items, isLoaded } = useCart()
+  const { items: wishlistItems, isLoaded: wishlistLoaded } = useWishlist()
   const [cartCount, setCartCount] = useState(0)
+  const [wishlistCount, setWishlistCount] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +32,13 @@ const NavigationDesktop = () => {
       setCartCount(items.length)
     }
   }, [items, isLoaded])
+
+  // Calculer le nombre d'éléments dans la wishlist
+  useEffect(() => {
+    if (wishlistLoaded) {
+      setWishlistCount(wishlistItems.length)
+    }
+  }, [wishlistItems, wishlistLoaded])
 
   // Écouter les changements du panier depuis localStorage (pour les mises à jour en temps réel)
   useEffect(() => {
@@ -58,6 +68,33 @@ const NavigationDesktop = () => {
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate)
       window.removeEventListener('storage', handleCartUpdate)
+    }
+  }, [])
+
+  // Écouter les changements de la wishlist
+  useEffect(() => {
+    const handleWishlistUpdate = () => {
+      if (typeof window !== 'undefined') {
+        const savedWishlist = localStorage.getItem('wishlist')
+        if (savedWishlist) {
+          try {
+            const wishlistItems = JSON.parse(savedWishlist)
+            setWishlistCount(wishlistItems.length)
+          } catch (error) {
+            console.error('Erreur lors de la lecture de la wishlist:', error)
+          }
+        } else {
+          setWishlistCount(0)
+        }
+      }
+    }
+
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate)
+    window.addEventListener('storage', handleWishlistUpdate)
+    
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate)
+      window.removeEventListener('storage', handleWishlistUpdate)
     }
   }, [])
 
@@ -155,33 +192,60 @@ const NavigationDesktop = () => {
           })}
         </div>
 
-        {/* Panier à droite */}
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            asChild
-            className={cn(
-              "transition-colors relative",
-              isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
-            )}
-          >
-            <Link href="/panier">
-              <ShoppingBag className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className={cn(
-                  "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
-                  isHomePage && !scrolled
-                    ? "bg-[#d4a574] text-[#f8f5f0]"
-                    : "bg-dore text-charbon"
-                )}>
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-              <span className="sr-only">Panier</span>
-            </Link>
-          </Button>
-        </div>
+                {/* Panier et Wishlist à droite */}
+                <div className="flex items-center gap-4">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    asChild
+                    className={cn(
+                      "transition-colors relative",
+                      isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
+                    )}
+                  >
+                    <Link href="/favoris">
+                      <Heart className={cn(
+                        "w-5 h-5",
+                        wishlistCount > 0 && "fill-current"
+                      )} />
+                      {wishlistCount > 0 && (
+                        <span className={cn(
+                          "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                          isHomePage && !scrolled
+                            ? "bg-[#d4a574] text-[#f8f5f0]"
+                            : "bg-dore text-charbon"
+                        )}>
+                          {wishlistCount > 99 ? '99+' : wishlistCount}
+                        </span>
+                      )}
+                      <span className="sr-only">Favoris</span>
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    asChild
+                    className={cn(
+                      "transition-colors relative",
+                      isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
+                    )}
+                  >
+                    <Link href="/panier">
+                      <ShoppingBag className="w-5 h-5" />
+                      {cartCount > 0 && (
+                        <span className={cn(
+                          "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                          isHomePage && !scrolled
+                            ? "bg-[#d4a574] text-[#f8f5f0]"
+                            : "bg-dore text-charbon"
+                        )}>
+                          {cartCount > 99 ? '99+' : cartCount}
+                        </span>
+                      )}
+                      <span className="sr-only">Panier</span>
+                    </Link>
+                  </Button>
+                </div>
       </nav>
     </header>
   )

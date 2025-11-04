@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ShoppingBag, DollarSign, MapPin, TrendingUp, Package, Clock, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
+import { ShoppingBag, DollarSign, MapPin, TrendingUp, Package, Clock, CheckCircle, AlertCircle, ArrowRight, AlertTriangle, Warehouse } from 'lucide-react'
 import Image from 'next/image'
 
 export default function AdminDashboardPage() {
@@ -17,6 +17,9 @@ export default function AdminDashboardPage() {
     commandesLivrees: 0,
     revenusMois: 0,
     produitsTotal: 0,
+    produitsRuptureStock: 0,
+    produitsStockFaible: 0,
+    totalStock: 0,
   })
   const [loading, setLoading] = useState(true)
   const [dernieresCommandes, setDernieresCommandes] = useState<any[]>([])
@@ -55,6 +58,11 @@ export default function AdminDashboardPage() {
       const commandesLivrees = commandes.filter((c: any) => c.statut === 'Livrée').length || 0
       const villesUniques = new Set(commandes.map((c: any) => c.ville)).size || 0
       const produitsTotal = produitsData.length || 0
+      
+      // Statistiques de stock
+      const produitsRuptureStock = produitsData.filter((p: any) => p.stock === 0).length || 0
+      const produitsStockFaible = produitsData.filter((p: any) => p.stock > 0 && p.stock <= 5).length || 0
+      const totalStock = produitsData.reduce((acc: number, p: any) => acc + (p.stock || 0), 0) || 0
 
       // Revenus du mois actuel
       const maintenant = new Date()
@@ -79,6 +87,9 @@ export default function AdminDashboardPage() {
         commandesLivrees,
         revenusMois,
         produitsTotal,
+        produitsRuptureStock,
+        produitsStockFaible,
+        totalStock,
       })
       setDernieresCommandes(dernieres)
       setProduits(produitsData)
@@ -143,6 +154,27 @@ export default function AdminDashboardPage() {
       color: 'text-pink-500',
       bgColor: 'bg-pink-50',
     },
+    {
+      label: 'Total stock',
+      value: stats.totalStock,
+      icon: Warehouse,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+    },
+    {
+      label: 'Rupture de stock',
+      value: stats.produitsRuptureStock,
+      icon: AlertTriangle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+    },
+    {
+      label: 'Stock faible (≤5)',
+      value: stats.produitsStockFaible,
+      icon: AlertCircle,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+    },
   ]
 
   const getStatutBadge = (statut: string) => {
@@ -163,7 +195,8 @@ export default function AdminDashboardPage() {
   // Grouper les métriques par catégorie
   const metricsArgent = metrics.filter(m => m.label.includes('Revenus') || m.label.includes('DH'))
   const metricsCommandes = metrics.filter(m => m.label.includes('Commande') || m.label.includes('Livrée') || m.label.includes('attente'))
-  const metricsAutres = metrics.filter(m => !metricsArgent.includes(m) && !metricsCommandes.includes(m))
+  const metricsStock = metrics.filter(m => m.label.toLowerCase().includes('stock') || m.label.includes('Rupture') || m.label.includes('faible'))
+  const metricsAutres = metrics.filter(m => !metricsArgent.includes(m) && !metricsCommandes.includes(m) && !metricsStock.includes(m))
 
   return (
     <div className="space-y-8">
@@ -244,7 +277,37 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Rangée 3: Autres informations */}
+      {/* Rangée 3: Gestion du stock */}
+      <div>
+        <h2 className="text-xl font-serif mb-4 text-foreground/80">Gestion du stock</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {metricsStock.map((metric, index) => {
+            const Icon = metric.icon
+            return (
+              <motion.div
+                key={metric.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + index * 0.1 }}
+              >
+                <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor} ${
+                  metric.label.includes('Rupture') || metric.label.includes('faible') ? 'border-2 border-red-300' : ''
+                }`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                      <Icon className={`w-6 h-6 ${metric.color}`} />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Rangée 4: Autres informations */}
       <div>
         <h2 className="text-xl font-serif mb-4 text-foreground/80">Autres informations</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -330,6 +393,42 @@ export default function AdminDashboardPage() {
             <AlertCircle className="w-5 h-5 text-yellow-500" />
           </div>
           <div className="space-y-3">
+            {stats.produitsRuptureStock > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  <p className="font-medium text-sm text-red-700">Rupture de stock</p>
+                </div>
+                <p className="text-xs text-red-600">
+                  {stats.produitsRuptureStock} produit{stats.produitsRuptureStock > 1 ? 's' : ''} en rupture de stock
+                </p>
+                <Button asChild variant="ghost" size="sm" className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-100">
+                  <Link href="/admin/produits">Voir les produits</Link>
+                </Button>
+              </motion.div>
+            )}
+            {stats.produitsStockFaible > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3 bg-orange-50 border border-orange-200 rounded-lg"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle className="w-4 h-4 text-orange-600" />
+                  <p className="font-medium text-sm text-orange-700">Stock faible</p>
+                </div>
+                <p className="text-xs text-orange-600">
+                  {stats.produitsStockFaible} produit{stats.produitsStockFaible > 1 ? 's' : ''} avec stock faible (≤5)
+                </p>
+                <Button asChild variant="ghost" size="sm" className="mt-2 text-orange-600 hover:text-orange-700 hover:bg-orange-100">
+                  <Link href="/admin/produits">Voir les produits</Link>
+                </Button>
+              </motion.div>
+            )}
             {stats.commandesEnAttente > 0 && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}

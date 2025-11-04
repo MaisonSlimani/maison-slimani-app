@@ -68,7 +68,7 @@ export default function PanierPage() {
               {items.map((article) => (
                 <Card key={article.id} className="p-6">
                   <div className="flex gap-6">
-                    <div className="relative w-24 h-24 rounded overflow-hidden">
+                    <Link href={`/produit/${article.id}`} className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity">
                       <Image
                         src={article.image_url || article.image || '/placeholder.jpg'}
                         alt={article.nom}
@@ -76,9 +76,11 @@ export default function PanierPage() {
                         className="object-cover"
                         sizes="96px"
                       />
-                    </div>
+                    </Link>
                     <div className="flex-1">
-                      <h3 className="font-medium mb-2">{article.nom}</h3>
+                      <Link href={`/produit/${article.id}`} className="font-medium mb-2 hover:text-dore transition-colors block">
+                        <h3>{article.nom}</h3>
+                      </Link>
                       {article.taille && (
                         <p className="text-sm text-muted-foreground mb-2">
                           Taille: {article.taille}

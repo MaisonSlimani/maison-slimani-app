@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
@@ -29,6 +30,8 @@ export default function AdminCategoriesPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [categorieToDelete, setCategorieToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -148,11 +151,11 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) return
+  const handleDelete = async () => {
+    if (!categorieToDelete) return
 
     try {
-      const response = await fetch(`/api/admin/categories?id=${id}`, {
+      const response = await fetch(`/api/admin/categories?id=${categorieToDelete}`, {
         method: 'DELETE',
       })
 
@@ -163,6 +166,8 @@ export default function AdminCategoriesPage() {
 
       toast.success('Catégorie supprimée')
       chargerCategories()
+      setDeleteDialogOpen(false)
+      setCategorieToDelete(null)
     } catch (error: any) {
       console.error('Erreur lors de la suppression:', error)
       toast.error(error.message || 'Erreur lors de la suppression')
@@ -392,6 +397,24 @@ export default function AdminCategoriesPage() {
           </Button>
         </Card>
       )}
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette catégorie ? Tous les produits liés devront être re-catégorisés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

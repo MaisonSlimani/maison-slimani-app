@@ -8,10 +8,7 @@ import NavigationDesktop from '@/components/NavigationDesktop'
 import MenuBasNavigation from '@/components/MenuBasNavigation'
 import Footer from '@/components/Footer'
 import CarteCategorie from '@/components/CarteCategorie'
-import CarteProduit from '@/components/CarteProduit'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
-import { useState } from 'react'
 
 // Images des catégories
 const categorieClassiques = '/assets/categorie-classiques.jpg'
@@ -20,35 +17,8 @@ const categorieLimitees = '/assets/categorie-limitees.jpg'
 const categorieNouveautes = '/assets/categorie-nouveautes.jpg'
 
 export default function BoutiquePage() {
-  const [produitsVedette, setProduitsVedette] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [])
-
-  useEffect(() => {
-    const chargerProduits = async () => {
-      setLoading(true)
-      try {
-        const supabase = createClient()
-        
-        // Charger produits vedette uniquement
-        const { data: vedette } = await supabase
-          .from('produits')
-          .select('*')
-          .eq('vedette', true)
-          .limit(6)
-
-        setProduitsVedette(vedette || [])
-      } catch (error) {
-        console.error('Erreur lors du chargement des produits:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    chargerProduits()
   }, [])
 
   const categories = [
@@ -152,40 +122,6 @@ export default function BoutiquePage() {
               </Button>
             </motion.div>
           </motion.div>
-
-          {/* Produits en vedette */}
-          {produitsVedette.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="mt-16"
-            >
-              <h3 className="text-2xl md:text-3xl font-serif mb-8 text-center">
-                Produits en vedette
-              </h3>
-              <div className="grid md:grid-cols-3 gap-8">
-                {produitsVedette.map((produit, index) => (
-                  <motion.div
-                    key={produit.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      delay: index * 0.1,
-                      duration: 0.6,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    whileHover={{ y: -8 }}
-                    className="transition-transform duration-500"
-                  >
-                    <CarteProduit produit={produit} />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
         </div>
       </section>
 

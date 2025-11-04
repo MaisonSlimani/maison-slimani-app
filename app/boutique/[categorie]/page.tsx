@@ -273,7 +273,7 @@ export default function CategoriePage() {
                 whileHover={{ y: -8 }}
                 className="transition-transform duration-500"
               >
-                <CarteProduit produit={produit} />
+                <CarteProduit produit={produit} showActions={true} />
               </motion.div>
             ))}
           </div>

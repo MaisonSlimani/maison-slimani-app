@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Eye, Download, AlertCircle, Package, Truck, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
@@ -50,6 +51,8 @@ export default function AdminCommandesStatutPage() {
   const [commandes, setCommandes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCommande, setSelectedCommande] = useState<any>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [commandeToDelete, setCommandeToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -104,13 +107,11 @@ export default function AdminCommandesStatutPage() {
     }
   }
 
-  const handleDelete = async (commandeId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.')) {
-      return
-    }
+  const handleDelete = async () => {
+    if (!commandeToDelete) return
 
     try {
-      const response = await fetch(`/api/admin/commandes?id=${commandeId}`, {
+      const response = await fetch(`/api/admin/commandes?id=${commandeToDelete}`, {
         method: 'DELETE',
       })
 
@@ -121,6 +122,8 @@ export default function AdminCommandesStatutPage() {
 
       toast.success('Commande supprimée')
       chargerCommandes()
+      setDeleteDialogOpen(false)
+      setCommandeToDelete(null)
     } catch (error: any) {
       console.error('Erreur lors de la suppression:', error)
       toast.error(error.message || 'Erreur lors de la suppression')
@@ -274,6 +277,24 @@ export default function AdminCommandesStatutPage() {
           </p>
         </Card>
       )}
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 
@@ -361,14 +382,17 @@ export default function AdminCommandesStatutPage() {
             </div>
           </div>
           <div className="flex gap-2 ml-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(commande.id)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setCommandeToDelete(commande.id)
+                              setDeleteDialogOpen(true)
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button

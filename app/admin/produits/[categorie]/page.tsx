@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Plus, Edit, Trash2, ArrowLeft, Package, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import Image from 'next/image'
@@ -47,6 +48,8 @@ export default function AdminCategorieProduitsPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [produitToDelete, setProduitToDelete] = useState<string | null>(null)
 
   const chargerProduits = async () => {
     try {
@@ -161,11 +164,11 @@ export default function AdminCategorieProduitsPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return
+  const handleDelete = async () => {
+    if (!produitToDelete) return
 
     try {
-      const response = await fetch(`/api/admin/produits?id=${id}`, {
+      const response = await fetch(`/api/admin/produits?id=${produitToDelete}`, {
         method: 'DELETE',
       })
 
@@ -176,6 +179,8 @@ export default function AdminCategorieProduitsPage() {
 
       toast.success('Produit supprimé')
       chargerProduits()
+      setDeleteDialogOpen(false)
+      setProduitToDelete(null)
     } catch (error: any) {
       console.error('Erreur lors de la suppression:', error)
       toast.error(error.message || 'Erreur lors de la suppression')
@@ -279,14 +284,30 @@ export default function AdminCategorieProduitsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="stock">Stock *</Label>
+                  <Label htmlFor="stock">Stock disponible *</Label>
                   <Input
                     id="stock"
                     type="number"
+                    min="0"
                     required
                     value={formData.stock}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Le stock sera automatiquement décrémenté lors des commandes
+                  </p>
+                  {parseInt(formData.stock) <= 5 && parseInt(formData.stock) > 0 && (
+                    <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Stock faible - Considérez réapprovisionner
+                    </p>
+                  )}
+                  {parseInt(formData.stock) === 0 && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Rupture de stock - Le produit ne sera pas disponible à la vente
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -394,6 +415,36 @@ export default function AdminCategorieProduitsPage() {
                         <p className="text-sm text-muted-foreground mb-2">
                           {produit.prix.toLocaleString('fr-MA')} DH
                         </p>
+                        {/* Affichage du stock avec indicateur visuel */}
+                        <div className="mb-3 flex items-center gap-2">
+                          <Package className={`w-4 h-4 ${
+                            produit.stock === 0 
+                              ? 'text-red-600' 
+                              : produit.stock <= 5 
+                              ? 'text-orange-600' 
+                              : 'text-green-600'
+                          }`} />
+                          <span className={`text-sm font-medium ${
+                            produit.stock === 0 
+                              ? 'text-red-600' 
+                              : produit.stock <= 5 
+                              ? 'text-orange-600' 
+                              : 'text-green-600'
+                          }`}>
+                            Stock: {produit.stock}
+                          </span>
+                          {produit.stock === 0 && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                              Rupture de stock
+                            </span>
+                          )}
+                          {produit.stock > 0 && produit.stock <= 5 && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Stock faible
+                            </span>
+                          )}
+                        </div>
                         <div className="flex gap-2">
                           <Button
                             variant="ghost"
@@ -420,7 +471,10 @@ export default function AdminCategorieProduitsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(produit.id)}
+                            onClick={() => {
+                              setProduitToDelete(produit.id)
+                              setDeleteDialogOpen(true)
+                            }}
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -455,6 +509,36 @@ export default function AdminCategorieProduitsPage() {
                   <p className="text-sm text-muted-foreground mb-2">
                     {produit.prix.toLocaleString('fr-MA')} DH
                   </p>
+                  {/* Affichage du stock avec indicateur visuel */}
+                  <div className="mb-3 flex items-center gap-2">
+                    <Package className={`w-4 h-4 ${
+                      produit.stock === 0 
+                        ? 'text-red-600' 
+                        : produit.stock <= 5 
+                        ? 'text-orange-600' 
+                        : 'text-green-600'
+                    }`} />
+                    <span className={`text-sm font-medium ${
+                      produit.stock === 0 
+                        ? 'text-red-600' 
+                        : produit.stock <= 5 
+                        ? 'text-orange-600' 
+                        : 'text-green-600'
+                    }`}>
+                      Stock: {produit.stock}
+                    </span>
+                    {produit.stock === 0 && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                        Rupture de stock
+                      </span>
+                    )}
+                    {produit.stock > 0 && produit.stock <= 5 && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        Stock faible
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -481,7 +565,10 @@ export default function AdminCategorieProduitsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(produit.id)}
+                      onClick={() => {
+                        setProduitToDelete(produit.id)
+                        setDeleteDialogOpen(true)
+                      }}
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -505,6 +592,24 @@ export default function AdminCategorieProduitsPage() {
           </Button>
         </Card>
       )}
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

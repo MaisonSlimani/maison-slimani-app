@@ -30,6 +30,7 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true)
   const [produitsExpanded, setProduitsExpanded] = useState(false)
   const [commandesExpanded, setCommandesExpanded] = useState(false)
+  const [commandesEnAttente, setCommandesEnAttente] = useState(0)
 
   useEffect(() => {
     // Vérifier la session au chargement
@@ -37,7 +38,7 @@ export default function AdminLayout({
       try {
         const response = await fetch('/api/auth/session')
         const data = await response.json()
-        
+
         if (!data.authenticated) {
           router.push('/login')
           return
@@ -52,6 +53,29 @@ export default function AdminLayout({
 
     verifierSession()
   }, [router])
+
+  // Charger le nombre de commandes en attente
+  useEffect(() => {
+    const chargerCommandesEnAttente = async () => {
+      try {
+        const response = await fetch('/api/admin/commandes?statut=En attente')
+        if (response.ok) {
+          const result = await response.json()
+          const commandes = result.data || []
+          setCommandesEnAttente(commandes.length)
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des commandes en attente:', error)
+      }
+    }
+
+    if (!loading) {
+      chargerCommandesEnAttente()
+      // Rafraîchir toutes les 30 secondes
+      const interval = setInterval(chargerCommandesEnAttente, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [loading])
 
   // Auto-expand si on est sur une page de catégorie
   useEffect(() => {
@@ -180,25 +204,6 @@ export default function AdminLayout({
                       >
                         <span>Toutes les catégories</span>
                       </Link>
-                      {statutsCommandes.map((statut) => {
-                        const StatutIcon = statut.icon
-                        const isActive = pathname === `/admin/commandes/${statut.slug}`
-                        return (
-                          <Link
-                            key={statut.slug}
-                            href={`/admin/commandes/${statut.slug}`}
-                            className={cn(
-                              'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
-                              isActive
-                                ? 'bg-dore/10 text-dore font-medium'
-                                : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
-                            )}
-                          >
-                            <StatutIcon className="w-4 h-4" />
-                            <span>{statut.nom}</span>
-                          </Link>
-                        )
-                      })}
                       <Link
                         href="/admin/commandes/toutes"
                         className={cn(
@@ -210,6 +215,33 @@ export default function AdminLayout({
                       >
                         <span>Toutes les commandes</span>
                       </Link>
+                      {statutsCommandes.map((statut) => {
+                        const StatutIcon = statut.icon
+                        const isActive = pathname === `/admin/commandes/${statut.slug}`
+                        const isEnAttente = statut.slug === 'en-attente'
+                        return (
+                          <Link
+                            key={statut.slug}
+                            href={`/admin/commandes/${statut.slug}`}
+                            className={cn(
+                              'flex items-center justify-between gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
+                              isActive
+                                ? 'bg-dore/10 text-dore font-medium'
+                                : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <StatutIcon className="w-4 h-4" />
+                              <span>{statut.nom}</span>
+                            </div>
+                            {isEnAttente && commandesEnAttente > 0 && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">
+                                {commandesEnAttente}
+                              </span>
+                            )}
+                          </Link>
+                        )
+                      })}
                     </div>
                   </motion.div>
                 )}

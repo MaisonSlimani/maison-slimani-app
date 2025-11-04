@@ -94,9 +94,13 @@ export default function CheckoutPage() {
         throw new Error(data?.error || 'Erreur lors de la création de la commande')
       }
 
-      // Succès - Rediriger vers la page de confirmation (pas de toast, la page s'en charge)
-      clearCart()
-      router.push(`/commande/${data.data.id}`)
+      // Succès - Rediriger vers la page de confirmation AVANT de vider le panier
+      const commandeId = data.data.id
+      router.push(`/commande/${commandeId}`)
+      // Vider le panier après la redirection (avec un petit délai pour s'assurer que la redirection fonctionne)
+      setTimeout(() => {
+        clearCart()
+      }, 100)
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error)
       toast.error(error instanceof Error ? error.message : 'Erreur lors de la création de la commande')
@@ -132,8 +136,62 @@ export default function CheckoutPage() {
           <h1 className="text-3xl font-serif mb-8">Finaliser votre commande</h1>
 
           <div className="grid md:grid-cols-2 gap-8">
+            {/* Récapitulatif */}
+            <Card className="p-6 order-2 md:order-1">
+              <h2 className="text-2xl font-serif mb-6">Récapitulatif</h2>
+              <div className="space-y-4 mb-6">
+                {items.map((item) => (
+                  <div key={item.id} className="flex gap-4 items-start">
+                    <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0">
+                      <Image
+                        src={item.image_url || item.image || '/placeholder.jpg'}
+                        alt={item.nom}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{item.nom}</p>
+                      {item.taille && (
+                        <p className="text-xs text-muted-foreground">Taille: {item.taille}</p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {item.quantite} × {item.prix.toLocaleString('fr-MA')} DH
+                      </p>
+                    </div>
+                    <p className="font-medium text-sm">
+                      {(item.prix * item.quantite).toLocaleString('fr-MA')} DH
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium">Sous-total</span>
+                  <span className="font-medium">{total.toLocaleString('fr-MA')} DH</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">Livraison</span>
+                  <span className="text-sm text-muted-foreground">Gratuite</span>
+                </div>
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <span className="text-xl font-serif">Total</span>
+                  <span className="text-xl font-serif text-primary">
+                    {total.toLocaleString('fr-MA')} DH
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                * Livraison gratuite dans tout le Maroc
+              </p>
+              <p className="text-xs text-muted-foreground">
+                * Retours sous 7 jours
+              </p>
+            </Card>
+
             {/* Formulaire */}
-            <Card className="p-6">
+            <Card className="p-6 order-1 md:order-2">
               <h2 className="text-2xl font-serif mb-6">Informations de livraison</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -199,57 +257,6 @@ export default function CheckoutPage() {
                   {loading ? 'Traitement...' : 'Confirmer la commande'}
                 </Button>
               </form>
-            </Card>
-
-            {/* Récapitulatif */}
-            <Card className="p-6">
-              <h2 className="text-2xl font-serif mb-6">Récapitulatif</h2>
-              <div className="space-y-4 mb-6">
-                {items.map((item) => (
-                  <div key={item.id} className="flex gap-4 items-start">
-                    <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0">
-                      <Image
-                        src={item.image_url || item.image || '/placeholder.jpg'}
-                        alt={item.nom}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{item.nom}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.quantite} × {item.prix.toLocaleString('fr-MA')} DH
-                      </p>
-                    </div>
-                    <p className="font-medium text-sm">
-                      {(item.prix * item.quantite).toLocaleString('fr-MA')} DH
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">Sous-total</span>
-                  <span className="font-medium">{total.toLocaleString('fr-MA')} DH</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-muted-foreground">Livraison</span>
-                  <span className="text-sm text-muted-foreground">Gratuite</span>
-                </div>
-                <div className="flex justify-between items-center pt-4 border-t">
-                  <span className="text-xl font-serif">Total</span>
-                  <span className="text-xl font-serif text-primary">
-                    {total.toLocaleString('fr-MA')} DH
-                  </span>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                * Livraison gratuite dans tout le Maroc
-              </p>
-              <p className="text-xs text-muted-foreground">
-                * Retours sous 7 jours
-              </p>
             </Card>
           </div>
         </motion.div>
