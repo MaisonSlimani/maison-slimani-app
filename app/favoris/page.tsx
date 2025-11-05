@@ -4,56 +4,177 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import EnteteMobile from '@/components/EnteteMobile'
 import NavigationDesktop from '@/components/NavigationDesktop'
 import MenuBasNavigation from '@/components/MenuBasNavigation'
 import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Heart, ShoppingBag, Trash2, ArrowRight, ShoppingCart, Plus, Minus } from 'lucide-react'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 
 export default function FavorisPage() {
+  const router = useRouter()
   const { items, removeItem, isLoaded } = useWishlist()
-  const { addItem: addToCart } = useCart()
+  const { addItem: addToCart, items: cartItems } = useCart()
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState<string | null>(null)
+  const [selectedTaille, setSelectedTaille] = useState<string>('')
+  const [quantite, setQuantite] = useState<Record<string, number>>({})
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [])
+    // Initialiser les quantités à 1 pour chaque item
+    const initialQuantites: Record<string, number> = {}
+    items.forEach(item => {
+      initialQuantites[item.id] = 1
+    })
+    setQuantite(initialQuantites)
+  }, [items])
+
+  // Parse les tailles disponibles pour un item
+  const getTaillesDisponibles = (item: typeof items[0]) => {
+    if (!item.taille || !item.taille.trim()) return []
+    return item.taille.split(',').map(t => t.trim()).filter(t => t)
+  }
 
   const handleAddToCart = async (item: typeof items[0]) => {
     if (addingToCart) return
     
+    // Vérifier le stock avant tout - check strict
+    if (item.stock === undefined || item.stock === null) {
+      // Si le stock n'est pas défini, on ne peut pas ajouter (sécurité)
+      toast.error('Stock non disponible pour ce produit')
+      return
+    }
+    
+    if (item.stock <= 0) {
+      toast.error('Produit en rupture de stock')
+      return
+    }
+
+    const taillesDisponibles = getTaillesDisponibles(item)
+    
+    // Si le produit a des tailles, ouvrir le modal (seulement si en stock)
+    if (taillesDisponibles.length > 0) {
+      // Vérifier le stock avant d'ouvrir le modal
+      if (item.stock <= 0) {
+        toast.error('Produit en rupture de stock')
+        return
+      }
+      setShowModal(item.id)
+      setSelectedTaille('')
+      setQuantite(prev => ({ ...prev, [item.id]: prev[item.id] || 1 }))
+      return
+    }
+
     setAddingToCart(item.id)
     
     try {
-      // Si le produit a une taille, rediriger vers la page produit
-      if (item.taille && item.taille.trim()) {
-        toast.info('Veuillez sélectionner une taille sur la page du produit')
-        window.location.href = `/produit/${item.id}`
+      const qty = quantite[item.id] || 1
+      
+      // Vérifier le stock encore une fois (strict)
+      if (item.stock === undefined || item.stock === null || item.stock <= 0) {
+        toast.error('Produit en rupture de stock')
+        setAddingToCart(null)
+        return
+      }
+      
+      if (item.stock < qty) {
+        toast.error(`Stock insuffisant. Stock disponible: ${item.stock}`)
+        setAddingToCart(null)
         return
       }
 
-      addToCart({
+      await addToCart({
         id: item.id,
         nom: item.nom,
         prix: item.prix,
-        quantite: 1,
+        quantite: qty,
         image_url: item.image_url,
         image: item.image,
-        taille: item.taille,
+        taille: undefined,
+        stock: item.stock,
       })
 
-      toast.success('Produit ajouté au panier')
+      toast.success('Produit ajouté au panier', { duration: 1400 })
     } catch (error) {
-      console.error('Erreur lors de l\'ajout au panier:', error)
-      toast.error('Erreur lors de l\'ajout au panier')
+      // Afficher l'erreur de stock si elle existe
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'ajout au panier')
+      setAddingToCart(null)
     } finally {
       setAddingToCart(null)
     }
+  }
+
+  const handleConfirmAddToCart = async (item: typeof items[0]) => {
+    // Vérifier le stock avant tout - check strict
+    if (item.stock === undefined || item.stock === null) {
+      toast.error('Stock non disponible pour ce produit')
+      return
+    }
+    
+    if (item.stock <= 0) {
+      toast.error('Produit en rupture de stock')
+      setShowModal(null)
+      return
+    }
+
+    const taillesDisponibles = getTaillesDisponibles(item)
+    
+    if (taillesDisponibles.length > 0 && !selectedTaille) {
+      toast.error('Veuillez sélectionner une taille')
+      return
+    }
+
+    const qty = quantite[item.id] || 1
+
+    // Vérifier le stock encore une fois (strict)
+    if (item.stock === undefined || item.stock === null || item.stock <= 0) {
+      toast.error('Produit en rupture de stock')
+      setShowModal(null)
+      return
+    }
+
+    if (item.stock < qty) {
+      toast.error(`Stock insuffisant. Stock disponible: ${item.stock}`)
+      return
+    }
+
+    setAddingToCart(item.id)
+
+    try {
+      await addToCart({
+        id: item.id,
+        nom: item.nom,
+        prix: item.prix,
+        quantite: qty,
+        image_url: item.image_url,
+        image: item.image,
+        taille: selectedTaille || undefined,
+        stock: item.stock,
+      })
+
+      // Fermer le modal et afficher le succès
+      setShowModal(null)
+      setSelectedTaille('')
+      setQuantite(prev => ({ ...prev, [item.id]: 1 }))
+      toast.success('Produit ajouté au panier', { duration: 1400 })
+    } catch (error) {
+      // Afficher l'erreur de stock si elle existe
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'ajout au panier')
+    } finally {
+      setAddingToCart(null)
+    }
+  }
+
+  // Vérifier si un produit est dans le panier
+  const isInCart = (itemId: string) => {
+    return cartItems.some(item => item.id === itemId)
   }
 
   if (!isLoaded) {
@@ -106,50 +227,182 @@ export default function FavorisPage() {
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map((item) => (
-                <Card key={item.id} className="p-6 group hover:shadow-lg transition-shadow">
-                  <Link href={`/produit/${item.id}`} className="block mb-4">
-                    <div className="relative aspect-square overflow-hidden rounded-lg mb-4 bg-muted">
-                      <Image
-                        src={item.image_url || item.image || '/placeholder.jpg'}
-                        alt={item.nom}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
+              {items.map((item) => {
+                const taillesDisponibles = getTaillesDisponibles(item)
+                const inCart = isInCart(item.id)
+                const isOutOfStock = item.stock === undefined || item.stock === null || item.stock <= 0
+                
+                return (
+                  <Card key={item.id} className={`p-6 group hover:shadow-lg transition-shadow relative ${isOutOfStock ? 'opacity-75' : ''}`}>
+                    {/* Badge rupture de stock */}
+                    {isOutOfStock && (
+                      <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-3 py-1.5">
+                        <span className="text-white text-xs font-semibold uppercase tracking-wide">Rupture de stock</span>
+                      </div>
+                    )}
+                    
+                    <Link href={`/produit/${item.id}`} className="block mb-4">
+                      <div className={`relative aspect-square overflow-hidden rounded-lg mb-4 bg-muted ${isOutOfStock ? 'grayscale' : ''}`}>
+                        <Image
+                          src={item.image_url || item.image || '/placeholder.jpg'}
+                          alt={item.nom}
+                          fill
+                          className={`object-cover transition-transform duration-300 ${isOutOfStock ? '' : 'group-hover:scale-105'}`}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      </div>
+                      <h3 className={`font-medium mb-2 transition-colors ${isOutOfStock ? 'text-muted-foreground' : 'hover:text-dore'}`}>
+                        {item.nom}
+                      </h3>
+                      <p className={`text-xl font-serif mb-4 ${isOutOfStock ? 'text-muted-foreground' : 'text-dore'}`}>
+                        {item.prix.toLocaleString('fr-MA')} DH
+                      </p>
+                    </Link>
+                    
+                    <div className="flex gap-2">
+                      {inCart ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push('/panier')}
+                          className="flex-1 border-charbon text-charbon hover:bg-charbon hover:text-background"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Aller au panier
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddToCart(item)}
+                          disabled={addingToCart === item.id || isOutOfStock}
+                          className="flex-1 bg-dore text-charbon hover:bg-dore/90 disabled:opacity-50"
+                        >
+                          <ShoppingBag className="w-4 h-4 mr-2" />
+                          {addingToCart === item.id ? 'Ajout...' : 'Ajouter au panier'}
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          removeItem(item.id)
+                          toast.success('Produit retiré des favoris')
+                        }}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <h3 className="font-medium mb-2 hover:text-dore transition-colors">
-                      {item.nom}
-                    </h3>
-                    <p className="text-xl font-serif text-dore mb-4">
-                      {item.prix.toLocaleString('fr-MA')} DH
-                    </p>
-                  </Link>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddToCart(item)}
-                      disabled={addingToCart === item.id}
-                      className="flex-1 bg-dore text-charbon hover:bg-dore/90"
-                    >
-                      <ShoppingBag className="w-4 h-4 mr-2" />
-                      {addingToCart === item.id ? 'Ajout...' : 'Ajouter au panier'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        removeItem(item.id)
-                        toast.success('Produit retiré des favoris')
-                      }}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+
+                    {/* Modal pour sélectionner la taille */}
+                    <Dialog open={showModal === item.id} onOpenChange={(open) => {
+                      if (!open) {
+                        setShowModal(null)
+                        setSelectedTaille('')
+                        setQuantite(prev => ({ ...prev, [item.id]: 1 }))
+                      }
+                    }}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{item.nom}</DialogTitle>
+                          <DialogDescription>
+                            Sélectionnez une taille et la quantité
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        {taillesDisponibles.length > 0 && (
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Taille</label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {taillesDisponibles.map((taille) => (
+                                  <Button
+                                    key={taille}
+                                    variant={selectedTaille === taille ? 'default' : 'outline'}
+                                    onClick={() => setSelectedTaille(taille)}
+                                    className={selectedTaille === taille ? 'bg-dore text-charbon hover:bg-dore/90' : ''}
+                                  >
+                                    {taille}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Afficher un avertissement si le produit est en rupture de stock */}
+                        {item.stock !== undefined && item.stock <= 0 && (
+                          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            <p className="text-sm font-medium">Ce produit est en rupture de stock</p>
+                          </div>
+                        )}
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Quantité</label>
+                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const currentQty = quantite[item.id] || 1
+                                  if (currentQty > 1) {
+                                    setQuantite(prev => ({ ...prev, [item.id]: currentQty - 1 }))
+                                  }
+                                }}
+                                className="h-8 w-8"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-12 text-center">{quantite[item.id] || 1}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const currentQty = quantite[item.id] || 1
+                                  const maxQty = item.stock !== undefined ? item.stock : 999
+                                  if (currentQty < maxQty) {
+                                    setQuantite(prev => ({ ...prev, [item.id]: currentQty + 1 }))
+                                  } else {
+                                    toast.error(`Stock disponible: ${maxQty}`)
+                                  }
+                                }}
+                                className="h-8 w-8"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <DialogFooter>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowModal(null)
+                              setSelectedTaille('')
+                              setQuantite(prev => ({ ...prev, [item.id]: 1 }))
+                            }}
+                          >
+                            Annuler
+                          </Button>
+                          <Button
+                            onClick={() => handleConfirmAddToCart(item)}
+                            disabled={
+                              addingToCart === item.id || 
+                              (taillesDisponibles.length > 0 && !selectedTaille) ||
+                              (item.stock !== undefined && item.stock <= 0)
+                            }
+                            className="bg-dore text-charbon hover:bg-dore/90 disabled:opacity-50"
+                          >
+                            {addingToCart === item.id ? 'Ajout...' : 'Ajouter au panier'}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </Card>
+                )
+              })}
             </div>
           )}
 

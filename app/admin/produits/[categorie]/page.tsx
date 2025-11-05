@@ -11,11 +11,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Plus, Edit, Trash2, ArrowLeft, Package, AlertTriangle } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, Package, AlertTriangle, X, Upload, Image as ImageIcon, Palette } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 
 const categoriesMap: Record<string, string> = {
   'classiques': 'Classiques',
@@ -44,10 +45,13 @@ export default function AdminCategorieProduitsPage() {
     vedette: false,
     image_url: '',
     taille: '',
+        has_colors: false,
   })
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  
+  // États pour les images multiples et couleurs
+  const [couleurs, setCouleurs] = useState<Array<{ nom: string; code: string; stock: number; taille: string; images: File[]; imageUrls: string[] }>>([])
+  const [imagesGenerales, setImagesGenerales] = useState<Array<{ file: File | null; url: string | null }>>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [produitToDelete, setProduitToDelete] = useState<string | null>(null)
 
@@ -79,27 +83,70 @@ export default function AdminCategorieProduitsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categorieSlug, categorieNom])
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+
+  // Gestion des couleurs
+  const addCouleur = () => {
+    setCouleurs([...couleurs, { nom: '', code: '#000000', stock: 0, taille: '', images: [], imageUrls: [] }])
+  }
+
+  const removeCouleur = (index: number) => {
+    setCouleurs(couleurs.filter((_, i) => i !== index))
+  }
+
+  const updateCouleur = (index: number, field: 'nom' | 'code' | 'stock' | 'taille', value: string | number) => {
+    setCouleurs(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  const addImageToCouleur = (couleurIndex: number, file: File) => {
+    const updated = [...couleurs]
+    updated[couleurIndex].images.push(file)
+    setCouleurs(updated)
+  }
+
+  const removeImageFromCouleur = (couleurIndex: number, imageIndex: number, isNewImage?: boolean) => {
+    const updated = [...couleurs]
+    if (isNewImage) {
+      updated[couleurIndex].images.splice(imageIndex, 1)
+    } else {
+      updated[couleurIndex].imageUrls.splice(imageIndex, 1)
+    }
+    setCouleurs(updated)
+  }
+
+  // Utility function to get filename from URL
+  const getFileName = (url: string) => {
+    try {
+      const urlObj = new URL(url)
+      const pathname = urlObj.pathname
+      const fileName = pathname.split('/').pop() || pathname
+      return fileName.length > 30 ? fileName.substring(0, 30) + '...' : fileName
+    } catch {
+      return url.length > 30 ? url.substring(0, 30) + '...' : url
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setUploading(true)
-    try {
-      let imageUrl = formData.image_url
+  // Gestion des images générales (sans couleur)
+  const addImageGenerale = () => {
+    setImagesGenerales([...imagesGenerales, { file: null, url: null }])
+  }
 
-      if (imageFile) {
+  const removeImageGenerale = (index: number) => {
+    setImagesGenerales(imagesGenerales.filter((_, i) => i !== index))
+  }
+
+  const handleImageGeneraleChange = (index: number, file: File | null) => {
+    const updated = [...imagesGenerales]
+    updated[index] = { file, url: file ? URL.createObjectURL(file) : null }
+    setImagesGenerales(updated)
+  }
+
+  const uploadImage = async (file: File): Promise<string> => {
         const uploadFormData = new FormData()
-        uploadFormData.append('file', imageFile)
+    uploadFormData.append('file', file)
 
         const uploadResponse = await fetch('/api/admin/upload-image', {
           method: 'POST',
@@ -112,17 +159,106 @@ export default function AdminCategorieProduitsPage() {
         }
 
         const uploadData = await uploadResponse.json()
-        imageUrl = uploadData.imageUrl
+    return uploadData.imageUrl
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setUploading(true)
+    try {
+      // Upload images générales (sans couleur)
+      const imagesGeneralesUrls: Array<{ url: string; couleur: null; ordre: number }> = []
+      for (let i = 0; i < imagesGenerales.length; i++) {
+        const img = imagesGenerales[i]
+        if (img.file) {
+          const url = await uploadImage(img.file)
+          imagesGeneralesUrls.push({ url, couleur: null, ordre: i + 1 })
+        } else if (img.url) {
+          // URL existante (lors de l'édition)
+          imagesGeneralesUrls.push({ url: img.url, couleur: null, ordre: i + 1 })
+        }
+      }
+
+      // Traitement selon le type de produit
+      let images: Array<{ url: string; ordre: number }> | undefined = undefined
+      let couleursData: Array<{ nom: string; code?: string; images: string[]; stock: number; taille?: string }> | undefined = undefined
+      let imageUrl = formData.image_url
+
+      if (formData.has_colors) {
+        // Produit AVEC couleurs
+        // Validation: chaque couleur doit avoir au moins une image
+        for (const couleur of couleurs) {
+          if (!couleur.nom) {
+            throw new Error(`Tous les noms de couleur doivent être remplis`)
+          }
+          const totalImages = couleur.images.length + couleur.imageUrls.length
+          if (totalImages === 0) {
+            throw new Error(`La couleur "${couleur.nom}" doit avoir au moins une image`)
+          }
+        }
+
+        // Upload images par couleur
+        couleursData = [] as Array<{ nom: string; code?: string; images: string[]; stock: number; taille?: string }>
+        for (const couleur of couleurs) {
+          if (!couleur.nom) continue
+
+          const couleurImages: string[] = []
+          
+          // Upload nouvelles images
+          for (const file of couleur.images) {
+            const url = await uploadImage(file)
+            couleurImages.push(url)
+          }
+          
+          // Ajouter URLs existantes (lors de l'édition)
+          couleurImages.push(...couleur.imageUrls)
+
+          if (couleurImages.length === 0) {
+            throw new Error(`La couleur "${couleur.nom}" doit avoir au moins une image`)
+          }
+
+          couleursData.push({
+            nom: couleur.nom,
+            code: couleur.code,
+            images: couleurImages,
+            stock: couleur.stock || 0,
+            taille: couleur.taille || undefined,
+          })
+        }
+
+        // Utiliser la première image de la première couleur comme image_url
+        if (couleursData.length > 0 && couleursData[0].images.length > 0) {
+          imageUrl = couleursData[0].images[0]
+        }
+      } else {
+        // Produit SANS couleurs - images générales
+        if (imagesGeneralesUrls.length === 0) {
+          throw new Error('Au moins une image est requise pour les produits sans couleurs')
+        }
+
+        images = imagesGeneralesUrls.map(img => ({ url: img.url, ordre: img.ordre }))
+        imageUrl = images[0]?.url || formData.image_url
       }
 
       const produitData = {
         ...formData,
         prix: parseFloat(formData.prix),
-        stock: parseInt(formData.stock),
+        stock: formData.has_colors ? 0 : parseInt(formData.stock), // Stock global = 0 si produit avec couleurs
         vedette: formData.vedette,
+        has_colors: formData.has_colors,
         image_url: imageUrl,
+        images: images,
+        couleurs: couleursData,
         categorie: categorieSlug === 'tous' ? formData.categorie : categorieNom,
       }
+
+      // Debug: log data being sent
+      console.log('📦 Données envoyées:', {
+        images: produitData.images,
+        couleurs: produitData.couleurs,
+        imagesCount: produitData.images?.length || 0,
+        couleursCount: produitData.couleurs?.length || 0,
+      })
 
       const response = await fetch('/api/admin/produits', {
         method: editingProduit ? 'PUT' : 'POST',
@@ -152,9 +288,10 @@ export default function AdminCategorieProduitsPage() {
         vedette: false,
         image_url: '',
         taille: '',
+        has_colors: false,
       })
-      setImageFile(null)
-      setImagePreview(null)
+      setCouleurs([])
+      setImagesGenerales([])
       chargerProduits()
     } catch (error: any) {
       console.error('Erreur lors de la sauvegarde:', error)
@@ -233,16 +370,17 @@ export default function AdminCategorieProduitsPage() {
                   vedette: false,
                   image_url: '',
                   taille: '',
+                  has_colors: false,
                 })
-                setImageFile(null)
-                setImagePreview(null)
+                setCouleurs([])
+                setImagesGenerales([])
               }}
             >
               <Plus className="w-4 h-4 mr-2" />
               Nouveau produit
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingProduit ? 'Modifier le produit' : 'Nouveau produit'}
@@ -271,6 +409,86 @@ export default function AdminCategorieProduitsPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
+              {/* Sélection du type de produit */}
+              <div>
+                <Label className="text-base font-semibold mb-3 block">Type de produit *</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, has_colors: false })
+                      setCouleurs([])
+                    }}
+                    className={cn(
+                      "h-auto py-6 px-4 rounded-lg border-2 transition-all flex flex-col gap-3 items-center justify-center",
+                      !formData.has_colors
+                        ? "bg-dore border-dore text-charbon shadow-lg scale-[1.02]"
+                        : "bg-background border-border text-foreground hover:border-dore/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <Package className={cn(
+                      "w-8 h-8",
+                      !formData.has_colors ? "text-charbon" : "text-muted-foreground"
+                    )} />
+                    <span className={cn(
+                      "font-semibold text-base",
+                      !formData.has_colors ? "text-charbon" : "text-foreground"
+                    )}>
+                      Sans couleurs
+                    </span>
+                    <span className={cn(
+                      "text-xs",
+                      !formData.has_colors ? "text-charbon/80" : "text-muted-foreground"
+                    )}>
+                      Images multiples
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, has_colors: true })
+                      setImagesGenerales([])
+                    }}
+                    className={cn(
+                      "h-auto py-6 px-4 rounded-lg border-2 transition-all flex flex-col gap-3 items-center justify-center",
+                      formData.has_colors
+                        ? "bg-dore border-dore text-charbon shadow-lg scale-[1.02]"
+                        : "bg-background border-border text-foreground hover:border-dore/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <Palette className={cn(
+                      "w-8 h-8",
+                      formData.has_colors ? "text-charbon" : "text-muted-foreground"
+                    )} />
+                    <span className={cn(
+                      "font-semibold text-base",
+                      formData.has_colors ? "text-charbon" : "text-foreground"
+                    )}>
+                      Avec couleurs
+                    </span>
+                    <span className={cn(
+                      "text-xs",
+                      formData.has_colors ? "text-charbon/80" : "text-muted-foreground"
+                    )}>
+                      Stock par couleur
+                    </span>
+                  </button>
+                </div>
+                <div className={cn(
+                  "mt-3 p-3 rounded-lg border",
+                  formData.has_colors ? "bg-dore/10 border-dore/30" : "bg-muted/30 border-border"
+                )}>
+                  <p className={cn(
+                    "text-sm",
+                    formData.has_colors ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {formData.has_colors 
+                      ? 'Ce produit aura des variantes de couleur avec stock et images séparés pour chaque couleur.'
+                      : 'Ce produit aura plusieurs images sans variantes de couleur.'}
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="prix">Prix (DH) *</Label>
@@ -283,6 +501,7 @@ export default function AdminCategorieProduitsPage() {
                     onChange={(e) => setFormData({ ...formData, prix: e.target.value })}
                   />
                 </div>
+                {!formData.has_colors && (
                 <div>
                   <Label htmlFor="stock">Stock disponible *</Label>
                   <Input
@@ -309,6 +528,7 @@ export default function AdminCategorieProduitsPage() {
                     </p>
                   )}
                 </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="taille">Tailles disponibles (séparées par des virgules, ex: 40, 41, 42, 43)</Label>
@@ -342,34 +562,269 @@ export default function AdminCategorieProduitsPage() {
                   </Select>
                 </div>
               )}
+              {/* Images générales (uniquement pour produits SANS couleurs) */}
+              {!formData.has_colors && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
               <div>
-                <Label htmlFor="image">Image du produit</Label>
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4" />
+                        Images du produit *
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Ajoutez plusieurs images pour ce produit. Au moins une image est requise.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addImageGenerale}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter une image
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {imagesGenerales.map((img, index) => (
+                      <div key={index} className="flex gap-3 items-start p-3 border rounded-lg">
+                        <div className="flex-1">
                 <Input
-                  id="image"
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleImageChange}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null
+                              handleImageGeneraleChange(index, file)
+                            }}
                   className="cursor-pointer"
                 />
-                {imagePreview && (
-                  <div className="mt-4">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full max-w-md h-48 object-cover rounded-lg border border-border"
-                    />
+                        </div>
+                        {img.url && (
+                          <div className="relative w-20 h-20 rounded overflow-hidden border">
+                            <img src={img.url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeImageGenerale(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {imagesGenerales.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
+                        Aucune image ajoutée. Cliquez sur "Ajouter une image" pour commencer.
+                      </p>
+                    )}
                   </div>
-                )}
-                {!imagePreview && formData.image_url && (
-                  <div className="mt-4">
-                    <img
-                      src={formData.image_url}
-                      alt="Image actuelle"
-                      className="w-full max-w-md h-48 object-cover rounded-lg border border-border"
-                    />
+                </div>
+              )}
+
+              {/* Gestion des couleurs (uniquement pour produits AVEC couleurs) */}
+              {formData.has_colors && (
+                <div className="border-t pt-4 bg-slate-50/50 dark:bg-slate-900/20 rounded-lg p-4 -mx-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <Label className="text-base font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                        <Palette className="w-4 h-4" />
+                        Couleurs disponibles *
+                      </Label>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        Ajoutez des variantes de couleur. Chaque couleur doit avoir au moins une image et son propre stock.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addCouleur}
+                      className="border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter une couleur
+                    </Button>
                   </div>
+                <div className="space-y-6">
+                  {couleurs.map((couleur, couleurIndex) => (
+                    <div key={couleurIndex} className="p-6 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg space-y-5 shadow-sm">
+                      {/* Top row: Color name, code, and stock */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Nom de la couleur *</Label>
+                          <Input
+                            value={couleur.nom}
+                            onChange={(e) => updateCouleur(couleurIndex, 'nom', e.target.value)}
+                            placeholder="Ex: Noir, Marron, Rouge"
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Code couleur (hex)</Label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={couleur.code || '#000000'}
+                              onChange={(e) => {
+                                const newColor = e.target.value
+                                updateCouleur(couleurIndex, 'code', newColor)
+                              }}
+                              className="w-16 h-10 rounded border border-input cursor-pointer flex-shrink-0"
+                            />
+                            <Input
+                              type="text"
+                              value={couleur.code || '#000000'}
+                              onChange={(e) => {
+                                let value = e.target.value
+                                // Ensure it starts with #
+                                if (value && !value.startsWith('#')) {
+                                  value = '#' + value
+                                }
+                                // Limit to 7 characters (#RRGGBB)
+                                if (value.length <= 7) {
+                                  updateCouleur(couleurIndex, 'code', value)
+                                }
+                              }}
+                              placeholder="#000000"
+                              pattern="^#[0-9A-Fa-f]{6}$"
+                              maxLength={7}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Stock pour cette couleur *</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={couleur.stock || 0}
+                            onChange={(e) => updateCouleur(couleurIndex, 'stock', parseInt(e.target.value) || 0)}
+                            required
+                            className="w-full"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Stock disponible pour cette couleur
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Sizes section */}
+                      <div className="space-y-2">
+                        <Label>Tailles disponibles pour cette couleur</Label>
+                        <Input
+                          type="text"
+                          value={couleur.taille || ''}
+                          onChange={(e) => updateCouleur(couleurIndex, 'taille', e.target.value)}
+                          placeholder="Ex: 40, 41, 42, 43 (séparées par des virgules)"
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Laissez vide si cette couleur n'a pas de tailles spécifiques. Format: tailles séparées par des virgules.
+                        </p>
+                      </div>
+
+                      {/* Images section */}
+                      <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base">
+                            Images pour "{couleur.nom || 'cette couleur'}" * (minimum 1 image)
+                          </Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const input = document.createElement('input')
+                              input.type = 'file'
+                              input.accept = 'image/jpeg,image/jpg,image/png,image/webp'
+                              input.onchange = (e) => {
+                                const file = (e.target as HTMLInputElement).files?.[0]
+                                if (file) addImageToCouleur(couleurIndex, file)
+                              }
+                              input.click()
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ajouter une image
+                          </Button>
+                        </div>
+                        <div className="space-y-3">
+                          {couleur.imageUrls.map((url, imgIndex) => (
+                            <div key={imgIndex} className="flex gap-4 items-center p-4 border rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+                              <div className="relative w-24 h-24 rounded overflow-hidden border flex-shrink-0">
+                                <img src={url} alt={`Image ${imgIndex + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{getFileName(url)}</p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeImageFromCouleur(couleurIndex, imgIndex)}
+                                className="flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          {couleur.images.map((file, imgIndex) => (
+                            <div key={`new-${imgIndex}`} className="flex gap-4 items-center p-4 border rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+                              <div className="relative w-24 h-24 rounded overflow-hidden border flex-shrink-0">
+                                <img src={URL.createObjectURL(file)} alt={`Preview ${imgIndex + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{file.name}</p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  const updated = [...couleurs]
+                                  updated[couleurIndex].images.splice(imgIndex, 1)
+                                  setCouleurs(updated)
+                                }}
+                                className="flex-shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          {couleur.imageUrls.length === 0 && couleur.images.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-8 border border-dashed rounded-lg">
+                              Aucune image ajoutée. Cliquez sur "Ajouter une image" pour commencer.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Remove color button */}
+                      <div className="flex justify-end pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCouleur(couleurIndex)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Supprimer cette couleur
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {couleurs.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
+                      Aucune couleur ajoutée. Cliquez sur "Ajouter une couleur" pour commencer.
+                    </p>
                 )}
               </div>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -416,35 +871,59 @@ export default function AdminCategorieProduitsPage() {
                           {produit.prix.toLocaleString('fr-MA')} DH
                         </p>
                         {/* Affichage du stock avec indicateur visuel */}
-                        <div className="mb-3 flex items-center gap-2">
+                        {(() => {
+                          // Calculer le stock total pour les produits avec couleurs
+                          let stockTotal = produit.stock || 0
+                          if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+                            stockTotal = produit.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
+                          }
+                          
+                          return (
+                            <div className="mb-3">
+                              <div className="flex items-center gap-2">
                           <Package className={`w-4 h-4 ${
-                            produit.stock === 0 
+                                  stockTotal === 0 
                               ? 'text-red-600' 
-                              : produit.stock <= 5 
+                                    : stockTotal <= 5 
                               ? 'text-orange-600' 
                               : 'text-green-600'
                           }`} />
                           <span className={`text-sm font-medium ${
-                            produit.stock === 0 
+                                  stockTotal === 0 
                               ? 'text-red-600' 
-                              : produit.stock <= 5 
+                                    : stockTotal <= 5 
                               ? 'text-orange-600' 
                               : 'text-green-600'
                           }`}>
-                            Stock: {produit.stock}
+                                  Stock total: {stockTotal}
                           </span>
-                          {produit.stock === 0 && (
+                                {stockTotal === 0 && (
                             <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
                               Rupture de stock
                             </span>
                           )}
-                          {produit.stock > 0 && produit.stock <= 5 && (
+                                {stockTotal > 0 && stockTotal <= 5 && (
                             <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" />
                               Stock faible
                             </span>
                           )}
                         </div>
+                              {produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {produit.couleurs.map((c: any, idx: number) => (
+                                    <div key={idx} className="text-xs flex items-center gap-2">
+                                      <span className="w-16 truncate">{c.nom}:</span>
+                                      <span className={c.stock === 0 ? 'text-red-600' : c.stock <= 5 ? 'text-orange-600' : 'text-green-600'}>
+                                        {c.stock || 0}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
                         <div className="flex gap-2">
                           <Button
                             variant="ghost"
@@ -460,9 +939,34 @@ export default function AdminCategorieProduitsPage() {
                                 vedette: produit.vedette || false,
                                 image_url: produit.image_url || '',
                                 taille: produit.taille || '',
+                                has_colors: produit.has_colors || false,
                               })
-                              setImageFile(null)
-                              setImagePreview(produit.image_url || null)
+                              
+                              // Charger selon le type de produit
+                              if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+                                // Produit AVEC couleurs
+                                const couleursData = produit.couleurs.map((c: any) => ({
+                                  nom: c.nom || '',
+                                  code: c.code || '#000000',
+                                  stock: c.stock || 0,
+                                  taille: c.taille || '',
+                                  images: [],
+                                  imageUrls: c.images || [],
+                                }))
+                                setCouleurs(couleursData)
+                                setImagesGenerales([])
+                              } else if (produit.images && Array.isArray(produit.images)) {
+                                // Produit SANS couleurs - images générales
+                                const generales = produit.images.map((img: any) => ({
+                                  file: null,
+                                  url: typeof img === 'string' ? img : img.url,
+                                }))
+                                setImagesGenerales(generales)
+                                setCouleurs([])
+                              } else {
+                                setImagesGenerales([])
+                                setCouleurs([])
+                              }
                               setDialogOpen(true)
                             }}
                           >
@@ -510,35 +1014,59 @@ export default function AdminCategorieProduitsPage() {
                     {produit.prix.toLocaleString('fr-MA')} DH
                   </p>
                   {/* Affichage du stock avec indicateur visuel */}
-                  <div className="mb-3 flex items-center gap-2">
+                  {(() => {
+                    // Calculer le stock total pour les produits avec couleurs
+                    let stockTotal = produit.stock || 0
+                    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+                      stockTotal = produit.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
+                    }
+                    
+                    return (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2">
                     <Package className={`w-4 h-4 ${
-                      produit.stock === 0 
+                            stockTotal === 0 
                         ? 'text-red-600' 
-                        : produit.stock <= 5 
+                              : stockTotal <= 5 
                         ? 'text-orange-600' 
                         : 'text-green-600'
                     }`} />
                     <span className={`text-sm font-medium ${
-                      produit.stock === 0 
+                            stockTotal === 0 
                         ? 'text-red-600' 
-                        : produit.stock <= 5 
+                              : stockTotal <= 5 
                         ? 'text-orange-600' 
                         : 'text-green-600'
                     }`}>
-                      Stock: {produit.stock}
+                            Stock total: {stockTotal}
                     </span>
-                    {produit.stock === 0 && (
+                          {stockTotal === 0 && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">
                         Rupture de stock
                       </span>
                     )}
-                    {produit.stock > 0 && produit.stock <= 5 && (
+                          {stockTotal > 0 && stockTotal <= 5 && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 rounded-full flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
                         Stock faible
                       </span>
                     )}
                   </div>
+                        {produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {produit.couleurs.map((c: any, idx: number) => (
+                              <div key={idx} className="text-xs flex items-center gap-2">
+                                <span className="w-16 truncate">{c.nom}:</span>
+                                <span className={c.stock === 0 ? 'text-red-600' : c.stock <= 5 ? 'text-orange-600' : 'text-green-600'}>
+                                  {c.stock || 0}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -554,9 +1082,34 @@ export default function AdminCategorieProduitsPage() {
                           vedette: produit.vedette || false,
                           image_url: produit.image_url || '',
                           taille: produit.taille || '',
+                          has_colors: produit.has_colors || false,
                         })
-                        setImageFile(null)
-                        setImagePreview(produit.image_url || null)
+                        
+                        // Charger selon le type de produit
+                        if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+                          // Produit AVEC couleurs
+                          const couleursData = produit.couleurs.map((c: any) => ({
+                            nom: c.nom || '',
+                            code: c.code || '#000000',
+                            stock: c.stock || 0,
+                            taille: c.taille || '',
+                            images: [],
+                            imageUrls: c.images || [],
+                          }))
+                          setCouleurs(couleursData)
+                          setImagesGenerales([])
+                        } else if (produit.images && Array.isArray(produit.images)) {
+                          // Produit SANS couleurs - images générales
+                          const generales = produit.images.map((img: any) => ({
+                            file: null,
+                            url: typeof img === 'string' ? img : img.url,
+                          }))
+                          setImagesGenerales(generales)
+                          setCouleurs([])
+                        } else {
+                          setImagesGenerales([])
+                          setCouleurs([])
+                        }
                         setDialogOpen(true)
                       }}
                     >

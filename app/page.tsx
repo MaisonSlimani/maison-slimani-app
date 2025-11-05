@@ -35,6 +35,115 @@ export default function AccueilPage() {
     window.scrollTo(0, 0)
   }, [])
 
+  // SEO Meta Tags - Dynamic
+  useEffect(() => {
+    // Update title
+    document.title = 'Maison Slimani - Chaussures Homme Luxe Maroc | Accueil'
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]')
+    const description = 'Découvrez Maison Slimani, marque marocaine de chaussures homme haut de gamme. Collections exclusives de chaussures en cuir, livraison gratuite sur tout le Maroc.'
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    // Update Open Graph tags
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) {
+      ogTitle.setAttribute('content', 'Maison Slimani - Chaussures Homme Luxe Maroc | Accueil')
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:title')
+      meta.content = 'Maison Slimani - Chaussures Homme Luxe Maroc | Accueil'
+      document.head.appendChild(meta)
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]')
+    if (ogDescription) {
+      ogDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:description')
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:url')
+      meta.content = window.location.href
+      document.head.appendChild(meta)
+    }
+
+    // Add structured data (Organization, Website)
+    const existingScript = document.getElementById('home-structured-data')
+    if (existingScript) {
+      existingScript.remove()
+    }
+    
+    const script = document.createElement('script')
+    script.id = 'home-structured-data'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': `${window.location.origin}/#organization`,
+          name: 'Maison Slimani',
+          url: window.location.origin,
+          logo: `${window.location.origin}/assets/logo.png`,
+          description: 'Marque marocaine de chaussures homme haut de gamme',
+          sameAs: [],
+          contactPoint: {
+            '@type': 'ContactPoint',
+            contactType: 'Customer Service',
+            availableLanguage: ['French', 'Arabic']
+          }
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${window.location.origin}/#website`,
+          url: window.location.origin,
+          name: 'Maison Slimani',
+          description: description,
+          publisher: {
+            '@id': `${window.location.origin}/#organization`
+          },
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: {
+              '@type': 'EntryPoint',
+              urlTemplate: `${window.location.origin}/boutique?search={search_term_string}`
+            },
+            'query-input': 'required name=search_term_string'
+          }
+        },
+        {
+          '@type': 'BreadcrumbList',
+          '@id': `${window.location.origin}/#breadcrumb`,
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Accueil',
+              item: window.location.origin
+            }
+          ]
+        }
+      ]
+    })
+    document.head.appendChild(script)
+  }, [])
+
   useEffect(() => {
     const chargerProduitsVedette = async () => {
       try {

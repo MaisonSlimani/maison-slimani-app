@@ -21,6 +21,90 @@ export default function BoutiquePage() {
     window.scrollTo(0, 0)
   }, [])
 
+  // SEO Meta Tags - Dynamic
+  useEffect(() => {
+    // Update title
+    document.title = 'Boutique - Nos Collections | Maison Slimani'
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]')
+    const description = 'Découvrez nos collections exclusives de chaussures homme haut de gamme: Classiques, Cuirs Exotiques, Éditions Limitées et Nouveautés. Livraison gratuite au Maroc.'
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    // Update Open Graph tags
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) {
+      ogTitle.setAttribute('content', 'Boutique - Nos Collections | Maison Slimani')
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:title')
+      meta.content = 'Boutique - Nos Collections | Maison Slimani'
+      document.head.appendChild(meta)
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]')
+    if (ogDescription) {
+      ogDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:description')
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:url')
+      meta.content = window.location.href
+      document.head.appendChild(meta)
+    }
+
+    // Add structured data (CollectionPage, BreadcrumbList)
+    const existingScript = document.getElementById('boutique-structured-data')
+    if (existingScript) {
+      existingScript.remove()
+    }
+    
+    const script = document.createElement('script')
+    script.id = 'boutique-structured-data'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Boutique - Nos Collections',
+      description: description,
+      url: window.location.href,
+      breadcrumb: {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Accueil',
+            item: window.location.origin
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Boutique',
+            item: window.location.href
+          }
+        ]
+      }
+    })
+    document.head.appendChild(script)
+  }, [])
+
   const categories = [
     {
       titre: 'Classiques',

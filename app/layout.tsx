@@ -32,11 +32,20 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'Maison Slimani',
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/assets/hero-chaussures.jpg`,
+        width: 1200,
+        height: 630,
+        alt: 'Maison Slimani - Chaussures homme luxe',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Maison Slimani - Chaussures Homme Luxe',
     description: 'Marque marocaine de chaussures homme haut de gamme.',
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/assets/hero-chaussures.jpg`],
   },
   robots: {
     index: true,

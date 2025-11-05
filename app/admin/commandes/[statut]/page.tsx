@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Eye, Download, AlertCircle, Package, Truck, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
 
 const statutsMap: Record<string, { nom: string; icon: typeof AlertCircle; color: string }> = {
   'en-attente': {
@@ -53,18 +54,167 @@ export default function AdminCommandesStatutPage() {
   const [selectedCommande, setSelectedCommande] = useState<any>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [commandeToDelete, setCommandeToDelete] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const supabase = createClient()
+  const isReloadingRef = useRef(false)
+  const lastCommandeIdsRef = useRef<Set<string>>(new Set())
+
+  // Initialiser l'audio pour la notification
+  useEffect(() => {
+    try {
+      audioRef.current = new Audio('/sounds/new_command.mp3')
+      audioRef.current.volume = 0.7
+      audioRef.current.preload = 'auto'
+      
+      // Gérer les erreurs de chargement
+      audioRef.current.addEventListener('error', (e) => {
+        console.error('❌ Erreur de chargement audio:', e)
+      })
+      
+      // Précharger l'audio pour éviter les problèmes de timing
+      audioRef.current.load()
+      console.log('✅ Audio initialisé:', audioRef.current.src)
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation audio:', error)
+    }
+  }, [])
 
   useEffect(() => {
     window.scrollTo(0, 0)
     chargerCommandes()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statutSlug])
+    
+    // Configurer l'abonnement en temps réel
+    const channelName = `commandes-changes-${statutSlug}-${Date.now()}`
+    const channel = supabase
+      .channel(channelName)
+      
+    // Ajouter un handler catch-all pour voir TOUS les événements
+    channel.on('broadcast', { event: '*' }, (payload) => {
+      console.log('📡 Broadcast reçu:', payload)
+    })
+      
+    // Écouter tous les types d'événements
+    channel
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'commandes',
+        },
+        (payload) => {
+          console.log('🎯 INSERT événement reçu:', payload)
+          const nouvelleCommande = payload.new as any
+          console.log('📦 Nouvelle commande détectée:', {
+            id: nouvelleCommande?.id,
+            statut: nouvelleCommande?.statut,
+            nom_client: nouvelleCommande?.nom_client,
+            filtreActuel: statutSlug,
+            statutInfoNom: statutInfo.nom
+          })
+          
+          // Vérifier si la nouvelle commande correspond au filtre actuel
+          const commandeCorrespondAuFiltre = 
+            statutSlug === 'toutes' || 
+            nouvelleCommande?.statut === statutInfo.nom
+          
+          console.log('✅ Commande correspond au filtre:', commandeCorrespondAuFiltre)
+          
+          // Si la commande correspond au filtre, recharger immédiatement
+          // (Le son et la notification sont gérés globalement dans le layout)
+          if (commandeCorrespondAuFiltre) {
+            console.log('🔄 Rechargement des commandes...')
+            chargerCommandes()
+          } else {
+            console.log('ℹ️ Commande ne correspond pas au filtre actuel')
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'commandes',
+        },
+        (payload) => {
+          console.log('🔄 UPDATE événement reçu:', payload)
+          const commandeModifiee = payload.new as any
+          const ancienneCommande = payload.old as any
+          
+          // Vérifier si la commande modifiée affecte la liste actuelle
+          const nouvelleStatutCorrespond = statutSlug === 'toutes' || commandeModifiee?.statut === statutInfo.nom
+          const ancienStatutCorrespondait = statutSlug === 'toutes' || ancienneCommande?.statut === statutInfo.nom
+          
+          if (nouvelleStatutCorrespond || ancienStatutCorrespondait) {
+            console.log('🔄 Statut modifié, rechargement...')
+            chargerCommandes()
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'commandes',
+        },
+        (payload) => {
+          console.log('🗑️ DELETE événement reçu:', payload)
+          console.log('🔄 Commande supprimée, rechargement...')
+          chargerCommandes()
+        }
+      )
+      .subscribe((status, err) => {
+        console.log('📡 Statut de l\'abonnement real-time:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Abonnement real-time actif - En attente d\'événements...')
+          // Test: essayer de recevoir un événement de test
+          console.log('🔍 Test: Abonnement configuré pour écouter:', {
+            schema: 'public',
+            table: 'commandes',
+            event: '*'
+          })
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erreur de canal real-time:', err)
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⚠️ Abonnement real-time timeout')
+        } else if (status === 'CLOSED') {
+          console.warn('⚠️ Canal real-time fermé')
+        }
+      })
 
-  const chargerCommandes = async () => {
+    // Polling de secours pour détecter les nouvelles commandes
+    // (au cas où real-time INSERT events ne fonctionnent pas)
+    const pollingInterval = setInterval(() => {
+      console.log('🔍 Polling: Vérification des nouvelles commandes...')
+      chargerCommandes(true) // Silent mode pour ne pas interférer avec l'UI
+    }, 5000) // Vérifier toutes les 5 secondes
+
+    // Nettoyer l'abonnement et le polling au démontage
+    return () => {
+      console.log('Nettoyage de l\'abonnement real-time et polling')
+      clearInterval(pollingInterval)
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statutSlug, supabase])
+
+  const chargerCommandes = async (silent = false) => {
+    // Prévenir les appels multiples simultanés
+    if (isReloadingRef.current && !silent) {
+      console.log('⚠️ Rechargement déjà en cours, ignoré')
+      return
+    }
+    
     try {
+      if (!silent) {
+        isReloadingRef.current = true
+        setLoading(true)
+      }
       // Si "toutes", charger toutes les commandes
       const statutQuery = statutSlug === 'toutes' ? 'tous' : statutInfo.nom
-      const response = await fetch(`/api/admin/commandes?statut=${statutQuery}`)
+      const response = await fetch(`/api/admin/commandes?statut=${encodeURIComponent(statutQuery)}`)
       
       if (!response.ok) {
         const errorData = await response.json()
@@ -72,12 +222,45 @@ export default function AdminCommandesStatutPage() {
       }
 
       const result = await response.json()
-      setCommandes(result.data || [])
+      const nouvellesCommandes = result.data || []
+      
+      // Détecter les nouvelles commandes (pour le polling)
+      // Toujours vérifier, même en mode silent, pour détecter les nouvelles commandes
+      if (lastCommandeIdsRef.current.size > 0) {
+        const nouvellesCommandesIds = new Set(nouvellesCommandes.map((c: any) => c.id))
+        const anciennesCommandesIds = lastCommandeIdsRef.current
+        
+        // Trouver les nouvelles commandes
+        const commandesNouvelles = nouvellesCommandes.filter(
+          (c: any) => !anciennesCommandesIds.has(c.id)
+        )
+        
+        if (commandesNouvelles.length > 0) {
+          console.log('🆕 Nouvelles commandes détectées via polling:', commandesNouvelles.length, commandesNouvelles)
+          // Le son et la notification sont gérés globalement dans le layout
+          // On recharge juste la liste ici
+        }
+      }
+      
+      // Mettre à jour les IDs des commandes
+      lastCommandeIdsRef.current = new Set(nouvellesCommandes.map((c: any) => c.id))
+      
+      if (!silent) {
+        console.log(`✅ Commandes chargées: ${nouvellesCommandes.length} commande(s)`)
+      }
+      setCommandes(nouvellesCommandes)
     } catch (error: any) {
-      console.error('Erreur lors du chargement des commandes:', error)
-      toast.error(error.message || 'Erreur lors du chargement des commandes')
+      console.error('❌ Erreur lors du chargement des commandes:', error)
+      if (!silent) {
+        toast.error(error.message || 'Erreur lors du chargement des commandes')
+      }
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+        setTimeout(() => {
+          isReloadingRef.current = false
+        }, 500)
+      }
     }
   }
 

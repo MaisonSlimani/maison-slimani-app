@@ -15,6 +15,101 @@ export default function MaisonPage() {
     window.scrollTo(0, 0)
   }, [])
 
+  // SEO Meta Tags
+  useEffect(() => {
+    // Update title
+    document.title = "Notre Maison - L'Histoire de Maison Slimani"
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]')
+    const description = "Découvrez l'histoire et les valeurs de Maison Slimani, marque marocaine de chaussures homme haut de gamme. Un savoir-faire transmis de génération en génération."
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    // Update Open Graph tags
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) {
+      ogTitle.setAttribute('content', "Notre Maison - L'Histoire de Maison Slimani")
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:title')
+      meta.content = "Notre Maison - L'Histoire de Maison Slimani"
+      document.head.appendChild(meta)
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]')
+    if (ogDescription) {
+      ogDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:description')
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:url')
+      meta.content = window.location.href
+      document.head.appendChild(meta)
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (canonical) {
+      canonical.setAttribute('href', window.location.href)
+    } else {
+      canonical = document.createElement('link')
+      canonical.setAttribute('rel', 'canonical')
+      canonical.setAttribute('href', window.location.href)
+      document.head.appendChild(canonical)
+    }
+
+    // Add structured data (AboutPage)
+    const existingScript = document.getElementById('maison-structured-data')
+    if (existingScript) {
+      existingScript.remove()
+    }
+    
+    const script = document.createElement('script')
+    script.id = 'maison-structured-data'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      name: "Notre Maison - Maison Slimani",
+      description: description,
+      url: window.location.href,
+      breadcrumb: {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Accueil',
+            item: window.location.origin
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Notre Maison',
+            item: window.location.href
+          }
+        ]
+      }
+    })
+    document.head.appendChild(script)
+  }, [])
+
   return (
     <div className="pb-24 md:pb-0 pt-0 md:pt-20">
       <NavigationDesktop />

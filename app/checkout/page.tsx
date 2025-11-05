@@ -18,24 +18,24 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 const villesMaroc = [
-  'Casablanca',
-  'Rabat',
-  'Fès',
-  'Marrakech',
-  'Tanger',
   'Agadir',
-  'Meknès',
-  'Oujda',
-  'Kenitra',
-  'Tétouan',
-  'Safi',
-  'Mohammedia',
-  'El Jadida',
-  'Nador',
-  'Settat',
   'Beni Mellal',
-  'Taza',
+  'Casablanca',
+  'El Jadida',
+  'Fès',
+  'Kenitra',
   'Khouribga',
+  'Marrakech',
+  'Meknès',
+  'Mohammedia',
+  'Nador',
+  'Oujda',
+  'Rabat',
+  'Safi',
+  'Settat',
+  'Tanger',
+  'Taza',
+  'Tétouan',
   'Autre',
 ]
 
@@ -43,6 +43,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { items, total, clearCart, isLoaded } = useCart()
   const [loading, setLoading] = useState(false)
+  const [orderComplete, setOrderComplete] = useState(false)
   const [formData, setFormData] = useState({
     nom_client: '',
     telephone: '',
@@ -52,10 +53,89 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    if (isLoaded && items.length === 0) {
+    // Ne pas rediriger si la commande vient d'être complétée
+    if (isLoaded && items.length === 0 && !orderComplete) {
       router.push('/panier')
     }
-  }, [isLoaded, items.length, router])
+  }, [isLoaded, items.length, router, orderComplete])
+
+  // SEO: Noindex (transactional page)
+  useEffect(() => {
+    let robotsMeta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null
+    if (robotsMeta) {
+      robotsMeta.setAttribute('content', 'noindex, nofollow')
+    } else {
+      const meta = document.createElement('meta') as HTMLMetaElement
+      meta.name = 'robots'
+      meta.content = 'noindex, nofollow'
+      document.head.appendChild(meta)
+    }
+  }, [])
+
+  // Valider le stock côté serveur quand le panier est chargé
+  useEffect(() => {
+    const validateCartStock = async () => {
+      if (!isLoaded || items.length === 0) return
+
+      try {
+        const supabase = createClient()
+        
+        // Vérifier le stock de chaque produit dans le panier
+        for (const item of items) {
+          const { data: produit, error } = await supabase
+            .from('produits')
+            .select('id, nom, stock, has_colors, couleurs')
+            .eq('id', item.id)
+            .single()
+
+          if (error || !produit) {
+            // Produit introuvable - le retirer du panier
+            toast.error(`Le produit "${item.nom}" n'est plus disponible`)
+            continue
+          }
+
+          // Vérifier le stock selon le type de produit
+          let stockDisponible: number = 0
+          
+          if (produit.has_colors && item.couleur) {
+            // Produit avec couleurs - vérifier le stock de la couleur spécifique
+            if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
+              toast.error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+              continue
+            }
+            
+            const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
+            if (!couleurSelected) {
+              toast.error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+              continue
+            }
+            
+            stockDisponible = couleurSelected.stock || 0
+          } else if (!produit.has_colors) {
+            // Produit sans couleurs - vérifier le stock global
+            stockDisponible = produit.stock || 0
+          } else {
+            toast.error(`Couleur requise pour "${item.nom}"`)
+            continue
+          }
+
+          if (stockDisponible <= 0) {
+            toast.error(`Le produit "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''} est en rupture de stock`)
+            continue
+          }
+
+          if (stockDisponible < item.quantite) {
+            toast.error(`Stock insuffisant pour "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''}. Stock disponible: ${stockDisponible}`)
+            continue
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la validation du stock:', error)
+      }
+    }
+
+    validateCartStock()
+  }, [isLoaded, items])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,7 +145,7 @@ export default function CheckoutPage() {
       const supabase = createClient()
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-      // Préparer les produits pour la commande (inclure l'image et la taille)
+      // Préparer les produits pour la commande (inclure l'image, la taille et la couleur)
       const produits = items.map((item) => ({
         id: item.id,
         nom: item.nom,
@@ -73,34 +153,57 @@ export default function CheckoutPage() {
         quantite: item.quantite,
         image_url: item.image_url || item.image || null,
         taille: item.taille || null,
+        couleur: item.couleur || null,
       }))
 
+      // Préparer les données de la commande
+      const commandeData = {
+        nom_client: formData.nom_client,
+        telephone: formData.telephone,
+        adresse: formData.adresse,
+        ville: formData.ville,
+        produits,
+      }
+
       // Appeler l'Edge Function pour créer la commande
-      const { data, error } = await supabase.functions.invoke('ajouterCommande', {
-        body: {
-          nom_client: formData.nom_client,
-          telephone: formData.telephone,
-          adresse: formData.adresse,
-          ville: formData.ville,
-          produits,
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/ajouterCommande`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
         },
+        body: JSON.stringify(commandeData),
       })
 
-      if (error) {
-        throw error
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        // Formater le message d'erreur pour l'utilisateur
+        let errorMessage = result.error || 'Erreur lors de la création de la commande'
+        
+        // Messages d'erreur plus clairs pour l'utilisateur
+        if (errorMessage.includes('Stock insuffisant') || errorMessage.includes('stock insuffisant')) {
+          errorMessage = 'Stock insuffisant pour certains produits. Veuillez vérifier votre panier.'
+        } else if (errorMessage.includes('introuvable')) {
+          errorMessage = 'Certains produits ne sont plus disponibles. Veuillez vérifier votre panier.'
+        } else if (result.details && Array.isArray(result.details)) {
+          // Si c'est une erreur de validation, afficher un message générique
+          errorMessage = 'Veuillez vérifier les informations de votre commande.'
+        }
+        
+        throw new Error(errorMessage)
       }
 
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Erreur lors de la création de la commande')
-      }
+      const data = result
 
-      // Succès - Rediriger vers la page de confirmation AVANT de vider le panier
-      const commandeId = data.data.id
-      router.push(`/commande/${commandeId}`)
-      // Vider le panier après la redirection (avec un petit délai pour s'assurer que la redirection fonctionne)
-      setTimeout(() => {
-        clearCart()
-      }, 100)
+      // Succès - Marquer la commande comme complétée et rediriger
+      setOrderComplete(true)
+      // Vider le panier immédiatement
+      clearCart()
+      // Rediriger vers la page de confirmation simple (sans exposer l'ID)
+      router.replace('/commande/confirme')
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error)
       toast.error(error instanceof Error ? error.message : 'Erreur lors de la création de la commande')

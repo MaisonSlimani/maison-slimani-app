@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyAdminSession } from '@/lib/auth/session'
 
 // GET - Récupérer toutes les commandes
 export async function GET(request: NextRequest) {
   try {
     // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -35,15 +29,17 @@ export async function GET(request: NextRequest) {
 
     // Récupérer le filtre de statut depuis les query params
     const { searchParams } = new URL(request.url)
-    const statut = searchParams.get('statut')
+    const statut = searchParams.get('statut')?.trim()
 
     let query = supabase
       .from('commandes')
       .select('*')
       .order('date_commande', { ascending: false })
 
-    if (statut && statut !== 'tous') {
-      query = query.eq('statut', statut)
+    if (statut && statut !== 'tous' && statut !== 'all') {
+      // Décode l'URL encoding si nécessaire (ex: "En%20attente" -> "En attente")
+      const decodedStatut = decodeURIComponent(statut)
+      query = query.eq('statut', decodedStatut)
     }
 
     const { data, error } = await query
@@ -51,16 +47,16 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Erreur lors de la récupération des commandes:', error)
       return NextResponse.json(
-        { error: 'Erreur lors de la récupération des commandes' },
+        { error: 'Erreur lors de la récupération des commandes', details: error.message },
         { status: 500 }
       )
     }
 
     return NextResponse.json({ success: true, data: data || [] })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur serveur:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur serveur', details: error?.message || 'Erreur inconnue' },
       { status: 500 }
     )
   }
@@ -70,15 +66,8 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -137,15 +126,8 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }

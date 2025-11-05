@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ShoppingBag, DollarSign, MapPin, TrendingUp, Package, Clock, CheckCircle, AlertCircle, ArrowRight, AlertTriangle, Warehouse } from 'lucide-react'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -24,12 +26,72 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [dernieresCommandes, setDernieresCommandes] = useState<any[]>([])
   const [produits, setProduits] = useState<any[]>([])
+  const [produitsRuptureStock, setProduitsRuptureStock] = useState<any[]>([])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const lastCommandesIdsRef = useRef<Set<string>>(new Set())
+  const supabase = createClient()
+
+  // Initialiser l'audio pour la notification
+  useEffect(() => {
+    audioRef.current = new Audio('/sounds/new_command.mp3')
+    audioRef.current.volume = 0.7
+  }, [])
 
   useEffect(() => {
     chargerStats()
-  }, [])
+    
+    // Configurer l'abonnement en temps réel
+    const channelName = `commandes-changes-dashboard-${Date.now()}`
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'commandes',
+        },
+        (payload) => {
+          console.log('Changement détecté sur le dashboard:', payload)
+          
+          // Les notifications sont gérées globalement dans le layout
+          // Ici, on recharge juste les stats
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') {
+            // Recharger les stats pour toutes les modifications
+            chargerStats()
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Statut de l\'abonnement real-time (dashboard):', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Abonnement real-time actif (dashboard)')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erreur de canal real-time (dashboard)')
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⚠️ Abonnement real-time timeout (dashboard)')
+        } else if (status === 'CLOSED') {
+          console.warn('⚠️ Canal real-time fermé (dashboard)')
+        }
+      })
 
-  const chargerStats = async () => {
+    // Polling de secours pour détecter les nouvelles commandes
+    // (au cas où real-time INSERT events ne fonctionnent pas)
+    const pollingInterval = setInterval(() => {
+      console.log('🔍 Polling (dashboard): Vérification des nouvelles commandes...')
+      chargerStats(true) // Silent mode pour le polling
+    }, 5000) // Vérifier toutes les 5 secondes
+
+    // Nettoyer l'abonnement et le polling au démontage
+    return () => {
+      console.log('Nettoyage de l\'abonnement real-time et polling (dashboard)')
+      clearInterval(pollingInterval)
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase])
+
+  const chargerStats = async (silent = false) => {
     try {
       // Charger les commandes via l'API admin
       const [commandesResponse, produitsResponse] = await Promise.all([
@@ -44,6 +106,10 @@ export default function AdminDashboardPage() {
       const commandesResult = await commandesResponse.json()
       const commandes = commandesResult.data || []
 
+      // Mettre à jour les IDs des commandes pour le polling
+      // (Les notifications sont gérées globalement dans le layout)
+      lastCommandesIdsRef.current = new Set(commandes.map((c: any) => c.id))
+
       // Charger les produits
       let produitsData: any[] = []
       if (produitsResponse.ok) {
@@ -53,14 +119,18 @@ export default function AdminDashboardPage() {
 
       // Calculer les statistiques
       const totalCommandes = commandes.length || 0
-      const totalRevenus = commandes.reduce((acc: number, c: any) => acc + parseFloat(c.total || 0), 0) || 0
+      // Revenus totaux - seulement pour les commandes livrées
+      const totalRevenus = commandes
+        .filter((c: any) => c.statut === 'Livrée')
+        .reduce((acc: number, c: any) => acc + parseFloat(c.total || 0), 0) || 0
       const commandesEnAttente = commandes.filter((c: any) => c.statut === 'En attente').length || 0
       const commandesLivrees = commandes.filter((c: any) => c.statut === 'Livrée').length || 0
       const villesUniques = new Set(commandes.map((c: any) => c.ville)).size || 0
       const produitsTotal = produitsData.length || 0
       
       // Statistiques de stock
-      const produitsRuptureStock = produitsData.filter((p: any) => p.stock === 0).length || 0
+      const produitsRuptureStockList = produitsData.filter((p: any) => p.stock === 0) || []
+      const produitsRuptureStock = produitsRuptureStockList.length || 0
       const produitsStockFaible = produitsData.filter((p: any) => p.stock > 0 && p.stock <= 5).length || 0
       const totalStock = produitsData.reduce((acc: number, p: any) => acc + (p.stock || 0), 0) || 0
 
@@ -93,6 +163,7 @@ export default function AdminDashboardPage() {
       })
       setDernieresCommandes(dernieres)
       setProduits(produitsData)
+      setProduitsRuptureStock(produitsRuptureStockList)
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error)
     } finally {
@@ -255,6 +326,16 @@ export default function AdminDashboardPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {metricsCommandes.map((metric, index) => {
             const Icon = metric.icon
+            // Déterminer le lien selon la métrique
+            let linkHref = '/admin/commandes'
+            if (metric.label === 'En attente') {
+              linkHref = '/admin/commandes/en-attente'
+            } else if (metric.label === 'Livrées') {
+              linkHref = '/admin/commandes/livree'
+            } else if (metric.label === 'Commandes totales') {
+              linkHref = '/admin/commandes/toutes'
+            }
+            
             return (
               <motion.div
                 key={metric.label}
@@ -262,15 +343,17 @@ export default function AdminDashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
               >
-                <Card className={`p-6 bg-card border-border hover:shadow-lg transition-shadow ${metric.bgColor}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-lg ${metric.bgColor}`}>
-                      <Icon className={`w-6 h-6 ${metric.color}`} />
+                <Link href={linkHref}>
+                  <Card className={`p-6 bg-card border-border hover:shadow-lg transition-all cursor-pointer hover:scale-105 ${metric.bgColor}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+                        <Icon className={`w-6 h-6 ${metric.color}`} />
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
-                  <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
-                </Card>
+                    <p className="text-3xl font-serif mb-1 font-bold">{metric.value}</p>
+                    <p className="text-sm text-muted-foreground font-medium">{metric.label}</p>
+                  </Card>
+                </Link>
               </motion.div>
             )
           })}
@@ -399,16 +482,46 @@ export default function AdminDashboardPage() {
                 animate={{ opacity: 1, x: 0 }}
                 className="p-3 bg-red-50 border border-red-200 rounded-lg"
               >
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="w-4 h-4 text-red-600" />
                   <p className="font-medium text-sm text-red-700">Rupture de stock</p>
                 </div>
-                <p className="text-xs text-red-600">
+                <p className="text-xs text-red-600 mb-2">
                   {stats.produitsRuptureStock} produit{stats.produitsRuptureStock > 1 ? 's' : ''} en rupture de stock
                 </p>
-                <Button asChild variant="ghost" size="sm" className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-100">
-                  <Link href="/admin/produits">Voir les produits</Link>
-                </Button>
+                <div className="space-y-1.5">
+                  {produitsRuptureStock.slice(0, 3).map((produit: any) => {
+                    // Mapper le nom de catégorie au slug
+                    const categorieSlugMap: Record<string, string> = {
+                      'Classiques': 'classiques',
+                      'Cuirs Exotiques': 'cuirs-exotiques',
+                      'Éditions Limitées': 'editions-limitees',
+                      'Nouveautés': 'nouveautes',
+                    }
+                    const categorieSlug = categorieSlugMap[produit.categorie] || 'tous'
+                    const produitLink = `/admin/produits/${categorieSlug}`
+                    
+                    return (
+                      <Link key={produit.id} href={produitLink}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start text-xs text-red-600 hover:text-red-700 hover:bg-red-100 h-auto py-1.5 px-2"
+                        >
+                          <ArrowRight className="w-3 h-3 mr-1.5" />
+                          <span className="truncate">{produit.nom}</span>
+                        </Button>
+                      </Link>
+                    )
+                  })}
+                  {produitsRuptureStock.length > 3 && (
+                    <Button asChild variant="ghost" size="sm" className="w-full text-xs text-red-600 hover:text-red-700 hover:bg-red-100">
+                      <Link href="/admin/produits">
+                        Voir {produitsRuptureStock.length - 3} autre{produitsRuptureStock.length - 3 > 1 ? 's' : ''}...
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </motion.div>
             )}
             {stats.produitsStockFaible > 0 && (

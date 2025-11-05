@@ -46,19 +46,176 @@ const categoriesConfig: Record<string, { nom: string; image: string; description
 export default function CategoriePage() {
   const params = useParams()
   const categorieSlug = params.categorie as string
+  
+  // Initialize categorieInfo immediately based on the slug to prevent flash
+  const getInitialCategorieInfo = () => {
+    if (categorieSlug && categoriesConfig[categorieSlug]) {
+      return categoriesConfig[categorieSlug]
+    }
+    return {
+      nom: 'Collection',
+      image: '/assets/hero-chaussures.jpg',
+      description: 'Découvrez notre collection exclusive.',
+    }
+  }
+  
   const [produits, setProduits] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('pertinence')
-  const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string }>({
-    nom: 'Collection',
-    image: '/assets/hero-chaussures.jpg',
-    description: 'Découvrez notre collection exclusive.',
-  })
+  const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string }>(getInitialCategorieInfo())
 
   useEffect(() => {
     window.scrollTo(0, 0)
+    // Update categorieInfo immediately when slug changes
+    if (categorieSlug && categoriesConfig[categorieSlug]) {
+      setCategorieInfo(categoriesConfig[categorieSlug])
+    }
   }, [categorieSlug])
+
+  // Charger la catégorie depuis la base si elle existe (prioritaire sur le fallback local)
+  useEffect(() => {
+    const chargerCategorieDepuisDB = async () => {
+      try {
+        if (!categorieSlug) return
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('categories')
+          .select('nom, description, image_url, slug, active')
+          .eq('slug', categorieSlug)
+          .eq('active', true)
+          .single()
+
+        if (error || !data) return
+
+        setCategorieInfo({
+          nom: data.nom || categorieInfo.nom,
+          image: data.image_url || categorieInfo.image,
+          description: data.description || categorieInfo.description,
+        })
+      } catch (e) {
+        // en cas d'erreur on garde le fallback local
+        console.warn('Impossible de charger la catégorie depuis la base:', e)
+      }
+    }
+
+    chargerCategorieDepuisDB()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorieSlug])
+
+  // SEO Meta Tags - Dynamic per category
+  useEffect(() => {
+    if (!categorieInfo) return
+
+    // Update title dynamically based on category
+    document.title = `${categorieInfo.nom} - Chaussures Homme Luxe | Maison Slimani`
+    
+    // Update meta description dynamically
+    const metaDescription = document.querySelector('meta[name="description"]')
+    const description = `${categorieInfo.description} Découvrez notre collection ${categorieInfo.nom} de chaussures homme haut de gamme. Livraison gratuite au Maroc.`
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    // Update Open Graph tags dynamically
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) {
+      ogTitle.setAttribute('content', `${categorieInfo.nom} - Chaussures Homme Luxe | Maison Slimani`)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:title')
+      meta.content = `${categorieInfo.nom} - Chaussures Homme Luxe | Maison Slimani`
+      document.head.appendChild(meta)
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]')
+    if (ogDescription) {
+      ogDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:description')
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    const ogImage = document.querySelector('meta[property="og:image"]')
+    if (ogImage && categorieInfo.image) {
+      ogImage.setAttribute('content', `${window.location.origin}${categorieInfo.image}`)
+    } else if (categorieInfo.image) {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:image')
+      meta.content = `${window.location.origin}${categorieInfo.image}`
+      document.head.appendChild(meta)
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:url')
+      meta.content = window.location.href
+      document.head.appendChild(meta)
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (canonical) {
+      canonical.setAttribute('href', window.location.href)
+    } else {
+      canonical = document.createElement('link')
+      canonical.setAttribute('rel', 'canonical')
+      canonical.setAttribute('href', window.location.href)
+      document.head.appendChild(canonical)
+    }
+
+    // Add structured data (CollectionPage, BreadcrumbList) - Dynamic per category
+    const existingScript = document.getElementById('category-structured-data')
+    if (existingScript) {
+      existingScript.remove()
+    }
+    
+    const script = document.createElement('script')
+    script.id = 'category-structured-data'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: categorieInfo.nom,
+      description: categorieInfo.description,
+      url: window.location.href,
+      image: categorieInfo.image ? `${window.location.origin}${categorieInfo.image}` : undefined,
+      breadcrumb: {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Accueil',
+            item: window.location.origin
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Boutique',
+            item: `${window.location.origin}/boutique`
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: categorieInfo.nom,
+            item: window.location.href
+          }
+        ]
+      }
+    })
+    document.head.appendChild(script)
+  }, [categorieInfo])
 
   useEffect(() => {
     const handleScroll = () => {

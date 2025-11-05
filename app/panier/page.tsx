@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ShoppingBag, Trash2, Plus, Minus } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
+import { toast } from 'sonner'
 
 export default function PanierPage() {
   const router = useRouter()
@@ -20,6 +21,19 @@ export default function PanierPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [])
+
+  // SEO: Noindex (user-specific page)
+  useEffect(() => {
+    let robotsMeta = document.querySelector('meta[name="robots"]')
+    if (robotsMeta) {
+      robotsMeta.setAttribute('content', 'noindex, nofollow')
+    } else {
+      robotsMeta = document.createElement('meta')
+      robotsMeta.name = 'robots'
+      robotsMeta.content = 'noindex, nofollow'
+      document.head.appendChild(robotsMeta)
+    }
   }, [])
 
   if (!isLoaded) {
@@ -81,11 +95,18 @@ export default function PanierPage() {
                       <Link href={`/produit/${article.id}`} className="font-medium mb-2 hover:text-dore transition-colors block">
                         <h3>{article.nom}</h3>
                       </Link>
-                      {article.taille && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Taille: {article.taille}
-                        </p>
-                      )}
+                      <div className="text-sm text-muted-foreground mb-2 space-y-1">
+                        {article.couleur && (
+                          <p>
+                            Couleur: <span className="font-medium">{article.couleur}</span>
+                          </p>
+                        )}
+                        {article.taille && (
+                          <p>
+                            Taille: <span className="font-medium">{article.taille}</span>
+                          </p>
+                        )}
+                      </div>
                       <p className="font-medium text-primary mb-4">
                         {article.prix.toLocaleString('fr-MA')} DH
                       </p>
@@ -93,7 +114,13 @@ export default function PanierPage() {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => updateQuantity(article.id, article.quantite - 1)}
+                          onClick={() => {
+                            try {
+                              updateQuantity(article.id, article.quantite - 1)
+                            } catch (error) {
+                              toast.error(error instanceof Error ? error.message : 'Erreur lors de la mise à jour')
+                            }
+                          }}
                           className="h-8 w-8"
                         >
                           <Minus className="w-4 h-4" />
@@ -102,7 +129,13 @@ export default function PanierPage() {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => updateQuantity(article.id, article.quantite + 1)}
+                          onClick={() => {
+                            try {
+                              updateQuantity(article.id, article.quantite + 1)
+                            } catch (error) {
+                              toast.error(error instanceof Error ? error.message : 'Erreur lors de la mise à jour')
+                            }
+                          }}
                           className="h-8 w-8"
                         >
                           <Plus className="w-4 h-4" />

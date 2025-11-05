@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { ShoppingBag, ArrowLeft, Package, Share2, Check, CheckCircle } from 'lucide-react'
+import { ShoppingBag, ArrowLeft, Package, Share2, Check, CheckCircle, ShoppingCart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
@@ -17,6 +17,21 @@ import EnteteMobile from '@/components/EnteteMobile'
 import Footer from '@/components/Footer'
 import MenuBasNavigation from '@/components/MenuBasNavigation'
 import SoundPlayer from '@/components/SoundPlayer'
+import GalerieProduit from '@/components/GalerieProduit'
+
+interface ImageItem {
+  url: string
+  couleur?: string | null
+  ordre?: number
+}
+
+interface Couleur {
+  nom: string
+  code?: string
+  images?: string[]
+  stock?: number
+  taille?: string
+}
 
 interface Produit {
   id: string
@@ -25,6 +40,9 @@ interface Produit {
   prix: number
   stock: number
   image_url?: string
+  images?: ImageItem[] | string[]
+  couleurs?: Couleur[]
+  has_colors?: boolean
   categorie: string
   vedette: boolean
   date_ajout: string
@@ -34,13 +52,36 @@ interface Produit {
 export default function ProduitPage() {
   const params = useParams()
   const router = useRouter()
-  const { addItem } = useCart()
+  const { addItem, items } = useCart()
   const [produit, setProduit] = useState<Produit | null>(null)
   const [loading, setLoading] = useState(true)
   const [quantite, setQuantite] = useState(1)
   const [taille, setTaille] = useState<string>('')
-  const [imageLoaded, setImageLoaded] = useState(false)
+  const [couleur, setCouleur] = useState<string>('')
   const [addedToCart, setAddedToCart] = useState(false)
+  
+  // Vérifier si le produit est dans le panier
+  const isInCart = produit ? items.some(item => item.id === produit.id) : false
+  
+  // Réinitialiser addedToCart si le produit est déjà dans le panier
+  useEffect(() => {
+    if (isInCart && addedToCart) {
+      setAddedToCart(false)
+    }
+  }, [isInCart, addedToCart, items])
+
+  // Set default color when product loads (first available color)
+  useEffect(() => {
+    if (produit?.has_colors && produit.couleurs && produit.couleurs.length > 0 && !couleur) {
+      const firstAvailableColor = produit.couleurs.find(c => (c.stock || 0) > 0)
+      if (firstAvailableColor) {
+        setCouleur(firstAvailableColor.nom)
+      } else if (produit.couleurs.length > 0) {
+        // If all colors are out of stock, still select the first one
+        setCouleur(produit.couleurs[0].nom)
+      }
+    }
+  }, [produit, couleur])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -70,43 +111,178 @@ export default function ProduitPage() {
     chargerProduit()
   }, [chargerProduit])
 
-  // Mettre à jour le titre de la page
+  // Mettre à jour le titre et les meta tags de la page
   useEffect(() => {
     if (produit) {
+      // Update title
       document.title = `${produit.nom} | Maison Slimani`
+      
+      // Update meta description
+      const metaDescription = document.querySelector('meta[name="description"]')
+      if (metaDescription) {
+        metaDescription.setAttribute('content', produit.description.substring(0, 160))
+      } else {
+        const meta = document.createElement('meta')
+        meta.name = 'description'
+        meta.content = produit.description.substring(0, 160)
+        document.head.appendChild(meta)
+      }
+
+      // Update Open Graph tags
+      const ogTitle = document.querySelector('meta[property="og:title"]')
+      if (ogTitle) {
+        ogTitle.setAttribute('content', `${produit.nom} | Maison Slimani`)
+      } else {
+        const meta = document.createElement('meta')
+        meta.setAttribute('property', 'og:title')
+        meta.content = `${produit.nom} | Maison Slimani`
+        document.head.appendChild(meta)
+      }
+
+      const ogDescription = document.querySelector('meta[property="og:description"]')
+      if (ogDescription) {
+        ogDescription.setAttribute('content', produit.description.substring(0, 160))
+      } else {
+        const meta = document.createElement('meta')
+        meta.setAttribute('property', 'og:description')
+        meta.content = produit.description.substring(0, 160)
+        document.head.appendChild(meta)
+      }
+
+      const ogImage = document.querySelector('meta[property="og:image"]')
+      const imageUrl = produit.image_url || (produit.images && Array.isArray(produit.images) && produit.images.length > 0 
+        ? (typeof produit.images[0] === 'string' ? produit.images[0] : produit.images[0].url)
+        : '')
+      if (ogImage && imageUrl) {
+        ogImage.setAttribute('content', imageUrl)
+      } else if (imageUrl) {
+        const meta = document.createElement('meta')
+        meta.setAttribute('property', 'og:image')
+        meta.content = imageUrl
+        document.head.appendChild(meta)
+      }
+
+      const ogUrl = document.querySelector('meta[property="og:url"]')
+      if (ogUrl) {
+        ogUrl.setAttribute('content', window.location.href)
+      } else {
+        const meta = document.createElement('meta')
+        meta.setAttribute('property', 'og:url')
+        meta.content = window.location.href
+        document.head.appendChild(meta)
+      }
+
+      // Add structured data (JSON-LD)
+      const existingScript = document.getElementById('product-structured-data')
+      if (existingScript) {
+        existingScript.remove()
+      }
+      
+      const script = document.createElement('script')
+      script.id = 'product-structured-data'
+      script.type = 'application/ld+json'
+      script.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: produit.nom,
+        description: produit.description,
+        image: imageUrl,
+        brand: {
+          '@type': 'Brand',
+          name: 'Maison Slimani'
+        },
+        offers: {
+          '@type': 'Offer',
+          price: produit.prix,
+          priceCurrency: 'MAD',
+          availability: produit.stock > 0 
+            ? 'https://schema.org/InStock' 
+            : 'https://schema.org/OutOfStock',
+          url: window.location.href
+        }
+      })
+      document.head.appendChild(script)
     }
   }, [produit])
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!produit) return
 
-    if (produit.stock < quantite) {
-      toast.error('Stock insuffisant')
+    // Vérifier que la couleur est sélectionnée si le produit a des couleurs
+    if (produit.has_colors && !couleur) {
+      toast.error('Veuillez sélectionner une couleur')
       return
     }
 
-    // Vérifier que la taille est sélectionnée si le produit a une taille
-    if (produit.taille && !taille) {
+    // Vérifier que la couleur est valide
+    if (produit.has_colors && couleur && produit.couleurs) {
+      const couleurExists = produit.couleurs.some(c => c.nom === couleur)
+      if (!couleurExists) {
+        toast.error('Couleur invalide')
+        return
+      }
+      
+      // Vérifier le stock de la couleur sélectionnée
+      const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
+      const stockCouleur = couleurSelected?.stock || 0
+      if (stockCouleur < quantite) {
+        toast.error(`Stock insuffisant pour la couleur ${couleur}`)
+        return
+      }
+    }
+
+    // Vérifier la taille selon le type de produit
+    let taillesDisponibles: string[] = []
+    if (produit.has_colors && couleur && produit.couleurs) {
+      // Produit avec couleurs - vérifier les tailles de la couleur sélectionnée
+      const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
+      if (couleurSelected?.taille) {
+        taillesDisponibles = couleurSelected.taille.split(',').map(t => t.trim())
+      } else if (produit.taille) {
+        // Fallback sur taille globale si couleur n'a pas de tailles spécifiques
+        taillesDisponibles = produit.taille.split(',').map(t => t.trim())
+      }
+    } else if (produit.taille) {
+      // Produit sans couleurs - utiliser taille globale
+      taillesDisponibles = produit.taille.split(',').map(t => t.trim())
+    }
+
+    // Vérifier que la taille est sélectionnée si des tailles sont disponibles
+    if (taillesDisponibles.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
 
     // Vérifier que la taille est valide
-    if (produit.taille && taille) {
-      const taillesDisponibles = produit.taille.split(',').map(t => t.trim())
+    if (taillesDisponibles.length > 0 && taille) {
       if (!taillesDisponibles.includes(taille)) {
         toast.error('Taille invalide')
         return
       }
     }
 
-    addItem({
+    // Vérifier le stock global si produit sans couleurs
+    if (!produit.has_colors && produit.stock < quantite) {
+      toast.error('Stock insuffisant')
+      return
+    }
+
+    try {
+      await addItem({
       id: produit.id,
       nom: produit.nom,
       prix: produit.prix,
       quantite,
       image_url: produit.image_url,
-      taille: produit.taille ? taille : undefined,
+        taille: (produit.has_colors && couleur && produit.couleurs) 
+          ? (produit.couleurs.find(c => c.nom === couleur)?.taille || produit.taille || undefined)
+            ? taille 
+            : undefined
+          : (produit.taille ? taille : undefined),
+        couleur: produit.has_colors && couleur ? couleur : undefined,
+        stock: produit.has_colors && couleur && produit.couleurs 
+          ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
+          : produit.stock,
     })
 
     // Afficher le message de succès dans le bouton
@@ -121,6 +297,11 @@ export default function ProduitPage() {
     setTimeout(() => {
       setAddedToCart(false)
     }, 2000)
+    } catch (error) {
+      // Afficher l'erreur de stock si elle existe
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'ajout au panier')
+      setAddedToCart(false)
+    }
   }
 
   const handleButtonClick = () => {
@@ -179,7 +360,6 @@ export default function ProduitPage() {
     return null
   }
 
-  const imageUrl = produit.image_url || '/placeholder-product.jpg'
 
   return (
     <div className="min-h-screen pb-24 md:pb-0 pt-0 md:pt-20">
@@ -212,33 +392,21 @@ export default function ProduitPage() {
       {/* Contenu principal */}
       <div className="container max-w-7xl mx-auto px-6 pb-20">
         <div className="grid md:grid-cols-2 gap-12 lg:gap-16">
-          {/* Image principale */}
+          {/* Galerie d'images */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
-            <Card className="overflow-hidden border-0 shadow-xl">
-              <div className="aspect-square relative bg-muted">
-                {!imageLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dore"></div>
-                  </div>
-                )}
-                <Image
-                  src={imageUrl}
-                  alt={produit.nom}
-                  fill
-                  className={`object-cover transition-opacity duration-500 ${
-                    imageLoaded ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  priority
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  onLoad={() => setImageLoaded(true)}
-                />
-              </div>
-            </Card>
+            <GalerieProduit
+              images={produit.images}
+              couleurs={produit.couleurs}
+              imageUrl={produit.image_url}
+              enableZoom={true}
+              showThumbnails={true}
+              selectedColor={couleur}
+            />
 
             {/* Badge vedette */}
             {produit.vedette && (
@@ -308,6 +476,7 @@ export default function ProduitPage() {
             </motion.div>
 
             {/* Stock */}
+            {!produit.has_colors && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -322,9 +491,34 @@ export default function ProduitPage() {
                 </span>
               </div>
             </motion.div>
+            )}
 
-            {/* Sélecteur de taille */}
-            {produit.taille && produit.stock > 0 && (
+            {/* Stock pour produits avec couleurs */}
+            {produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <div className="flex items-center gap-2 text-sm">
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  {couleur ? (
+                    <span className={(produit.couleurs.find(c => c.nom === couleur)?.stock || 0) > 0 ? 'text-green-600' : 'text-red-600'}>
+                      {(produit.couleurs.find(c => c.nom === couleur)?.stock || 0) > 0
+                        ? `${produit.couleurs.find(c => c.nom === couleur)?.stock || 0} disponible${(produit.couleurs.find(c => c.nom === couleur)?.stock || 0) > 1 ? 's' : ''} pour ${couleur}`
+                        : 'Rupture de stock pour cette couleur'}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Sélectionnez une couleur pour voir le stock disponible
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Sélecteur de couleur (obligatoire pour produits avec couleurs) */}
+            {produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -332,10 +526,120 @@ export default function ProduitPage() {
                 className="space-y-2"
               >
                 <label className="text-sm font-medium">
-                  Taille:
+                  Couleur *:
+                </label>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {produit.couleurs.map((c) => {
+                    const couleurNom = c.nom
+                    const isSelected = couleur === couleurNom
+                    const stockCouleur = c.stock || 0
+                    const isOutOfStock = stockCouleur === 0
+                    const colorCode = c.code || '#000000'
+                    
+                    return (
+                      <button
+                        key={couleurNom}
+                        type="button"
+                        onClick={() => {
+                          if (!isOutOfStock) {
+                            setCouleur(couleurNom)
+                            // Reset quantity if it exceeds the color's stock
+                            if (quantite > stockCouleur) {
+                              setQuantite(stockCouleur)
+                            }
+                          }
+                        }}
+                        disabled={isOutOfStock}
+                        className={cn(
+                          'relative flex flex-col items-center gap-2 transition-all hover:scale-105',
+                          isOutOfStock && 'opacity-50 cursor-not-allowed'
+                        )}
+                        title={couleurNom}
+                      >
+                        <div
+                          className={cn(
+                            'w-12 h-12 rounded-lg border-2 transition-all shadow-md',
+                            isSelected
+                              ? 'border-charbon shadow-lg scale-110 ring-2 ring-charbon ring-offset-2'
+                              : 'border-gray-300 hover:border-gray-400',
+                            isOutOfStock && 'border-gray-200 opacity-50'
+                          )}
+                          style={{
+                            backgroundColor: isOutOfStock ? '#e5e5e5' : colorCode,
+                          }}
+                        >
+                          {isSelected && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <svg
+                                className="w-6 h-6 text-white drop-shadow-lg"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="3"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <span className={cn(
+                          'text-xs font-medium text-center',
+                          isSelected ? 'text-charbon font-semibold' : 'text-foreground',
+                          isOutOfStock && 'text-muted-foreground'
+                        )}>
+                          {couleurNom}
+                        </span>
+                        {isOutOfStock && (
+                          <span className="text-xs text-red-600">Rupture</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                {!couleur && (
+                  <p className="text-xs text-red-600 mt-1">Veuillez sélectionner une couleur</p>
+                )}
+              </motion.div>
+            )}
+
+            {/* Sélecteur de taille */}
+            {(() => {
+              // Déterminer les tailles disponibles selon le type de produit
+              let taillesDisponibles: string[] = []
+              if (produit.has_colors && couleur && produit.couleurs) {
+                // Produit avec couleurs - utiliser les tailles de la couleur sélectionnée
+                const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
+                if (couleurSelected?.taille) {
+                  taillesDisponibles = couleurSelected.taille.split(',').map(t => t.trim())
+                } else if (produit.taille) {
+                  // Fallback sur taille globale si couleur n'a pas de tailles spécifiques
+                  taillesDisponibles = produit.taille.split(',').map(t => t.trim())
+                }
+              } else if (produit.taille) {
+                // Produit sans couleurs - utiliser taille globale
+                taillesDisponibles = produit.taille.split(',').map(t => t.trim())
+              }
+
+              // Afficher le sélecteur de taille si des tailles sont disponibles et le produit est disponible
+              const isAvailable = produit.has_colors
+                ? (couleur && (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) > 0)
+                : produit.stock > 0
+
+              if (taillesDisponibles.length > 0 && isAvailable) {
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="space-y-2"
+                  >
+                    <label className="text-sm font-medium">
+                      Taille:
                 </label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {produit.taille.split(',').map((t) => {
+                      {taillesDisponibles.map((t) => {
                     const tailleValue = t.trim()
                     const isSelected = taille === tailleValue
                     return (
@@ -356,14 +660,21 @@ export default function ProduitPage() {
                   })}
                 </div>
               </motion.div>
-            )}
+                )
+              }
+              return null
+            })()}
 
             {/* Sélecteur de quantité */}
-            {produit.stock > 0 && (
+            {(
+              produit.has_colors
+                ? (couleur && (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) > 0)
+                : produit.stock > 0
+            ) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.85 }}
                 className="flex items-center gap-4"
               >
                 <label htmlFor="quantite" className="text-sm font-medium">
@@ -384,8 +695,17 @@ export default function ProduitPage() {
                     variant="ghost"
                     size="icon"
                     className="h-10 w-10"
-                    onClick={() => setQuantite(Math.min(produit.stock, quantite + 1))}
-                    disabled={quantite >= produit.stock}
+                    onClick={() => {
+                      const maxStock = produit.has_colors && couleur
+                        ? (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0)
+                        : produit.stock
+                      setQuantite(Math.min(maxStock, quantite + 1))
+                    }}
+                    disabled={quantite >= (
+                      produit.has_colors && couleur
+                        ? (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0)
+                        : produit.stock
+                    )}
                   >
                     +
                   </Button>
@@ -400,6 +720,19 @@ export default function ProduitPage() {
               transition={{ delay: 0.9 }}
               className="flex flex-col sm:flex-row gap-4 pt-4"
             >
+              {isInCart ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  asChild
+                  className="flex-1 font-medium text-base py-4 transition-all duration-300 border-charbon text-charbon hover:bg-charbon hover:text-background"
+                >
+                  <Link href="/panier">
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    Aller au panier
+                  </Link>
+                </Button>
+              ) : (
               <Button
                 size="lg"
                 className={cn(
@@ -412,7 +745,13 @@ export default function ProduitPage() {
                   handleAddToCart()
                   handleButtonClick()
                 }}
-                disabled={produit.stock === 0 || addedToCart}
+                  disabled={
+                    addedToCart ||
+                    (produit.has_colors 
+                      ? (!couleur || (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) === 0)
+                      : produit.stock === 0
+                    )
+                  }
               >
                 {addedToCart ? (
                   <>
@@ -422,10 +761,16 @@ export default function ProduitPage() {
                 ) : (
                   <>
                     <ShoppingBag className="w-5 h-5 mr-2" />
-                    {produit.stock > 0 ? 'Ajouter au panier' : 'Rupture de stock'}
+                      {produit.has_colors 
+                        ? (couleur && (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) > 0)
+                          ? 'Ajouter au panier'
+                          : (!couleur ? 'Sélectionnez une couleur' : 'Rupture de stock')
+                        : (produit.stock > 0 ? 'Ajouter au panier' : 'Rupture de stock')
+                      }
                   </>
                 )}
               </Button>
+              )}
 
               <Button
                 variant="outline"

@@ -9,6 +9,7 @@ export interface WishlistItem {
   image_url?: string
   image?: string
   taille?: string
+  stock?: number
 }
 
 export function useWishlist() {

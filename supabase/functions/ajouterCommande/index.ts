@@ -14,6 +14,7 @@ const schemaCommande = z.object({
     quantite: z.number().int().positive(),
     image_url: z.string().optional().nullable(),
     taille: z.string().optional().nullable(),
+    couleur: z.string().optional().nullable(),
   })).min(1, 'Au moins un produit est requis'),
 })
 
@@ -65,7 +66,23 @@ serve(async (req) => {
       )
     }
 
-    const validatedData = schemaCommande.parse(body)
+    // Valider avec Zod et capturer les erreurs de validation
+    const validationResult = schemaCommande.safeParse(body)
+    if (!validationResult.success) {
+      console.error('Erreur de validation Zod:', validationResult.error.issues)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Données de commande invalides',
+          details: validationResult.error.issues,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
+    }
+    const validatedData = validationResult.data
 
     // Vérifier que la ville est valide
     if (!villesMaroc.includes(validatedData.ville)) {
@@ -79,7 +96,7 @@ serve(async (req) => {
     for (const produitCommande of validatedData.produits) {
       const { data: produit, error: produitError } = await supabase
         .from('produits')
-        .select('id, nom, prix, stock')
+        .select('id, nom, prix, stock, has_colors, couleurs')
         .eq('id', produitCommande.id)
         .single()
 
@@ -87,8 +104,30 @@ serve(async (req) => {
         throw new Error(`Produit ${produitCommande.nom} introuvable`)
       }
 
-      if (produit.stock < produitCommande.quantite) {
-        throw new Error(`Stock insuffisant pour ${produit.nom}`)
+      // Vérifier le stock selon le type de produit
+      let stockDisponible: number = 0
+      
+      if (produit.has_colors && produitCommande.couleur) {
+        // Produit avec couleurs - vérifier le stock de la couleur spécifique
+        if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
+          throw new Error(`Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`)
+        }
+        
+        const couleurSelected = produit.couleurs.find((c: any) => c.nom === produitCommande.couleur)
+        if (!couleurSelected) {
+          throw new Error(`Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`)
+        }
+        
+        stockDisponible = couleurSelected.stock || 0
+      } else if (!produit.has_colors) {
+        // Produit sans couleurs - vérifier le stock global
+        stockDisponible = produit.stock || 0
+      } else {
+        throw new Error(`Couleur requise pour ${produit.nom}`)
+      }
+
+      if (stockDisponible < produitCommande.quantite) {
+        throw new Error(`Stock insuffisant pour ${produit.nom}${produitCommande.couleur ? ` (${produitCommande.couleur})` : ''}. Stock disponible: ${stockDisponible}`)
       }
 
       total += produit.prix * produitCommande.quantite
@@ -99,6 +138,8 @@ serve(async (req) => {
         image_url: produitCommande.image_url || produit.image_url || null,
         // Préserver la taille si fournie
         taille: produitCommande.taille || null,
+        // Préserver la couleur si fournie
+        couleur: produitCommande.couleur || null,
       })
     }
 
@@ -123,13 +164,43 @@ serve(async (req) => {
 
     // Décrémenter le stock
     for (const produitCommande of validatedData.produits) {
-      const { error: rpcError } = await supabase.rpc('decrementer_stock', {
-        produit_id: produitCommande.id,
-        quantite: produitCommande.quantite,
-      })
-      if (rpcError) {
-        console.error(`Erreur lors de la décrémentation du stock pour ${produitCommande.id}:`, rpcError)
-        // Ne pas faire échouer la commande si la décrémentation échoue
+      // Récupérer le produit pour vérifier le type
+      const { data: produit } = await supabase
+        .from('produits')
+        .select('has_colors, couleurs')
+        .eq('id', produitCommande.id)
+        .single()
+
+      if (produit && produit.has_colors && produitCommande.couleur) {
+        // Produit avec couleurs - décrémenter le stock de la couleur spécifique
+        if (produit.couleurs && Array.isArray(produit.couleurs)) {
+          const couleurIndex = produit.couleurs.findIndex((c: any) => c.nom === produitCommande.couleur)
+          if (couleurIndex !== -1) {
+            const updatedCouleurs = [...produit.couleurs]
+            updatedCouleurs[couleurIndex] = {
+              ...updatedCouleurs[couleurIndex],
+              stock: Math.max(0, (updatedCouleurs[couleurIndex].stock || 0) - produitCommande.quantite),
+            }
+            
+            const { error: updateError } = await supabase
+              .from('produits')
+              .update({ couleurs: updatedCouleurs })
+              .eq('id', produitCommande.id)
+            
+            if (updateError) {
+              console.error(`Erreur lors de la décrémentation du stock couleur pour ${produitCommande.id}:`, updateError)
+            }
+          }
+        }
+      } else {
+        // Produit sans couleurs - utiliser la fonction RPC existante
+        const { error: rpcError } = await supabase.rpc('decrementer_stock', {
+          produit_id: produitCommande.id,
+          quantite: produitCommande.quantite,
+        })
+        if (rpcError) {
+          console.error(`Erreur lors de la décrémentation du stock pour ${produitCommande.id}:`, rpcError)
+        }
       }
     }
 
@@ -164,10 +235,15 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Erreur lors de l\'ajout de la commande:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+    const errorDetails = error instanceof Error && (error as any).issues 
+      ? JSON.stringify((error as any).issues) 
+      : errorMessage
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        error: errorMessage,
+        details: errorDetails,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

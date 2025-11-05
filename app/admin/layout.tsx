@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 export default function AdminLayout({
   children,
@@ -31,6 +33,8 @@ export default function AdminLayout({
   const [produitsExpanded, setProduitsExpanded] = useState(false)
   const [commandesExpanded, setCommandesExpanded] = useState(false)
   const [commandesEnAttente, setCommandesEnAttente] = useState(0)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const lastCommandeIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     // Vérifier la session au chargement
@@ -54,14 +58,65 @@ export default function AdminLayout({
     verifierSession()
   }, [router])
 
-  // Charger le nombre de commandes en attente
+  // Initialiser l'audio pour la notification globale
   useEffect(() => {
-    const chargerCommandesEnAttente = async () => {
+    try {
+      audioRef.current = new Audio('/sounds/new_command.mp3')
+      audioRef.current.volume = 0.7
+      audioRef.current.preload = 'auto'
+      audioRef.current.load()
+      console.log('✅ Audio global initialisé dans le layout')
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation audio:', error)
+    }
+  }, [])
+
+  // Charger le nombre de commandes en attente avec real-time et notifications globales
+  useEffect(() => {
+    const supabase = createClient()
+    const chargerCommandesEnAttente = async (silent = false) => {
       try {
         const response = await fetch('/api/admin/commandes?statut=En attente')
         if (response.ok) {
           const result = await response.json()
           const commandes = result.data || []
+          
+          // Détecter les nouvelles commandes pour notification globale (polling fallback)
+          // Vérifier même en mode silent (polling) pour détecter les nouvelles commandes
+          const nouvellesCommandesIds = new Set(commandes.map((c: any) => c.id))
+          const anciennesCommandesIds = lastCommandeIdsRef.current
+          
+          // Si on a déjà des IDs enregistrés, comparer pour trouver les nouvelles
+          // (Seulement si real-time n'a pas déjà déclenché la notification)
+          if (anciennesCommandesIds.size > 0) {
+            const commandesNouvelles = commandes.filter(
+              (c: any) => !anciennesCommandesIds.has(c.id)
+            )
+            
+            if (commandesNouvelles.length > 0) {
+              console.log('🆕 Nouvelles commandes détectées via polling (layout):', commandesNouvelles.length, commandesNouvelles)
+              
+              // Jouer le son (même en mode silent/polling) - fallback si real-time n'a pas fonctionné
+              if (audioRef.current) {
+                try {
+                  audioRef.current.currentTime = 0
+                  audioRef.current.play().catch(err => {
+                    console.error('❌ Erreur lors de la lecture du son:', err)
+                  })
+                } catch (error) {
+                  console.error('❌ Erreur lors de la préparation du son:', error)
+                }
+              }
+              
+              // Afficher notification (même en mode silent/polling) - fallback si real-time n'a pas fonctionné
+              toast.success(`Nouvelle commande reçue !`, {
+                description: `${commandesNouvelles.length} commande(s) en attente`,
+              })
+            }
+          }
+          
+          // Mettre à jour les IDs (même si c'était la première fois, pour la prochaine fois)
+          lastCommandeIdsRef.current = nouvellesCommandesIds
           setCommandesEnAttente(commandes.length)
         }
       } catch (error) {
@@ -70,19 +125,83 @@ export default function AdminLayout({
     }
 
     if (!loading) {
-      chargerCommandesEnAttente()
-      // Rafraîchir toutes les 30 secondes
-      const interval = setInterval(chargerCommandesEnAttente, 30000)
-      return () => clearInterval(interval)
+      // Initialiser lastCommandeIdsRef avec un Set vide pour permettre la détection
+      if (lastCommandeIdsRef.current.size === 0) {
+        // Ne pas initialiser ici, laisser le premier appel charger les IDs
+      }
+      
+      // Charger initialement (pas en mode silent pour initialiser les IDs)
+      chargerCommandesEnAttente(false)
+      
+      // Configurer l'abonnement en temps réel pour les nouvelles commandes
+      // Utiliser un nom de canal simple et stable
+      const channel = supabase
+        .channel('commandes-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'commandes',
+          },
+          (payload) => {
+            const nouvelleCommande = payload.new as any
+            console.log('🆕 Nouvelle commande détectée via real-time:', nouvelleCommande)
+            
+            // Jouer le son
+            if (audioRef.current) {
+              try {
+                audioRef.current.currentTime = 0
+                audioRef.current.play().catch(err => {
+                  console.error('❌ Erreur lors de la lecture du son:', err)
+                })
+              } catch (error) {
+                console.error('❌ Erreur lors de la préparation du son:', error)
+              }
+            }
+            
+            // Afficher notification (une seule fois)
+            toast.success(`Nouvelle commande reçue !`, {
+              description: `Commande #${nouvelleCommande.id?.substring(0, 8) || 'N/A'} - ${nouvelleCommande.nom_client || 'Client'}`,
+            })
+            
+            // Recharger le nombre de commandes en attente
+            chargerCommandesEnAttente()
+          }
+        )
+        .subscribe((status) => {
+          console.log('Layout: Statut real-time:', status)
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Abonnement real-time actif (layout)')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Erreur de canal real-time (layout)')
+          } else if (status === 'TIMED_OUT') {
+            console.warn('⚠️ Abonnement real-time timeout (layout)')
+          } else if (status === 'CLOSED') {
+            console.warn('⚠️ Canal real-time fermé (layout)')
+          }
+        })
+
+      // Polling de secours pour détecter les nouvelles commandes
+      // (au cas où real-time INSERT events ne fonctionnent pas)
+      const pollingInterval = setInterval(() => {
+        console.log('🔍 Polling (layout): Vérification des nouvelles commandes...')
+        chargerCommandesEnAttente(true) // Silent mode pour le polling
+      }, 5000) // Vérifier toutes les 5 secondes
+      
+      return () => {
+        clearInterval(pollingInterval)
+        supabase.removeChannel(channel)
+      }
     }
   }, [loading])
 
   // Auto-expand si on est sur une page de catégorie
   useEffect(() => {
-    if (pathname?.startsWith('/admin/produits/')) {
+    if (pathname?.startsWith('/admin/produits') || pathname === '/admin/produits') {
       setProduitsExpanded(true)
     }
-    if (pathname?.startsWith('/admin/commandes/')) {
+    if (pathname?.startsWith('/admin/commandes') || pathname === '/admin/commandes') {
       setCommandesExpanded(true)
     }
     if (pathname === '/admin/categories' || pathname?.startsWith('/admin/categories/')) {

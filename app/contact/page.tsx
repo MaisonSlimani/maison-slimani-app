@@ -29,6 +29,101 @@ export default function ContactPage() {
     window.scrollTo(0, 0)
   }, [])
 
+  // SEO Meta Tags
+  useEffect(() => {
+    // Update title
+    document.title = 'Contact - Maison Slimani'
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]')
+    const description = 'Contactez Maison Slimani pour toute question sur nos chaussures homme haut de gamme. Service client disponible pour vous accompagner.'
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    // Update Open Graph tags
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    if (ogTitle) {
+      ogTitle.setAttribute('content', 'Contact - Maison Slimani')
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:title')
+      meta.content = 'Contact - Maison Slimani'
+      document.head.appendChild(meta)
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]')
+    if (ogDescription) {
+      ogDescription.setAttribute('content', description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:description')
+      meta.content = description
+      document.head.appendChild(meta)
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href)
+    } else {
+      const meta = document.createElement('meta')
+      meta.setAttribute('property', 'og:url')
+      meta.content = window.location.href
+      document.head.appendChild(meta)
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (canonical) {
+      canonical.setAttribute('href', window.location.href)
+    } else {
+      canonical = document.createElement('link')
+      canonical.setAttribute('rel', 'canonical')
+      canonical.setAttribute('href', window.location.href)
+      document.head.appendChild(canonical)
+    }
+
+    // Add structured data (ContactPage)
+    const existingScript = document.getElementById('contact-structured-data')
+    if (existingScript) {
+      existingScript.remove()
+    }
+    
+    const script = document.createElement('script')
+    script.id = 'contact-structured-data'
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'ContactPage',
+      name: 'Contact - Maison Slimani',
+      description: description,
+      url: window.location.href,
+      breadcrumb: {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Accueil',
+            item: window.location.origin
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Contact',
+            item: window.location.href
+          }
+        ]
+      }
+    })
+    document.head.appendChild(script)
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setEnvoiEnCours(true)

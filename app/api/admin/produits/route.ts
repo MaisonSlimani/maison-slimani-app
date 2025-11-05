@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { nom, description, prix, stock, categorie, vedette, image_url, taille } = body
+    const { nom, description, prix, stock, categorie, vedette, image_url, taille, has_colors, images, couleurs } = body
 
     if (!nom || !description || prix === undefined || stock === undefined || !categorie) {
       return NextResponse.json(
@@ -98,25 +98,46 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    const insertData: any = {
+      nom,
+      description,
+      prix: parseFloat(prix),
+      stock: parseInt(stock),
+      categorie,
+      vedette: vedette || false,
+      image_url: image_url || null,
+      taille: taille || null,
+      has_colors: has_colors || false,
+    }
+
+    // Ajouter images et couleurs si fournis (même si vides)
+    if (images !== undefined) {
+      insertData.images = Array.isArray(images) ? images : null
+    }
+    if (couleurs !== undefined) {
+      insertData.couleurs = Array.isArray(couleurs) ? couleurs : null
+    }
+
+    // Debug: log what we're inserting
+    console.log('📦 Insertion produit:', {
+      nom: insertData.nom,
+      hasImages: !!insertData.images,
+      imagesCount: insertData.images?.length || 0,
+      hasCouleurs: !!insertData.couleurs,
+      couleursCount: insertData.couleurs?.length || 0,
+    })
+
     const { data, error } = await supabase
       .from('produits')
-      .insert({
-        nom,
-        description,
-        prix: parseFloat(prix),
-        stock: parseInt(stock),
-        categorie,
-        vedette: vedette || false,
-        image_url: image_url || null,
-        taille: taille || null,
-      })
+      .insert(insertData)
       .select()
       .single()
 
     if (error) {
       console.error('Erreur lors de la création du produit:', error)
+      console.error('Données envoyées:', insertData)
       return NextResponse.json(
-        { error: 'Erreur lors de la création du produit' },
+        { error: `Erreur lors de la création du produit: ${error.message}` },
         { status: 500 }
       )
     }
@@ -151,7 +172,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, nom, description, prix, stock, categorie, vedette, image_url, taille } = body
+    const { id, nom, description, prix, stock, categorie, vedette, image_url, taille, has_colors, images, couleurs } = body
 
     if (!id) {
       return NextResponse.json(
@@ -182,6 +203,19 @@ export async function PUT(request: NextRequest) {
     if (vedette !== undefined) updateData.vedette = vedette
     if (image_url !== undefined) updateData.image_url = image_url || null
     if (taille !== undefined) updateData.taille = taille || null
+    if (has_colors !== undefined) updateData.has_colors = has_colors
+    // Ajouter images et couleurs (même si vides)
+    if (images !== undefined) updateData.images = Array.isArray(images) ? images : null
+    if (couleurs !== undefined) updateData.couleurs = Array.isArray(couleurs) ? couleurs : null
+
+    // Debug: log what we're updating
+    console.log('📦 Mise à jour produit:', {
+      id,
+      hasImages: !!updateData.images,
+      imagesCount: updateData.images?.length || 0,
+      hasCouleurs: !!updateData.couleurs,
+      couleursCount: updateData.couleurs?.length || 0,
+    })
 
     const { data, error } = await supabase
       .from('produits')
@@ -192,8 +226,9 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       console.error('Erreur lors de la mise à jour du produit:', error)
+      console.error('Données envoyées:', updateData)
       return NextResponse.json(
-        { error: 'Erreur lors de la mise à jour du produit' },
+        { error: `Erreur lors de la mise à jour du produit: ${error.message}` },
         { status: 500 }
       )
     }
