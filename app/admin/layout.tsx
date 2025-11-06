@@ -83,14 +83,16 @@ export default function AdminLayout({
           
           // Détecter les nouvelles commandes pour notification globale (polling fallback)
           // Vérifier même en mode silent (polling) pour détecter les nouvelles commandes
-          const nouvellesCommandesIds = new Set(commandes.map((c: any) => c.id))
+          const nouvellesCommandesIds = new Set<string>(
+            (commandes as Array<{ id: string }>).map((c) => String(c.id))
+          )
           const anciennesCommandesIds = lastCommandeIdsRef.current
           
           // Si on a déjà des IDs enregistrés, comparer pour trouver les nouvelles
           // (Seulement si real-time n'a pas déjà déclenché la notification)
           if (anciennesCommandesIds.size > 0) {
             const commandesNouvelles = commandes.filter(
-              (c: any) => !anciennesCommandesIds.has(c.id)
+              (c: any) => !anciennesCommandesIds.has(String(c.id))
             )
             
             if (commandesNouvelles.length > 0) {

@@ -61,7 +61,7 @@ export default function CheckoutPage() {
 
   // SEO: Noindex (transactional page)
   useEffect(() => {
-    let robotsMeta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null
+    const robotsMeta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null
     if (robotsMeta) {
       robotsMeta.setAttribute('content', 'noindex, nofollow')
     } else {

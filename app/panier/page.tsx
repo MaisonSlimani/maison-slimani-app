@@ -25,14 +25,14 @@ export default function PanierPage() {
 
   // SEO: Noindex (user-specific page)
   useEffect(() => {
-    let robotsMeta = document.querySelector('meta[name="robots"]')
+    const robotsMeta = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null
     if (robotsMeta) {
       robotsMeta.setAttribute('content', 'noindex, nofollow')
     } else {
-      robotsMeta = document.createElement('meta')
-      robotsMeta.name = 'robots'
-      robotsMeta.content = 'noindex, nofollow'
-      document.head.appendChild(robotsMeta)
+      const meta = document.createElement('meta') as HTMLMetaElement
+      meta.name = 'robots'
+      meta.content = 'noindex, nofollow'
+      document.head.appendChild(meta)
     }
   }, [])
 
