@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button'
 import { useCart } from '@/lib/hooks/useCart'
 import { cn } from '@/lib/utils'
 import { useWishlist } from '@/lib/hooks/useWishlist'
+import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 
 const EnteteMobile = () => {
   const { items, isLoaded } = useCart()
   const { items: wishlistItems, isLoaded: wishlistLoaded } = useWishlist()
+  const { openDrawer } = useCartDrawer()
   const [cartCount, setCartCount] = useState(0)
   const [wishlistCount, setWishlistCount] = useState(0)
 
@@ -118,16 +120,14 @@ const EnteteMobile = () => {
               <span className="sr-only">Favoris</span>
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className="relative">
-            <Link href="/panier">
-              <ShoppingBag className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-dore text-charbon">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-              <span className="sr-only">Panier</span>
-            </Link>
+          <Button variant="ghost" size="icon" onClick={openDrawer} className="relative">
+            <ShoppingBag className="w-5 h-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-dore text-charbon">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
+            <span className="sr-only">Panier</span>
           </Button>
         </div>
       </div>

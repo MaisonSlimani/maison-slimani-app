@@ -15,69 +15,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowUp, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-const categoriesConfig: Record<string, { nom: string; image: string; description: string }> = {
-  classiques: {
-    nom: 'Classiques',
-    image: '/assets/categorie-classiques.jpg',
-    description: "L'essence de l'élégance quotidienne. Nos modèles classiques allient tradition et modernité pour un style intemporel.",
-  },
-  'cuirs-exotiques': {
-    nom: 'Cuirs Exotiques',
-    image: '/assets/categorie-exotiques.jpg',
-    description: 'Le luxe dans sa forme la plus rare. Des cuirs précieux et exotiques pour des créations d\'exception.',
-  },
-  'editions-limitees': {
-    nom: 'Éditions Limitées',
-    image: '/assets/categorie-limitees.jpg',
-    description: 'Des pièces uniques pour les connaisseurs. Chaque édition limitée raconte une histoire unique.',
-  },
-  nouveautes: {
-    nom: 'Nouveautés',
-    image: '/assets/categorie-nouveautes.jpg',
-    description: 'Les dernières créations de nos ateliers. Découvrez nos nouveautés qui célèbrent l\'innovation et le savoir-faire marocain.',
-  },
-  tous: {
-    nom: 'Tous nos produits',
-    image: '/assets/hero-chaussures.jpg',
-    description: 'Explorez notre collection complète de chaussures homme haut de gamme, confectionnées avec passion au Maroc.',
-  },
-}
-
 export default function CategoriePage() {
   const params = useParams()
   const categorieSlug = params.categorie as string
   
-  // Initialize categorieInfo immediately based on the slug to prevent flash
-  const getInitialCategorieInfo = () => {
-    if (categorieSlug && categoriesConfig[categorieSlug]) {
-      return categoriesConfig[categorieSlug]
-    }
-    return {
-      nom: 'Collection',
-      image: '/assets/hero-chaussures.jpg',
-      description: 'Découvrez notre collection exclusive.',
-    }
-  }
-  
   const [produits, setProduits] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingCategory, setLoadingCategory] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('pertinence')
-  const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string }>(getInitialCategorieInfo())
+  const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string } | null>(null)
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    // Update categorieInfo immediately when slug changes
-    if (categorieSlug && categoriesConfig[categorieSlug]) {
-      setCategorieInfo(categoriesConfig[categorieSlug])
-    }
-  }, [categorieSlug])
+  }, [])
 
-  // Charger la catégorie depuis la base si elle existe (prioritaire sur le fallback local)
+  // Charger la catégorie depuis la base de données - DOIT être chargé AVANT le rendu
   useEffect(() => {
     const chargerCategorieDepuisDB = async () => {
       try {
-        if (!categorieSlug) return
+        setLoadingCategory(true)
+        if (!categorieSlug || categorieSlug === 'tous') {
+          // Pour "tous", utiliser des valeurs par défaut
+          setCategorieInfo({
+            nom: 'Tous nos produits',
+            image: '/assets/hero-chaussures.jpg',
+            description: 'Explorez notre collection complète de chaussures homme haut de gamme, confectionnées avec passion au Maroc.',
+          })
+          setLoadingCategory(false)
+          return
+        }
+
         const supabase = createClient()
         const { data, error } = await supabase
           .from('categories')
@@ -86,21 +54,45 @@ export default function CategoriePage() {
           .eq('active', true)
           .single()
 
-        if (error || !data) return
+        if (error || !data) {
+          // Si la catégorie n'existe pas, utiliser des valeurs par défaut
+          setCategorieInfo({
+            nom: 'Collection',
+            image: '/assets/hero-chaussures.jpg',
+            description: 'Découvrez notre collection exclusive.',
+          })
+          setLoadingCategory(false)
+          return
+        }
 
-        setCategorieInfo({
-          nom: data.nom || categorieInfo.nom,
-          image: data.image_url || categorieInfo.image,
-          description: data.description || categorieInfo.description,
-        })
+        // Vérifier que l'image existe, sinon utiliser un fallback uniquement si vraiment nécessaire
+        if (!data.image_url || data.image_url.trim() === '') {
+          console.warn(`Catégorie "${data.nom}" n'a pas d'image_url définie`)
+          setCategorieInfo({
+            nom: data.nom,
+            image: '/assets/hero-chaussures.jpg', // Fallback uniquement si vraiment pas d'image
+            description: data.description || '',
+          })
+        } else {
+          setCategorieInfo({
+            nom: data.nom,
+            image: data.image_url, // Utiliser l'image de la base de données
+            description: data.description || '',
+          })
+        }
       } catch (e) {
-        // en cas d'erreur on garde le fallback local
-        console.warn('Impossible de charger la catégorie depuis la base:', e)
+        console.error('Erreur lors du chargement de la catégorie:', e)
+        setCategorieInfo({
+          nom: 'Collection',
+          image: '/assets/hero-chaussures.jpg',
+          description: 'Découvrez notre collection exclusive.',
+        })
+      } finally {
+        setLoadingCategory(false)
       }
     }
 
     chargerCategorieDepuisDB()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categorieSlug])
 
   // SEO Meta Tags - Dynamic per category
@@ -231,24 +223,20 @@ export default function CategoriePage() {
       try {
         const supabase = createClient()
         
-        // Mapper le slug vers le nom de catégorie
-        const categorieMap: Record<string, string> = {
-          'classiques': 'Classiques',
-          'cuirs-exotiques': 'Cuirs Exotiques',
-          'editions-limitees': 'Éditions Limitées',
-          'nouveautes': 'Nouveautés',
-        }
-
         let query = supabase.from('produits').select('*')
 
-        // Déterminer le nom de catégorie et filtrer
-        let categorieNom: string | null = null
-        
+        // Filtrer par catégorie si ce n'est pas "tous"
         if (categorieSlug !== 'tous') {
-          // Essayer d'abord le mapping direct
-          if (categorieMap[categorieSlug]) {
-            categorieNom = categorieMap[categorieSlug]
-            query = query.eq('categorie', categorieNom)
+          // Charger d'abord la catégorie pour obtenir son nom
+          const { data: categorieData } = await supabase
+            .from('categories')
+            .select('nom')
+            .eq('slug', categorieSlug)
+            .eq('active', true)
+            .single()
+
+          if (categorieData?.nom) {
+            query = query.eq('categorie', categorieData.nom)
           }
         }
 
@@ -262,35 +250,7 @@ export default function CategoriePage() {
         }
 
         const { data } = await query
-
         setProduits(data || [])
-        
-        // Mettre à jour les infos de catégorie - PRIORITÉ: utiliser la catégorie réelle des produits
-        if (data && data.length > 0) {
-          const firstProductCategorie = data[0]?.categorie
-          if (firstProductCategorie) {
-            // Si on a une config pour ce slug, l'utiliser, sinon utiliser la catégorie réelle
-            if (categoriesConfig[categorieSlug]) {
-              setCategorieInfo(categoriesConfig[categorieSlug])
-            } else {
-              setCategorieInfo({
-                nom: firstProductCategorie,
-                image: data[0]?.image_url || '/assets/hero-chaussures.jpg',
-                description: `Découvrez notre collection ${firstProductCategorie.toLowerCase()}.`,
-              })
-            }
-          }
-        } else if (categoriesConfig[categorieSlug]) {
-          // Si pas de produits mais config existe, utiliser la config
-          setCategorieInfo(categoriesConfig[categorieSlug])
-        } else if (categorieNom) {
-          // Fallback: utiliser le nom de catégorie mappé
-          setCategorieInfo({
-            nom: categorieNom,
-            image: '/assets/hero-chaussures.jpg',
-            description: `Découvrez notre collection ${categorieNom.toLowerCase()}.`,
-          })
-        }
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error)
       } finally {
@@ -303,6 +263,24 @@ export default function CategoriePage() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Ne pas rendre le contenu principal tant que la catégorie n'est pas chargée
+  if (loadingCategory || !categorieInfo) {
+    return (
+      <div className="pb-24 md:pb-0 pt-0 md:pt-20">
+        <NavigationDesktop />
+        <EnteteMobile />
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dore mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Chargement...</p>
+          </div>
+        </div>
+        <Footer />
+        <MenuBasNavigation />
+      </div>
+    )
   }
 
   return (
@@ -325,6 +303,7 @@ export default function CategoriePage() {
             className="object-cover"
             priority
             sizes="100vw"
+            unoptimized={categorieInfo.image.startsWith('http')} // Si c'est une URL externe (Supabase)
           />
         </motion.div>
         {/* Overlay dégradé sombre pour meilleure lisibilité */}
@@ -372,25 +351,30 @@ export default function CategoriePage() {
       </section>
 
       {/* Contenu avec filtres et produits */}
-      <div className="container px-6 py-12 mx-auto">
+      <div className="container px-4 md:px-6 py-8 md:py-12 mx-auto">
         {/* Filtres avec animation */}
         <motion.div
-          className="flex flex-wrap gap-4 mb-12"
+          className="flex flex-wrap items-center gap-4 mb-8 md:mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <Select value={triPrix} onValueChange={setTriPrix}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Trier par" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pertinence">Pertinence</SelectItem>
-              <SelectItem value="prix-asc">Prix croissant</SelectItem>
-              <SelectItem value="prix-desc">Prix décroissant</SelectItem>
-              <SelectItem value="nouveaute">Nouveautés</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <label htmlFor="filter-select" className="text-sm font-medium text-muted-foreground hidden sm:inline">
+              Filtrer:
+            </label>
+            <Select value={triPrix} onValueChange={setTriPrix}>
+              <SelectTrigger id="filter-select" className="w-1/2 sm:w-[240px] md:w-[280px]">
+                <SelectValue placeholder="Filtrer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pertinence">Filtrer</SelectItem>
+                <SelectItem value="prix-asc">Prix croissant</SelectItem>
+                <SelectItem value="prix-desc">Prix décroissant</SelectItem>
+                <SelectItem value="nouveaute">Nouveautés</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </motion.div>
 
         {/* Produits avec animations en cascade */}
@@ -415,7 +399,7 @@ export default function CategoriePage() {
             </Button>
           </motion.div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
             {produits.map((produit, index) => (
               <motion.div
                 key={produit.id}
@@ -428,7 +412,7 @@ export default function CategoriePage() {
                   ease: [0.22, 1, 0.36, 1],
                 }}
                 whileHover={{ y: -8 }}
-                className="transition-transform duration-500"
+                className="transition-transform duration-500 h-full"
               >
                 <CarteProduit produit={produit} showActions={true} />
               </motion.div>

@@ -11,7 +11,6 @@ const schemaCategorie = z.object({
   slug: z.string().min(1, 'Le slug est requis'),
   description: z.string().optional(),
   image_url: z.string().optional().nullable(),
-  couleur: z.string().optional(),
   ordre: z.number().int().optional(),
   active: z.boolean().optional(),
 })

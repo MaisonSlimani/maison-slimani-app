@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,17 +9,83 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 
 export default function AdminParametresPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
-    email_entreprise: 'contact@maisonslimani.com',
-    telephone: '+212 5XX-XXXXXX',
-    adresse: 'Casablanca, Maroc',
+    email_entreprise: '',
+    telephone: '',
+    adresse: '',
     description: '',
   })
 
+  useEffect(() => {
+    const chargerParametres = async () => {
+      try {
+        const response = await fetch('/api/admin/settings')
+        if (!response.ok) throw new Error('Erreur lors du chargement')
+        
+        const result = await response.json()
+        if (result.data) {
+          setFormData({
+            email_entreprise: result.data.email_entreprise || '',
+            telephone: result.data.telephone || '',
+            adresse: result.data.adresse || '',
+            description: result.data.description || '',
+          })
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des paramètres:', error)
+        toast.error('Erreur lors du chargement des paramètres')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    chargerParametres()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Sauvegarder dans Supabase (table parametres ou configuration)
-    toast.success('Paramètres sauvegardés')
+    setSaving(true)
+    
+    try {
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erreur lors de la sauvegarde')
+      }
+
+      toast.success('Paramètres sauvegardés avec succès')
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-serif mb-2">Paramètres</h1>
+          <p className="text-muted-foreground">Gérez les paramètres de votre site</p>
+        </div>
+        <Card className="p-6 bg-card border-border">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto"></div>
+            <p className="text-muted-foreground mt-4">Chargement...</p>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -67,7 +133,9 @@ export default function AdminParametresPage() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
-          <Button type="submit">Sauvegarder</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+          </Button>
         </form>
       </Card>
     </div>

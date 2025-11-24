@@ -23,7 +23,6 @@ export default function AdminCategoriesPage() {
     slug: '',
     description: '',
     image_url: '',
-    couleur: '',
     ordre: 0,
     active: true,
   })
@@ -136,7 +135,6 @@ export default function AdminCategoriesPage() {
         slug: '',
         description: '',
         image_url: '',
-        couleur: '',
         ordre: 0,
         active: true,
       })
@@ -195,7 +193,6 @@ export default function AdminCategoriesPage() {
                   slug: '',
                   description: '',
                   image_url: '',
-                  couleur: '',
                   ordre: categories.length,
                   active: true,
                 })
@@ -247,25 +244,14 @@ export default function AdminCategoriesPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="couleur">Couleur (hex)</Label>
-                  <Input
-                    id="couleur"
-                    type="color"
-                    value={formData.couleur || '#000000'}
-                    onChange={(e) => setFormData({ ...formData, couleur: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="ordre">Ordre d'affichage</Label>
-                  <Input
-                    id="ordre"
-                    type="number"
-                    value={formData.ordre}
-                    onChange={(e) => setFormData({ ...formData, ordre: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="ordre">Ordre d'affichage</Label>
+                <Input
+                  id="ordre"
+                  type="number"
+                  value={formData.ordre}
+                  onChange={(e) => setFormData({ ...formData, ordre: parseInt(e.target.value) || 0 })}
+                />
               </div>
               <div>
                 <Label htmlFor="image">Image de la catégorie</Label>
@@ -361,7 +347,6 @@ export default function AdminCategoriesPage() {
                       slug: categorie.slug,
                       description: categorie.description || '',
                       image_url: categorie.image_url || '',
-                      couleur: categorie.couleur || '',
                       ordre: categorie.ordre || 0,
                       active: categorie.active !== false,
                     })

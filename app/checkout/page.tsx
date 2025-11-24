@@ -294,7 +294,7 @@ export default function CheckoutPage() {
             </Card>
 
             {/* Formulaire */}
-            <Card className="p-6 order-1 md:order-2">
+            <Card className="p-6 order-1 md:order-2 bg-secondary/40">
               <h2 className="text-2xl font-serif mb-6">Informations de livraison</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>

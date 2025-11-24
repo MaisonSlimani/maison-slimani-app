@@ -33,6 +33,8 @@ export default function AdminLayout({
   const [produitsExpanded, setProduitsExpanded] = useState(false)
   const [commandesExpanded, setCommandesExpanded] = useState(false)
   const [commandesEnAttente, setCommandesEnAttente] = useState(0)
+  const [categories, setCategories] = useState<Array<{ slug: string; nom: string }>>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const lastCommandeIdsRef = useRef<Set<string>>(new Set())
 
@@ -171,16 +173,24 @@ export default function AdminLayout({
             chargerCommandesEnAttente()
           }
         )
-        .subscribe((status) => {
-          console.log('Layout: Statut real-time:', status)
+        .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log('✅ Abonnement real-time actif (layout)')
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Erreur de canal real-time (layout)')
+            // Log error details if available, but don't spam the console
+            if (err) {
+              console.warn('⚠️ Erreur de canal real-time (layout):', err.message || err)
+            } else {
+              console.warn('⚠️ Erreur de canal real-time (layout) - Le polling de secours est actif')
+            }
+            // Real-time failed, but polling will handle updates
           } else if (status === 'TIMED_OUT') {
-            console.warn('⚠️ Abonnement real-time timeout (layout)')
+            console.warn('⚠️ Abonnement real-time timeout (layout) - Le polling de secours est actif')
           } else if (status === 'CLOSED') {
-            console.warn('⚠️ Canal real-time fermé (layout)')
+            // Channel closed is normal when component unmounts, only log if unexpected
+            if (loading === false) {
+              console.log('ℹ️ Canal real-time fermé (layout)')
+            }
           }
         })
 
@@ -195,6 +205,36 @@ export default function AdminLayout({
         clearInterval(pollingInterval)
         supabase.removeChannel(channel)
       }
+    }
+  }, [loading])
+
+  // Charger les catégories depuis la base de données
+  useEffect(() => {
+    const chargerCategories = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('categories')
+          .select('nom, slug')
+          .eq('active', true)
+          .order('ordre', { ascending: true })
+
+        if (error) throw error
+
+        setCategories((data || []).map(cat => ({
+          slug: cat.slug,
+          nom: cat.nom,
+        })))
+      } catch (error) {
+        console.error('Erreur lors du chargement des catégories:', error)
+        setCategories([])
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    if (!loading) {
+      chargerCategories()
     }
   }, [loading])
 
@@ -220,17 +260,8 @@ export default function AdminLayout({
     }
   }
 
-  // Définir les constantes avant le return conditionnel
-  const categories = [
-    { slug: 'classiques', nom: 'Classiques', icon: Package },
-    { slug: 'cuirs-exotiques', nom: 'Cuirs Exotiques', icon: Package },
-    { slug: 'editions-limitees', nom: 'Éditions Limitées', icon: Package },
-    { slug: 'nouveautes', nom: 'Nouveautés', icon: Package },
-  ]
-
   const menuItems = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
   ]
 
   const statutsCommandes = [
@@ -250,17 +281,17 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="flex h-screen">
+      <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 bg-card border-r border-border flex flex-col shadow-lg">
-          <div className="p-6 border-b border-border">
+        <aside className="w-64 bg-card border-r border-border flex flex-col shadow-lg h-full">
+          <div className="p-6 border-b border-border flex-shrink-0">
             <h1 className="text-2xl font-serif">
               Maison <span className="text-dore">Slimani</span>
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Administration</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden min-h-0">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -314,17 +345,6 @@ export default function AdminLayout({
                     className="overflow-hidden"
                   >
                     <div className="pl-4 space-y-1 pt-2">
-                      <Link
-                        href="/admin/commandes"
-                        className={cn(
-                          'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
-                          pathname === '/admin/commandes'
-                            ? 'bg-dore/10 text-dore font-medium'
-                            : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
-                        )}
-                      >
-                        <span>Toutes les catégories</span>
-                      </Link>
                       <Link
                         href="/admin/commandes/toutes"
                         className={cn(
@@ -402,33 +422,52 @@ export default function AdminLayout({
                   >
                     <div className="pl-4 space-y-1 pt-2">
                       <Link
-                        href="/admin/produits"
+                        href="/admin/categories"
                         className={cn(
                           'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
-                          pathname === '/admin/produits'
-                            ? 'bg-dore/10 text-dore font-medium'
-                            : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                          pathname === '/admin/categories' || pathname?.startsWith('/admin/categories/')
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'text-primary/80 hover:text-primary hover:bg-primary/10'
                         )}
                       >
-                        <span>Tous les produits</span>
+                        <span>Tous les catégories</span>
                       </Link>
-                      {categories.map((categorie) => {
-                        const isActive = pathname === `/admin/produits/${categorie.slug}`
-                        return (
-                          <Link
-                            key={categorie.slug}
-                            href={`/admin/produits/${categorie.slug}`}
-                            className={cn(
-                              'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
-                              isActive
-                                ? 'bg-dore/10 text-dore font-medium'
-                                : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
-                            )}
-                          >
-                            <span>{categorie.nom}</span>
-                          </Link>
-                        )
-                      })}
+                      <div className="space-y-1">
+                        <Link
+                          href="/admin/produits"
+                          className={cn(
+                            'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
+                            pathname === '/admin/produits' && !pathname?.startsWith('/admin/produits/')
+                              ? 'bg-dore/10 text-dore font-medium'
+                              : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                          )}
+                        >
+                          <span>Tous les produits</span>
+                        </Link>
+                        {loadingCategories ? (
+                          <div className="pl-4 pr-4 py-2 text-sm text-muted-foreground">Chargement...</div>
+                        ) : categories.length > 0 ? (
+                          <div className="pl-4 space-y-1">
+                            {categories.map((categorie) => {
+                              const isActive = pathname === `/admin/produits/${categorie.slug}`
+                              return (
+                                <Link
+                                  key={categorie.slug}
+                                  href={`/admin/produits/${categorie.slug}`}
+                                  className={cn(
+                                    'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors',
+                                    isActive
+                                      ? 'bg-dore/10 text-dore font-medium'
+                                      : 'text-foreground/70 hover:text-foreground hover:bg-accent/30'
+                                  )}
+                                >
+                                  <span>{categorie.nom}</span>
+                                </Link>
+                              )
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -436,7 +475,19 @@ export default function AdminLayout({
             </div>
           </nav>
 
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-2 flex-shrink-0">
+            <Link
+              href="/admin/parametres"
+              className={cn(
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full',
+                pathname === '/admin/parametres'
+                  ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
+                  : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
+              )}
+            >
+              <Settings className="w-5 h-5" />
+              <span>Paramètres</span>
+            </Link>
             <Button
               variant="ghost"
               onClick={handleLogout}

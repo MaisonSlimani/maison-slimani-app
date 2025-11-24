@@ -18,6 +18,12 @@ import { toast } from 'sonner'
 export default function ContactPage() {
   const router = useRouter()
   const [envoiEnCours, setEnvoiEnCours] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(true)
+  const [settings, setSettings] = useState({
+    email_entreprise: 'contact@maisonslimani.com',
+    telephone: '+212 5XX-XXXXXX',
+    adresse: 'Casablanca, Maroc',
+  })
   const [formData, setFormData] = useState({
     nom: '',
     email: '',
@@ -27,6 +33,31 @@ export default function ContactPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
+    const chargerSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/settings')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.data) {
+            setSettings({
+              email_entreprise: result.data.email_entreprise || 'contact@maisonslimani.com',
+              telephone: result.data.telephone || '+212 5XX-XXXXXX',
+              adresse: result.data.adresse || 'Casablanca, Maroc',
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des paramètres:', error)
+        // Garder les valeurs par défaut en cas d'erreur
+      } finally {
+        setLoadingSettings(false)
+      }
+    }
+
+    chargerSettings()
   }, [])
 
   // SEO Meta Tags
@@ -172,19 +203,29 @@ export default function ContactPage() {
             <Card className="p-6 text-center">
               <Mail className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-medium mb-2">Email</h3>
-              <p className="text-sm text-muted-foreground">contact@maisonslimani.com</p>
+              <a 
+                href={`mailto:${settings.email_entreprise}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {settings.email_entreprise}
+              </a>
             </Card>
 
             <Card className="p-6 text-center">
               <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-medium mb-2">Téléphone</h3>
-              <p className="text-sm text-muted-foreground">+212 5XX-XXXXXX</p>
+              <a 
+                href={`tel:${settings.telephone.replace(/\s/g, '')}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {settings.telephone}
+              </a>
             </Card>
 
             <Card className="p-6 text-center">
               <MapPin className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-medium mb-2">Adresse</h3>
-              <p className="text-sm text-muted-foreground">Casablanca, Maroc</p>
+              <p className="text-sm text-muted-foreground">{settings.adresse}</p>
             </Card>
           </div>
 

@@ -19,10 +19,6 @@ import { useState } from 'react'
 // Chemins des images (Next.js Image nécessite des chemins relatifs depuis public/)
 const heroImage = '/assets/hero-chaussures.jpg'
 const lookbookImage = '/assets/lookbook-1.jpg'
-const categorieClassiques = '/assets/categorie-classiques.jpg'
-const categorieExotiques = '/assets/categorie-exotiques.jpg'
-const categorieLimitees = '/assets/categorie-limitees.jpg'
-const categorieNouveautes = '/assets/categorie-nouveautes.jpg'
 const lookbookLifestyle1 = '/assets/lookbook-lifestyle-1.jpg'
 const lookbookAtelier = '/assets/lookbook-atelier.jpg'
 const lookbookLifestyle2 = '/assets/lookbook-lifestyle-2.jpg'
@@ -30,6 +26,13 @@ const lookbookLifestyle2 = '/assets/lookbook-lifestyle-2.jpg'
 export default function AccueilPage() {
   const [produitsVedette, setProduitsVedette] = useState<any[]>([])
   const [loadingVedette, setLoadingVedette] = useState(true)
+  const [categories, setCategories] = useState<Array<{
+    titre: string
+    tagline: string
+    image: string
+    lien: string
+  }>>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -168,32 +171,44 @@ export default function AccueilPage() {
     chargerProduitsVedette()
   }, [])
 
-  const categories = [
-    {
-      titre: 'Classiques',
-      tagline: "L'essence de l'élégance quotidienne",
-      image: categorieClassiques,
-      lien: '/boutique/classiques',
-    },
-    {
-      titre: 'Cuirs Exotiques',
-      tagline: 'Le luxe dans sa forme la plus rare',
-      image: categorieExotiques,
-      lien: '/boutique/cuirs-exotiques',
-    },
-    {
-      titre: 'Éditions Limitées',
-      tagline: 'Des pièces uniques pour les connaisseurs',
-      image: categorieLimitees,
-      lien: '/boutique/editions-limitees',
-    },
-    {
-      titre: 'Nouveautés',
-      tagline: 'Les dernières créations de nos ateliers',
-      image: categorieNouveautes,
-      lien: '/boutique/nouveautes',
-    },
-  ]
+  useEffect(() => {
+    const chargerCategories = async () => {
+      try {
+        const supabase = createClient()
+        
+        // Charger les catégories actives depuis la base de données
+        const { data: categoriesData, error } = await supabase
+          .from('categories')
+          .select('nom, description, image_url, slug, ordre')
+          .eq('active', true)
+          .order('ordre', { ascending: true })
+
+        if (error) throw error
+
+        // Mapper les données de la base vers le format attendu par CarteCategorie
+        // Filtrer les catégories sans image_url pour éviter les fallbacks
+        const categoriesMapped = (categoriesData || [])
+          .filter((cat) => cat.image_url && cat.image_url.trim() !== '') // Seulement les catégories avec image
+          .map((cat) => ({
+            titre: cat.nom,
+            tagline: cat.description || '',
+            image: cat.image_url, // Pas de fallback - on filtre déjà les vides
+            lien: `/boutique/${cat.slug}`,
+          }))
+
+        setCategories(categoriesMapped)
+      } catch (error) {
+        console.error('Erreur lors du chargement des catégories:', error)
+        // En cas d'erreur, laisser categories vide - la section ne s'affichera pas
+        setCategories([])
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    chargerCategories()
+  }, [])
+
 
 
   const lookbookImages = [
@@ -284,42 +299,44 @@ export default function AccueilPage() {
       </section>
 
       {/* Nos Catégories */}
-      <section className="py-20 px-6 bg-ecru -mt-32 pt-32 md:-mt-32 md:pt-32" style={{ marginTop: '-8rem', marginBottom: '-1px' }}>
-        <div className="container max-w-6xl mx-auto">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-serif mb-4 text-charbon">
-              Nos Catégories
-            </h2>
-            <p className="text-lg text-charbon/70 max-w-2xl mx-auto">
-              Découvrez nos collections exclusives, chacune incarnant l'excellence marocaine
-            </p>
-          </motion.div>
+      {!loadingCategories && categories.length > 0 && (
+        <section className="py-20 px-6 bg-ecru -mt-32 pt-32 md:-mt-32 md:pt-32" style={{ marginTop: '-8rem', marginBottom: '-1px' }}>
+          <div className="container max-w-6xl mx-auto">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl md:text-5xl font-serif mb-4 text-charbon">
+                Nos Catégories
+              </h2>
+              <p className="text-lg text-charbon/70 max-w-2xl mx-auto">
+                Découvrez nos collections exclusives, chacune incarnant l'excellence marocaine
+              </p>
+            </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {categories.map((categorie, index) => (
-              <motion.div
-                key={categorie.titre}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.6 }}
-              >
-                <CarteCategorie {...categorie} priority={index === 0} />
-              </motion.div>
-            ))}
+            <div className="grid md:grid-cols-2 gap-6">
+              {categories.map((categorie, index) => (
+                <motion.div
+                  key={categorie.titre}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, duration: 0.6 }}
+                >
+                  <CarteCategorie {...categorie} priority={index === 0} />
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Produits en Vedette */}
       {!loadingVedette && produitsVedette.length > 0 && (
-        <section className="py-20 px-6 bg-ecru">
+        <section className="py-12 md:py-20 px-3 md:px-6 bg-ecru">
           <div className="container max-w-6xl mx-auto">
             <motion.div
               className="text-center mb-12"
@@ -336,7 +353,7 @@ export default function AccueilPage() {
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
               {produitsVedette.map((produit, index) => (
                 <motion.div
                   key={produit.id}
@@ -349,7 +366,7 @@ export default function AccueilPage() {
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   whileHover={{ y: -8 }}
-                  className="transition-transform duration-500"
+                  className="transition-transform duration-500 h-full"
                 >
                   <CarteProduit produit={{
                     id: produit.id,
@@ -357,6 +374,13 @@ export default function AccueilPage() {
                     prix: produit.prix,
                     image_url: produit.image_url,
                     image: produit.image_url,
+                    stock: produit.stock,
+                    has_colors: produit.has_colors,
+                    couleurs: produit.couleurs,
+                    taille: produit.taille,
+                    matiere: produit.matiere,
+                    images: produit.images,
+                    slug: produit.slug,
                   }} />
                 </motion.div>
               ))}

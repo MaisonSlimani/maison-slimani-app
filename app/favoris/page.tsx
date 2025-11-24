@@ -226,7 +226,7 @@ export default function FavorisPage() {
               </Button>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {items.map((item) => {
                 const taillesDisponibles = getTaillesDisponibles(item)
                 const inCart = isInCart(item.id)
@@ -241,7 +241,17 @@ export default function FavorisPage() {
                       </div>
                     )}
                     
-                    <Link href={`/produit/${item.id}`} className="block mb-4">
+                    <Link
+                      href={`/produits/${item.slug || item.nom
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/\p{Diacritic}/gu, '')
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')}`}
+                      className="block mb-4"
+                    >
                       <div className={`relative aspect-square overflow-hidden rounded-lg mb-4 bg-muted ${isOutOfStock ? 'grayscale' : ''}`}>
                         <Image
                           src={item.image_url || item.image || '/placeholder.jpg'}

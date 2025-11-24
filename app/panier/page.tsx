@@ -82,7 +82,17 @@ export default function PanierPage() {
               {items.map((article) => (
                 <Card key={article.id} className="p-6">
                   <div className="flex gap-6">
-                    <Link href={`/produit/${article.id}`} className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity">
+                    <Link
+                      href={`/produits/${(article as any).slug || article.nom
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/\p{Diacritic}/gu, '')
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')}`}
+                      className="relative w-24 h-24 rounded overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity"
+                    >
                       <Image
                         src={article.image_url || article.image || '/placeholder.jpg'}
                         alt={article.nom}
@@ -92,7 +102,17 @@ export default function PanierPage() {
                       />
                     </Link>
                     <div className="flex-1">
-                      <Link href={`/produit/${article.id}`} className="font-medium mb-2 hover:text-dore transition-colors block">
+                      <Link
+                        href={`/produits/${(article as any).slug || article.nom
+                          .toLowerCase()
+                          .normalize('NFD')
+                          .replace(/\p{Diacritic}/gu, '')
+                          .replace(/[^a-z0-9\s-]/g, '')
+                          .trim()
+                          .replace(/\s+/g, '-')
+                          .replace(/-+/g, '-')}`}
+                        className="font-medium mb-2 hover:text-dore transition-colors block"
+                      >
                         <h3>{article.nom}</h3>
                       </Link>
                       <div className="text-sm text-muted-foreground mb-2 space-y-1">

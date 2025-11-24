@@ -19,6 +19,13 @@ interface ImageItem {
   ordre?: number
 }
 
+interface Couleur {
+  nom: string
+  code?: string
+  stock?: number
+  taille?: string
+}
+
 interface Produit {
   id: string
   nom: string
@@ -30,6 +37,8 @@ interface Produit {
   images?: ImageItem[] | string[]
   stock?: number
   taille?: string
+  has_colors?: boolean
+  couleurs?: Couleur[]
 }
 
 interface CarteProduitProps {
@@ -48,7 +57,16 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   }
   
   const imageUrl = getFirstImage()
-  const href = `/produit/${produit.id}`
+  const slugify = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+  const href = `/produits/${produit.slug || slugify(produit.nom)}`
   const { addItem: addToCart, items } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -57,8 +75,6 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   const [showModal, setShowModal] = useState(false)
   const [selectedTaille, setSelectedTaille] = useState<string>('')
   const [quantite, setQuantite] = useState(1)
-  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
-  const [isHovering, setIsHovering] = useState(false)
   const inWishlist = isInWishlist(produit.id)
   
   // Vérifier si le produit est dans le panier
@@ -76,6 +92,17 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     ? produit.taille.split(',').map(t => t.trim()).filter(t => t)
     : []
 
+  // Helper function to check if product is out of stock
+  const isOutOfStock = () => {
+    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+      // For products with colors, check if ANY color has stock > 0
+      return !produit.couleurs.some(c => (c.stock || 0) > 0)
+    } else {
+      // For products without colors, check the global stock
+      return produit.stock !== undefined && produit.stock <= 0
+    }
+  }
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -89,7 +116,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     }
 
     // Vérifier le stock
-    if (produit.stock !== undefined && produit.stock <= 0) {
+    if (isOutOfStock()) {
       toast.error('Produit en rupture de stock')
       return
     }
@@ -127,7 +154,8 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     }
 
     // Vérifier le stock
-    if (produit.stock !== undefined && produit.stock < quantite) {
+    // Note: For products with colors, stock validation happens in useCart hook
+    if (!produit.has_colors && produit.stock !== undefined && produit.stock < quantite) {
       toast.error('Stock insuffisant')
       return
     }
@@ -192,62 +220,43 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   }
 
   return (
-    <Card className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col">
-      <Link href={href} className="block">
+    <Card className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col h-full">
+      <Link href={href} className="block flex-1 flex flex-col">
         <motion.div
-          className="aspect-square overflow-hidden bg-muted relative group cursor-zoom-in"
-          onMouseMove={(e) => {
-            if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-              const rect = e.currentTarget.getBoundingClientRect()
-              const x = ((e.clientX - rect.left) / rect.width) * 100
-              const y = ((e.clientY - rect.top) / rect.height) * 100
-              setHoverPosition({ x, y })
-              setIsHovering(true)
-            }
-          }}
-          onMouseLeave={() => {
-            setIsHovering(false)
-            setHoverPosition(null)
-          }}
+          className="aspect-square overflow-hidden bg-muted relative group"
         >
           <Image
             src={imageUrl}
             alt={produit.nom}
             fill
-            className={cn(
-              'object-cover transition-transform duration-300',
-              isHovering && typeof window !== 'undefined' && window.innerWidth >= 768 && 'scale-150'
-            )}
-            style={{
-              transformOrigin: hoverPosition
-                ? `${hoverPosition.x}% ${hoverPosition.y}%`
-                : 'center',
-            }}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
           {/* Badge favori en haut à droite */}
           {inWishlist && (
-            <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-2">
-              <Heart className="w-4 h-4 text-charbon fill-current" />
+            <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-1.5 md:p-2">
+              <Heart className="w-3 h-3 md:w-4 md:h-4 text-charbon fill-current" />
             </div>
           )}
           {/* Badge rupture de stock */}
-          {produit.stock !== undefined && produit.stock <= 0 && (
-            <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-3 py-1.5">
-              <span className="text-white text-xs font-semibold uppercase tracking-wide">Rupture de stock</span>
+          {isOutOfStock() && (
+            <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-2 py-1 md:px-3 md:py-1.5">
+              <span className="text-white text-[10px] md:text-xs font-semibold uppercase tracking-wide">Rupture</span>
             </div>
           )}
         </motion.div>
 
-        <div className="p-5 flex-1 flex flex-col">
-          <h3 className="font-medium text-lg mb-1 group-hover:text-primary transition-colors">
-            {produit.nom}
-          </h3>
-          {produit.matiere && (
-            <p className="text-sm text-muted-foreground mb-3">{produit.matiere}</p>
-          )}
-          <p className="text-xl font-serif text-primary mb-4">
+        <div className="p-3 md:p-5 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 className="font-medium text-sm md:text-lg mb-0.5 md:mb-1 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+              {produit.nom}
+            </h3>
+            {produit.matiere && (
+              <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3 line-clamp-1">{produit.matiere}</p>
+            )}
+          </div>
+          <p className="text-base md:text-xl font-serif text-primary mt-auto">
             {produit.prix.toLocaleString('fr-MA')} DH
           </p>
         </div>
@@ -255,26 +264,27 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
       
       {/* Boutons d'action toujours visibles */}
       {showActions && (
-        <div className="px-5 pb-5 flex gap-2">
+        <div className="px-3 md:px-5 pb-3 md:pb-5 flex gap-1.5 md:gap-2">
           {isInCart ? (
             <Button
               size="sm"
               variant="outline"
               asChild
-              className="flex-1 border-charbon text-charbon hover:bg-charbon hover:text-background"
+              className="flex-1 border-charbon text-charbon hover:bg-charbon hover:text-background text-xs md:text-sm h-8 md:h-9"
             >
-              <Link href="/panier">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Aller au panier
+              <Link href="/panier" className="flex items-center justify-center">
+                <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline">Aller au panier</span>
+                <span className="sm:hidden">Panier</span>
               </Link>
             </Button>
           ) : (
             <Button
               size="sm"
               onClick={handleAddToCart}
-              disabled={isAddingToCart || (produit.stock !== undefined && produit.stock <= 0)}
+              disabled={isAddingToCart || isOutOfStock()}
               className={cn(
-                "flex-1 relative overflow-hidden",
+                "flex-1 relative overflow-hidden text-xs md:text-sm h-8 md:h-9",
                 addedToCart && !isInCart
                   ? "bg-green-600 text-white hover:bg-green-700" 
                   : "bg-dore text-charbon hover:bg-dore/90"
@@ -290,8 +300,9 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
                     transition={{ duration: 0.3, ease: "easeOut" }}
                     className="flex items-center justify-center"
                   >
-                    <Check className="w-4 h-4 mr-2" />
-                    Ajouté !
+                    <Check className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 flex-shrink-0" />
+                    <span className="hidden sm:inline">Ajouté !</span>
+                    <span className="sm:hidden">OK</span>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -302,8 +313,15 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
                     transition={{ duration: 0.3, ease: "easeOut" }}
                     className="flex items-center justify-center"
                   >
-                    <ShoppingBag className="w-4 h-4 mr-2" />
-                    {isAddingToCart ? 'Ajout...' : 'Ajouter'}
+                    <ShoppingBag className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 flex-shrink-0" />
+                    {isAddingToCart ? (
+                      <span className="hidden sm:inline">Ajout...</span>
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline">Ajouter</span>
+                        <span className="sm:hidden">Ajouter</span>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -315,11 +333,11 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
             onClick={handleToggleWishlist}
             disabled={isAddingToWishlist}
             className={cn(
-              "px-3",
+              "px-2 md:px-3 h-8 md:h-9 flex-shrink-0",
               inWishlist && "bg-dore/20 border-dore text-dore"
             )}
           >
-            <Heart className={cn("w-4 h-4", inWishlist && "fill-current")} />
+            <Heart className={cn("w-3 h-3 md:w-4 md:h-4", inWishlist && "fill-current")} />
           </Button>
         </div>
       )}

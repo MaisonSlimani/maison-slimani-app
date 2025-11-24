@@ -72,11 +72,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       
       const { data: produits } = await supabase
         .from('produits')
-        .select('id, date_ajout')
+        .select('id, nom, date_ajout')
         .order('date_ajout', { ascending: false })
 
+      // Helper function to generate slug from product name
+      const generateSlug = (name: string): string => {
+        return name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/\p{Diacritic}/gu, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+      }
+
       const productPages: MetadataRoute.Sitemap = (produits || []).map((produit) => ({
-        url: `${baseUrl}/produit/${produit.id}`,
+        url: `${baseUrl}/produits/${generateSlug(produit.nom || '')}`,
         lastModified: new Date(produit.date_ajout),
         changeFrequency: 'weekly' as const,
         priority: 0.9,

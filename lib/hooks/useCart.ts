@@ -87,7 +87,7 @@ export function useCart() {
     }
   }, [items, isLoaded])
 
-  const addItem = async (item: CartItem) => {
+  const addItem = async (item: CartItem, openDrawer: boolean = true) => {
     // Vérification client-side (immédiate)
     if (item.stock === undefined || item.stock === null) {
       throw new Error(`Stock non disponible pour "${item.nom}"`)
@@ -190,23 +190,63 @@ export function useCart() {
     if ((window as any).playSuccessSound) {
       ;(window as any).playSuccessSound()
     }
+
+    // Ouvrir le drawer du panier après ajout (sauf si openDrawer est false)
+    if (openDrawer && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('openCartDrawer'))
+    }
   }
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id))
+  // Helper pour créer une clé unique pour un item (id + couleur + taille)
+  const getItemKey = (item: CartItem): string => {
+    return `${item.id}-${item.couleur || ''}-${item.taille || ''}`
   }
 
-  const updateQuantity = (id: string, quantite: number) => {
+  const removeItem = (id: string, couleur?: string, taille?: string) => {
+    setItems((prev) => {
+      if (couleur !== undefined || taille !== undefined) {
+        // Supprimer un item spécifique avec couleur/taille
+        return prev.filter((item) => 
+          !(item.id === id && 
+            (couleur === undefined || item.couleur === couleur) &&
+            (taille === undefined || item.taille === taille))
+        )
+      }
+      // Si pas de couleur/taille spécifiée, supprimer le premier match (pour compatibilité)
+      const itemToRemove = prev.find((item) => item.id === id && !item.couleur && !item.taille)
+      if (itemToRemove) {
+        return prev.filter((item) => item !== itemToRemove)
+      }
+      // Fallback: supprimer tous les items avec cet id (ancien comportement)
+      return prev.filter((item) => item.id !== id)
+    })
+  }
+
+  const updateQuantity = (id: string, quantite: number, couleur?: string, taille?: string) => {
     if (quantite <= 0) {
-      removeItem(id)
+      removeItem(id, couleur, taille)
       return
     }
     setItems((prev) => {
-      const item = prev.find((i) => i.id === id)
+      // Trouver l'item spécifique
+      const item = couleur !== undefined || taille !== undefined
+        ? prev.find((i) => 
+            i.id === id && 
+            (couleur === undefined || i.couleur === couleur) &&
+            (taille === undefined || i.taille === taille)
+          )
+        : prev.find((i) => i.id === id && !i.couleur && !i.taille)
+      
       if (item && item.stock !== undefined && item.stock < quantite) {
         throw new Error(`Stock insuffisant pour "${item.nom}". Stock disponible: ${item.stock}`)
       }
-      return prev.map((item) => (item.id === id ? { ...item, quantite } : item))
+      
+      return prev.map((item) => {
+        const matches = item.id === id && 
+          (couleur === undefined || item.couleur === couleur) &&
+          (taille === undefined || item.taille === taille)
+        return matches ? { ...item, quantite } : item
+      })
     })
   }
 

@@ -3,7 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { Providers } from '@/components/Providers'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -66,11 +66,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
-        <TooltipProvider>
+        <Providers>
           {children}
           <Toaster />
           <Sonner />
-        </TooltipProvider>
+        </Providers>
       </body>
     </html>
   )
