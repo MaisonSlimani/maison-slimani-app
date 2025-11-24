@@ -355,8 +355,12 @@ class WebsiteInspector {
     }
   }
   
+  getTotalPrice(): number {
+    return this.pages.reduce((sum, page) => sum + page.estimatedPrice, 0)
+  }
+  
   generatePricingReport(): string {
-    const totalPrice = this.pages.reduce((sum, page) => sum + page.estimatedPrice, 0)
+    const totalPrice = this.getTotalPrice()
     
     // Group by category
     const publicPages = this.pages.filter(p => !p.details.isAdmin && !p.url.includes('/login'))
@@ -544,7 +548,7 @@ async function main() {
     await inspector.saveReport(report)
     
     console.log('\n✨ Inspection terminée avec succès!')
-    console.log(`📊 Prix total estimé: ${inspector.pages.reduce((sum, p) => sum + p.estimatedPrice, 0).toLocaleString('fr-FR')} MAD\n`)
+    console.log(`📊 Prix total estimé: ${inspector.getTotalPrice().toLocaleString('fr-FR')} MAD\n`)
     
   } catch (error) {
     console.error('❌ Erreur lors de l\'inspection:', error)

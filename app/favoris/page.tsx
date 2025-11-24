@@ -242,7 +242,7 @@ export default function FavorisPage() {
                     )}
                     
                     <Link
-                      href={`/produits/${item.slug || item.nom
+                      href={`/produits/${item.nom
                         .toLowerCase()
                         .normalize('NFD')
                         .replace(/\p{Diacritic}/gu, '')

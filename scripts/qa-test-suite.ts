@@ -84,6 +84,10 @@ class QATestSuite {
     }
   }
   
+  getAllErrors(): ErrorReport[] {
+    return this.allErrors
+  }
+  
   async testPage(url: string): Promise<PageTestResult> {
     if (!this.browser) throw new Error('Browser not initialized')
     
@@ -829,8 +833,9 @@ async function main() {
     const report = qaSuite.generateReport()
     await qaSuite.saveReport(report)
     
-    const totalErrors = qaSuite.allErrors.length
-    const criticalErrors = qaSuite.allErrors.filter(e => e.severity === 'critical').length
+    const allErrors = qaSuite.getAllErrors()
+    const totalErrors = allErrors.length
+    const criticalErrors = allErrors.filter(e => e.severity === 'critical').length
     
     console.log('\n✨ Tests terminés!')
     console.log(`📊 Total d'erreurs détectées: ${totalErrors}`)

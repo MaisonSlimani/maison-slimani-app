@@ -371,22 +371,28 @@ export default function ProduitSlugPage() {
       url: window.location.href,
     }
     try {
-      if (navigator.share && (navigator as any).canShare && (navigator as any).canShare(shareData)) {
-        await (navigator as any).share(shareData)
-        toast.success('Lien partagé avec succès')
-      } else {
-        await navigator.clipboard.writeText(window.location.href)
-        toast.success('Lien copié dans le presse-papier')
-      }
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
+      if (navigator.share) {
         try {
-          await navigator.clipboard.writeText(window.location.href)
-          toast.success('Lien copié dans le presse-papier')
-        } catch (clipboardError) {
-          toast.error('Erreur lors du partage')
+          // Check if canShare exists and can share this data
+          const canShare = (navigator as any).canShare
+          if (canShare && !canShare(shareData)) {
+            throw new Error('Cannot share this data')
+          }
+          await navigator.share(shareData)
+          toast.success('Lien partagé avec succès')
+          return
+        } catch (shareError: any) {
+          // If share fails, fall through to clipboard
+          if (shareError.name === 'AbortError') {
+            return // User cancelled, don't show error
+          }
         }
       }
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(window.location.href)
+      toast.success('Lien copié dans le presse-papier')
+    } catch (error: any) {
+      toast.error('Erreur lors du partage')
     }
     handleButtonClick()
   }
