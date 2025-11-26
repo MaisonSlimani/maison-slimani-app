@@ -1,0 +1,17 @@
+
+
+
+/admin-app/node_modules
+/admin-app/.pnp
+/admin-app/.pnp.js
+/admin-app/.yarn/install-state.gz
+/admin-app/.next
+/admin-app/out
+/admin-app/.swc
+/admin-app/build
+/admin-app/dist
+/admin-app/coverage
+/admin-app/coverage.lcov
+/admin-app/coverage.lcov.json
+/admin-app/.env.local
+/admin-app/.next

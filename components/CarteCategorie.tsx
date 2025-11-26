@@ -39,21 +39,14 @@ const CarteCategorie = ({ titre, tagline, image, lien, priority = false }: Carte
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </motion.div>
-        </div>
         
         {/* Overlay dégradé sombre pour améliorer la lisibilité */}
         <div className="absolute inset-0 bg-gradient-to-t from-charbon via-charbon/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
         
+          {/* Only category name inside image */}
         <div className="absolute bottom-0 left-0 right-0 p-6 text-[#f8f5f0] drop-shadow-lg">
-          <h3 className="text-2xl font-serif mb-2">{titre}</h3>
-          <p className="text-sm text-[#f8f5f0]/90 mb-4">{tagline}</p>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="border-dore text-dore hover:bg-dore hover:text-charbon bg-transparent"
-          >
-            Voir la collection
-          </Button>
+            <h3 className="text-2xl font-serif">{titre}</h3>
+          </div>
         </div>
       </Link>
     </motion.div>

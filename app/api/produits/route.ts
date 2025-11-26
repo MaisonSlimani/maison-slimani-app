@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { categorie, vedette, limit, offset, sort } = validatedParams.data
+    const { categorie, vedette, search, limit, offset, sort } = validatedParams.data
 
     let query = supabase
       .from('produits')
@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
 
     if (vedette !== undefined) {
       query = query.eq('vedette', vedette)
+    }
+
+    // Search functionality - search in nom and description
+    if (search) {
+      query = query.or(`nom.ilike.%${search}%,description.ilike.%${search}%`)
     }
 
     const resolvedLimit =

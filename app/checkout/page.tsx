@@ -12,10 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
-import { villesMaroc } from '@/lib/constants/villes'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -318,21 +316,14 @@ export default function CheckoutPage() {
 
                 <div>
                   <Label htmlFor="ville">Ville *</Label>
-                  <Select
+                  <Input
+                    id="ville"
+                    required
+                    className="mt-2"
                     value={formData.ville}
-                    onValueChange={(value) => setFormData({ ...formData, ville: value })}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Sélectionnez une ville" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {villesMaroc.map((ville) => (
-                        <SelectItem key={ville} value={ville}>
-                          {ville}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+                    placeholder="Entrez le nom de votre ville"
+                  />
                 </div>
 
                 <Button

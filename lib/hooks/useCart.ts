@@ -255,6 +255,7 @@ export function useCart() {
   }
 
   const total = items.reduce((acc, item) => acc + item.prix * item.quantite, 0)
+  const totalItems = items.reduce((acc, item) => acc + item.quantite, 0)
 
   return {
     items,
@@ -263,6 +264,7 @@ export function useCart() {
     updateQuantity,
     clearCart,
     total,
+    totalItems,
     isLoaded,
   }
 }

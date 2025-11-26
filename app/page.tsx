@@ -367,20 +367,23 @@ export default function AccueilPage() {
                   whileHover={{ y: -8 }}
                   className="transition-transform duration-500 h-full"
                 >
-                  <CarteProduit produit={{
-                    id: produit.id,
-                    nom: produit.nom,
-                    prix: produit.prix,
-                    image_url: produit.image_url,
-                    image: produit.image_url,
-                    stock: produit.stock,
-                    has_colors: produit.has_colors,
-                    couleurs: produit.couleurs,
-                    taille: produit.taille,
-                    matiere: produit.matiere,
-                    images: produit.images,
-                    slug: produit.slug,
-                  }} />
+                  <CarteProduit 
+                    produit={{
+                      id: produit.id,
+                      nom: produit.nom,
+                      prix: produit.prix,
+                      image_url: produit.image_url,
+                      image: produit.image_url,
+                      stock: produit.stock,
+                      has_colors: produit.has_colors,
+                      couleurs: produit.couleurs,
+                      taille: produit.taille,
+                      matiere: produit.matiere,
+                      images: produit.images,
+                      slug: produit.slug,
+                    }}
+                    showActions={true}
+                  />
                 </motion.div>
               ))}
             </div>

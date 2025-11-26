@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { villesMaroc } from '@/lib/constants/villes'
 
 export const produitQuerySchema = z.object({
   categorie: z
@@ -11,6 +10,12 @@ export const produitQuerySchema = z.object({
   vedette: z
     .string()
     .transform((value) => value === 'true')
+    .optional(),
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
     .optional(),
   limit: z
     .string()
@@ -37,13 +42,11 @@ export const commandeProduitSchema = z.object({
   couleur: z.string().optional().nullable(),
 })
 
-export const villeSchema = z.enum(villesMaroc)
-
 export const commandeSchema = z.object({
   nom_client: z.string().min(1, 'Le nom est requis'),
   telephone: z.string().min(1, 'Le téléphone est requis'),
   adresse: z.string().min(1, "L'adresse est requise"),
-  ville: villeSchema,
+  ville: z.string().min(1, 'La ville est requise'),
   produits: z.array(commandeProduitSchema).min(1, 'Au moins un produit est requis'),
 })
 
@@ -51,8 +54,5 @@ export const statutCommandeSchema = z.object({
   nouveau_statut: z.enum(['En attente', 'Expédiée', 'Livrée', 'Annulée']),
 })
 
-export type VilleMaroc = (typeof villesMaroc)[number]
 export type CommandePayload = z.infer<typeof commandeSchema>
-
-export { villesMaroc }
 

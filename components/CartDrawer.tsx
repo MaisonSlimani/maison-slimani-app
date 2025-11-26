@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -18,11 +18,14 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const { items, removeItem, updateQuantity, total, isLoaded } = useCart()
+  
+  const isPWA = pathname?.startsWith('/pwa') || false
 
   const handleCheckout = () => {
     onOpenChange(false)
-    router.push('/checkout')
+    router.push(isPWA ? '/pwa/checkout' : '/checkout')
   }
 
   const handleQuantityChange = (item: typeof items[0], newQuantity: number) => {
@@ -69,7 +72,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               Découvrez notre collection de chaussures haut de gamme
             </p>
             <Button asChild onClick={() => onOpenChange(false)}>
-              <Link href="/boutique">Voir la collection</Link>
+              <Link href={isPWA ? '/pwa/boutique' : '/boutique'}>
+                Voir la collection
+              </Link>
             </Button>
           </div>
         ) : (
@@ -81,14 +86,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   return (
                     <div key={`${item.id}-${item.couleur || ''}-${item.taille || ''}`} className="flex gap-4 pb-4 border-b last:border-0">
                       <Link
-                        href={`/produits/${(item as any).slug || item.nom
-                          .toLowerCase()
-                          .normalize('NFD')
-                          .replace(/\p{Diacritic}/gu, '')
-                          .replace(/[^a-z0-9\s-]/g, '')
-                          .trim()
-                          .replace(/\s+/g, '-')
-                          .replace(/-+/g, '-')}`}
+                        href={`${isPWA ? '/pwa' : ''}/produit/${item.id}`}
                         className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity bg-muted"
                         onClick={() => onOpenChange(false)}
                       >
@@ -103,14 +101,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                       
                       <div className="flex-1 min-w-0">
                         <Link
-                          href={`/produits/${(item as any).slug || item.nom
-                            .toLowerCase()
-                            .normalize('NFD')
-                            .replace(/\p{Diacritic}/gu, '')
-                            .replace(/[^a-z0-9\s-]/g, '')
-                            .trim()
-                            .replace(/\s+/g, '-')
-                            .replace(/-+/g, '-')}`}
+                          href={`${isPWA ? '/pwa' : ''}/produit/${item.id}`}
                           onClick={() => onOpenChange(false)}
                           className="block"
                         >
@@ -200,7 +191,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 className="w-full"
                 onClick={() => onOpenChange(false)}
               >
-                <Link href="/panier">Voir le panier complet</Link>
+                <Link href={isPWA ? '/pwa/panier' : '/panier'}>
+                  Voir le panier complet
+                </Link>
               </Button>
             </div>
           </>

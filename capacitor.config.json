@@ -1,0 +1,30 @@
+{
+  "appId": "com.maisonslimani.customer",
+  "appName": "Maison Slimani",
+  "webDir": ".next",
+  "server": {
+    "url": "https://maisonslimani.ma/pwa",
+    "cleartext": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "Share": {
+      "enabled": true
+    },
+    "Camera": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": ""
+    }
+  },
+  "ios": {
+    "scheme": "maisonslimani"
+  }
+}
+
