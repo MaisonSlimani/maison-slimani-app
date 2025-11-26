@@ -6,7 +6,7 @@ export async function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    const missingVars = []
+    const missingVars: string[] = []
     if (!supabaseUrl) missingVars.push('NEXT_PUBLIC_SUPABASE_URL')
     if (!supabaseAnonKey) missingVars.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
     
