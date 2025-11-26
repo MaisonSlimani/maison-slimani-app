@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyAdminSession } from '@/lib/auth/session'
 
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }

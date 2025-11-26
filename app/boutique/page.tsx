@@ -9,7 +9,6 @@ import MenuBasNavigation from '@/components/MenuBasNavigation'
 import Footer from '@/components/Footer'
 import CarteCategorie from '@/components/CarteCategorie'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
 
 export default function BoutiquePage() {
   const [categories, setCategories] = useState<Array<{
@@ -25,34 +24,36 @@ export default function BoutiquePage() {
   }, [])
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const chargerCategories = async () => {
       try {
-        const supabase = createClient()
-        
-        // Charger les catégories actives depuis la base de données
-        const { data: categoriesData, error } = await supabase
-          .from('categories')
-          .select('nom, description, image_url, slug, ordre')
-          .eq('active', true)
-          .order('ordre', { ascending: true })
+        const response = await fetch('/api/categories?active=true', {
+          signal: controller.signal,
+        })
 
-        if (error) throw error
+        if (!response.ok) {
+          throw new Error(`Erreur API catégories: ${response.status}`)
+        }
 
-        // Mapper les données de la base vers le format attendu par CarteCategorie
-        // Filtrer les catégories sans image_url pour éviter les fallbacks
-        const categoriesMapped = (categoriesData || [])
-          .filter((cat) => cat.image_url && cat.image_url.trim() !== '') // Seulement les catégories avec image
-          .map((cat) => ({
+        const payload = await response.json()
+        const categoriesData = payload?.data || []
+
+        const categoriesMapped = categoriesData
+          .filter((cat: any) => cat.image_url && cat.image_url.trim() !== '')
+          .map((cat: any) => ({
             titre: cat.nom,
             tagline: cat.description || '',
-            image: cat.image_url, // Pas de fallback - on filtre déjà les vides
+            image: cat.image_url,
             lien: `/boutique/${cat.slug}`,
           }))
 
         setCategories(categoriesMapped)
       } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          return
+        }
         console.error('Erreur lors du chargement des catégories:', error)
-        // En cas d'erreur, laisser categories vide - la section ne s'affichera pas
         setCategories([])
       } finally {
         setLoadingCategories(false)
@@ -60,6 +61,8 @@ export default function BoutiquePage() {
     }
 
     chargerCategories()
+
+    return () => controller.abort()
   }, [])
 
   // SEO Meta Tags - Dynamic (mis à jour quand les catégories sont chargées)

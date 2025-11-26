@@ -8,7 +8,6 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ShoppingBag, ArrowLeft, Package, Share2, Check, CheckCircle, ShoppingCart } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -86,40 +85,50 @@ export default function ProduitSlugPage() {
   }
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const chargerProduit = async () => {
       try {
         setLoading(true)
-        const supabase = createClient()
         const slug = params.slug as string
-        
-        // Try by id from query param first (most reliable)
         const id = searchParams.get('id')
+
+        let produitData: Produit | null = null
+
         if (id) {
-          const { data, error } = await supabase.from('produits').select('*').eq('id', id).single()
-          if (data && !error) {
-            setProduit(data as any)
-            setLoading(false)
-            return
+          const response = await fetch(`/api/produits/${id}`, {
+            signal: controller.signal,
+          })
+
+          if (response.ok) {
+            const payload = await response.json()
+            produitData = payload?.data || null
           }
         }
 
-        // Fallback: fetch all products and match by generated slug
-        const { data: allProducts, error } = await supabase.from('produits').select('*')
-        
-        if (error) throw error
+        if (!produitData) {
+          const response = await fetch(
+            `/api/produits/by-slug/${encodeURIComponent(slug)}`,
+            { signal: controller.signal }
+          )
 
-        // Find product by matching generated slug
-        const produit = allProducts?.find((p: any) => {
-          const productSlug = generateSlug(p.nom || '')
-          return productSlug === slug
-        })
+          if (!response.ok) {
+            throw new Error('Produit introuvable')
+          }
 
-        if (produit) {
-          setProduit(produit as any)
+          const payload = await response.json()
+          produitData = payload?.data || null
+        }
+
+        if (produitData) {
+          setProduit(produitData as any)
         } else {
           throw new Error('Produit introuvable')
         }
       } catch (e) {
+        if ((e as Error).name === 'AbortError') {
+          return
+        }
         console.error('Erreur lors du chargement du produit:', e)
         toast.error('Produit introuvable')
         router.push('/boutique')
@@ -129,6 +138,8 @@ export default function ProduitSlugPage() {
     }
 
     chargerProduit()
+
+    return () => controller.abort()
   }, [params.slug, searchParams, router])
 
 

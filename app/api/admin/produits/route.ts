@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
+import { verifyAdminSession } from '@/lib/auth/session'
+import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 
 // GET - Récupérer tous les produits
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -59,16 +54,8 @@ export async function GET(request: NextRequest) {
 // POST - Créer un produit
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -142,6 +129,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    revalidateTag(PRODUCTS_CACHE_TAG)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('Erreur serveur:', error)
@@ -155,16 +143,8 @@ export async function POST(request: NextRequest) {
 // PUT - Modifier un produit
 export async function PUT(request: NextRequest) {
   try {
-    // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -233,6 +213,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    revalidateTag(PRODUCTS_CACHE_TAG)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('Erreur serveur:', error)
@@ -246,16 +227,8 @@ export async function PUT(request: NextRequest) {
 // DELETE - Supprimer un produit
 export async function DELETE(request: NextRequest) {
   try {
-    // Vérifier la session admin
-    const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
-      headers: {
-        cookie: request.headers.get('cookie') || '',
-      },
-    })
-    
-    const sessionData = await sessionResponse.json()
-    
-    if (!sessionData.authenticated) {
+    const email = await verifyAdminSession()
+    if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -298,6 +271,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    revalidateTag(PRODUCTS_CACHE_TAG)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Erreur serveur:', error)

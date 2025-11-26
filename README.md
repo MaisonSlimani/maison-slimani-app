@@ -5,7 +5,7 @@ Site e-commerce haut de gamme pour chaussures homme en cuir, développé avec Ne
 ## Technologies
 
 - **Next.js 15** (App Router, TypeScript)
-- **Supabase** (Base de données, Edge Functions, Storage, Authentification)
+- **Supabase** (Base de données, Authentification, Storage, Realtime)
 - **Resend** (Emails transactionnels)
 - **TailwindCSS** + **Framer Motion** + **shadcn/ui**
 - **Vercel** (Hébergement)
@@ -30,7 +30,6 @@ maison-slimani-experience/
 │   ├── supabase/          # Configuration Supabase
 │   └── resend/            # Configuration Resend
 ├── supabase/               # Configuration Supabase
-│   ├── functions/         # Edge Functions
 │   └── migrations/        # Migrations SQL
 └── public/                 # Assets statiques
 ```
@@ -70,20 +69,11 @@ supabase start
 supabase db reset
 ```
 
-5. Déployer les Edge Functions :
-```bash
-supabase functions deploy recupererProduits
-supabase functions deploy ajouterCommande
-supabase functions deploy recupererCommandes
-supabase functions deploy changerStatutCommande
-supabase functions deploy envoyerEmailCommande
-```
-
-6. Configurer Supabase Storage :
+5. Configurer Supabase Storage :
 - Créer un bucket `produits-images` (public)
 - Configurer les politiques d'accès
 
-7. Lancer le serveur de développement :
+6. Lancer le serveur de développement :
 ```bash
 npm run dev
 ```
@@ -96,13 +86,14 @@ npm run dev
 - `commandes` : Commandes clients (COD)
 - `admins` : Administrateurs du site
 
-### Edge Functions
+### API Routes Vercel
 
-- `recupererProduits` : Récupère les produits (avec filtres)
-- `ajouterCommande` : Crée une commande et vérifie le stock
-- `recupererCommandes` : Récupère les commandes (admin)
-- `changerStatutCommande` : Met à jour le statut d'une commande
-- `envoyerEmailCommande` : Envoie les emails (client + admin)
+- `GET /api/produits` : Récupère les produits (filtres, pagination, vedettes)
+- `GET /api/produits/[id]` et `GET /api/produits/by-slug/[slug]` : Détails produit
+- `POST /api/commandes` : Crée une commande, vérifie le stock et déclenche les emails
+- `GET /api/admin/commandes`, `PATCH /api/admin/commandes/[id]` : Gestion commandes admin
+- `POST /api/emails` : Envoi d'emails transactionnels via Resend
+- `GET /api/categories` : Récupère les catégories actives
 
 ## Configuration Admin
 

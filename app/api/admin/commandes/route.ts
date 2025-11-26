@@ -2,11 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyAdminSession } from '@/lib/auth/session'
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error(
+    'Variables Supabase manquantes pour les routes admin commandes. Définissez NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY.'
+  )
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const ORDER_FIELDS =
+  'id, nom_client, telephone, adresse, ville, produits, total, statut, date_commande'
+
 // GET - Récupérer toutes les commandes
 export async function GET(request: NextRequest) {
   try {
     // Vérifier la session admin
-    const email = await verifyAdminSession()
+    let email: string | null = null
+    try {
+      email = await verifyAdminSession()
+    } catch (authError) {
+      console.error('Erreur lors de la vérification de la session:', authError)
+      return NextResponse.json(
+        { error: 'Erreur d\'authentification', details: 'Impossible de vérifier la session' },
+        { status: 500 }
+      )
+    }
+    
     if (!email) {
       return NextResponse.json(
         { error: 'Non autorisé' },
@@ -14,35 +37,25 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Utiliser la SERVICE_ROLE_KEY pour contourner RLS
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Configuration serveur invalide' },
-        { status: 500 }
-      )
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-    // Récupérer le filtre de statut depuis les query params
     const { searchParams } = new URL(request.url)
     const statut = searchParams.get('statut')?.trim()
+    const limitParam = Number(searchParams.get('limit'))
+    const offsetParam = Number(searchParams.get('offset'))
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 50
+    const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0
 
     let query = supabase
       .from('commandes')
-      .select('*')
+      .select(ORDER_FIELDS, { count: 'exact' })
       .order('date_commande', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (statut && statut !== 'tous' && statut !== 'all') {
-      // Décode l'URL encoding si nécessaire (ex: "En%20attente" -> "En attente")
       const decodedStatut = decodeURIComponent(statut)
       query = query.eq('statut', decodedStatut)
     }
 
-    const { data, error } = await query
+    const { data, error, count } = await query
 
     if (error) {
       console.error('Erreur lors de la récupération des commandes:', error)
@@ -52,7 +65,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, data: data || [] })
+    const response = NextResponse.json({
+      success: true,
+      data: data || [],
+      count: count ?? data?.length ?? 0,
+    })
+
+    response.headers.set(
+      'Cache-Control',
+      'private, s-maxage=30, stale-while-revalidate=30'
+    )
+
+    return response
   } catch (error: any) {
     console.error('Erreur serveur:', error)
     return NextResponse.json(
@@ -83,19 +107,6 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    // Utiliser la SERVICE_ROLE_KEY pour contourner RLS
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Configuration serveur invalide' },
-        { status: 500 }
-      )
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const { data, error } = await supabase
       .from('commandes')
@@ -143,19 +154,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    // Utiliser la SERVICE_ROLE_KEY pour contourner RLS
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Configuration serveur invalide' },
-        { status: 500 }
-      )
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const { error } = await supabase
       .from('commandes')

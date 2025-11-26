@@ -8,7 +8,6 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ShoppingBag, ArrowLeft, Package, Share2, Check, CheckCircle, ShoppingCart } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -89,15 +88,15 @@ export default function ProduitPage() {
 
   const chargerProduit = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('produits')
-        .select('*')
-        .eq('id', params.id)
-        .single()
+      setLoading(true)
+      const response = await fetch(`/api/produits/${params.id}`)
 
-      if (error) throw error
-      setProduit(data)
+      if (!response.ok) {
+        throw new Error('Produit introuvable')
+      }
+
+      const payload = await response.json()
+      setProduit(payload?.data || null)
     } catch (error) {
       console.error('Erreur lors du chargement du produit:', error)
       toast.error('Produit introuvable')

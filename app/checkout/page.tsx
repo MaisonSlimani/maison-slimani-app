@@ -15,29 +15,7 @@ import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
-
-const villesMaroc = [
-  'Agadir',
-  'Beni Mellal',
-  'Casablanca',
-  'El Jadida',
-  'Fès',
-  'Kenitra',
-  'Khouribga',
-  'Marrakech',
-  'Meknès',
-  'Mohammedia',
-  'Nador',
-  'Oujda',
-  'Rabat',
-  'Safi',
-  'Settat',
-  'Tanger',
-  'Taza',
-  'Tétouan',
-  'Autre',
-]
+import { villesMaroc } from '@/lib/constants/villes'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -78,55 +56,68 @@ export default function CheckoutPage() {
       if (!isLoaded || items.length === 0) return
 
       try {
-        const supabase = createClient()
-        
-        // Vérifier le stock de chaque produit dans le panier
-        for (const item of items) {
-          const { data: produit, error } = await supabase
-            .from('produits')
-            .select('id, nom, stock, has_colors, couleurs')
-            .eq('id', item.id)
-            .single()
+        const responses = await Promise.all(
+          items.map((item) =>
+            fetch(`/api/produits/${item.id}`)
+              .then(async (res) => ({
+                item,
+                ok: res.ok,
+                data: res.ok ? (await res.json())?.data : null,
+              }))
+              .catch(() => ({ item, ok: false, data: null }))
+          )
+        )
 
-          if (error || !produit) {
-            // Produit introuvable - le retirer du panier
+        for (const { item, ok, data } of responses) {
+          if (!ok || !data) {
             toast.error(`Le produit "${item.nom}" n'est plus disponible`)
             continue
           }
 
-          // Vérifier le stock selon le type de produit
-          let stockDisponible: number = 0
-          
-          if (produit.has_colors && item.couleur) {
-            // Produit avec couleurs - vérifier le stock de la couleur spécifique
-            if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
-              toast.error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+          let stockDisponible = 0
+
+          if (data.has_colors && item.couleur) {
+            if (!data.couleurs || !Array.isArray(data.couleurs)) {
+              toast.error(
+                `Couleur "${item.couleur}" non disponible pour "${item.nom}"`
+              )
               continue
             }
-            
-            const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
+
+            const couleurSelected = data.couleurs.find(
+              (c: any) => c.nom === item.couleur
+            )
+
             if (!couleurSelected) {
-              toast.error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+              toast.error(
+                `Couleur "${item.couleur}" non disponible pour "${item.nom}"`
+              )
               continue
             }
-            
+
             stockDisponible = couleurSelected.stock || 0
-          } else if (!produit.has_colors) {
-            // Produit sans couleurs - vérifier le stock global
-            stockDisponible = produit.stock || 0
+          } else if (!data.has_colors) {
+            stockDisponible = data.stock || 0
           } else {
             toast.error(`Couleur requise pour "${item.nom}"`)
             continue
           }
 
           if (stockDisponible <= 0) {
-            toast.error(`Le produit "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''} est en rupture de stock`)
+            toast.error(
+              `Le produit "${item.nom}"${
+                item.couleur ? ` (${item.couleur})` : ''
+              } est en rupture de stock`
+            )
             continue
           }
 
           if (stockDisponible < item.quantite) {
-            toast.error(`Stock insuffisant pour "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''}. Stock disponible: ${stockDisponible}`)
-            continue
+            toast.error(
+              `Stock insuffisant pour "${item.nom}"${
+                item.couleur ? ` (${item.couleur})` : ''
+              }. Stock disponible: ${stockDisponible}`
+            )
           }
         }
       } catch (error) {
@@ -142,9 +133,6 @@ export default function CheckoutPage() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-
       // Préparer les produits pour la commande (inclure l'image, la taille et la couleur)
       const produits = items.map((item) => ({
         id: item.id,
@@ -165,14 +153,10 @@ export default function CheckoutPage() {
         produits,
       }
 
-      // Appeler l'Edge Function pour créer la commande
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/ajouterCommande`, {
+      const response = await fetch('/api/commandes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
         },
         body: JSON.stringify(commandeData),
       })
@@ -188,7 +172,7 @@ export default function CheckoutPage() {
           errorMessage = 'Stock insuffisant pour certains produits. Veuillez vérifier votre panier.'
         } else if (errorMessage.includes('introuvable')) {
           errorMessage = 'Certains produits ne sont plus disponibles. Veuillez vérifier votre panier.'
-        } else if (result.details && Array.isArray(result.details)) {
+        } else if (result.details?.fieldErrors || result.details?.formErrors) {
           // Si c'est une erreur de validation, afficher un message générique
           errorMessage = 'Veuillez vérifier les informations de votre commande.'
         }

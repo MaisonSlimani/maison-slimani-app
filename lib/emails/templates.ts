@@ -1,27 +1,14 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
+import { CommandeEmailPayload } from '@/lib/emails/types'
 
-const schemaCommande = z.object({
-  id: z.string().uuid(),
-  nom_client: z.string(),
-  telephone: z.string(),
-  adresse: z.string(),
-  ville: z.string(),
-  produits: z.array(z.any()),
-  total: z.number(),
-  statut: z.string(),
-  notification_statut: z.boolean().optional(),
-  ancien_statut: z.string().optional(),
-  nouveau_statut: z.string().optional(),
+const priceFormatter = new Intl.NumberFormat('fr-MA', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 })
 
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
-const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@maisonslimani.com'
-const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'admin@maisonslimani.com'
+const formatPrice = (value: number) => `${priceFormatter.format(value)} DH`
 
-// Template email confirmation client
-const templateConfirmationClient = (commande: z.infer<typeof schemaCommande>) => `
-<!DOCTYPE html>
+export function buildClientConfirmationTemplate(commande: CommandeEmailPayload) {
+  return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -178,18 +165,22 @@ const templateConfirmationClient = (commande: z.infer<typeof schemaCommande>) =>
             </tr>
           </thead>
           <tbody>
-            ${commande.produits.map((p: any) => `
+            ${commande.produits
+              .map(
+                (p) => `
               <tr>
-                <td>${p.nom}</td>
+                <td>${p.nom}${p.couleur ? ` (${p.couleur})` : ''}</td>
                 <td>${p.quantite}</td>
-                <td>${p.prix.toLocaleString('fr-MA')} DH</td>
-                <td>${(p.prix * p.quantite).toLocaleString('fr-MA')} DH</td>
+                <td>${formatPrice(p.prix)}</td>
+                <td>${formatPrice(p.prix * p.quantite)}</td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
           </tbody>
         </table>
         <div class="total">
-          Total : ${commande.total.toLocaleString('fr-MA')} DH
+          Total : ${formatPrice(commande.total)}
         </div>
       </div>
 
@@ -205,17 +196,16 @@ const templateConfirmationClient = (commande: z.infer<typeof schemaCommande>) =>
     </div>
   </div>
 </body>
-</html>
-`
+</html>`
+}
 
-// Template email notification admin
-const templateNotificationAdmin = (commande: z.infer<typeof schemaCommande>) => `
-<!DOCTYPE html>
+export function buildAdminNotificationTemplate(commande: CommandeEmailPayload) {
+  return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nouvelle commande</title>
+  <title>Notification commande</title>
   <style>
     body {
       font-family: 'Inter', Arial, sans-serif;
@@ -274,11 +264,20 @@ const templateNotificationAdmin = (commande: z.infer<typeof schemaCommande>) => 
 <body>
   <div class="container">
     <div class="header">
-      <h1>Nouvelle commande reçue</h1>
+      <h1>${
+        commande.notification_statut
+          ? 'Mise à jour du statut'
+          : 'Nouvelle commande reçue'
+      }</h1>
     </div>
     <div class="content">
       <div class="alert">
-        <strong>Commande #${commande.id.substring(0, 8)}</strong>
+        <strong>Commande #${commande.id.substring(0, 8)}</strong><br />
+        ${
+          commande.notification_statut
+            ? `Statut: ${commande.ancien_statut} → ${commande.nouveau_statut}`
+            : 'Nouvelle commande à traiter'
+        }
       </div>
       <div class="info-row">
         <span class="info-label">Client :</span>
@@ -293,92 +292,15 @@ const templateNotificationAdmin = (commande: z.infer<typeof schemaCommande>) => 
         <span>${commande.ville}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">Total :</span>
-        <span class="total">${commande.total.toLocaleString('fr-MA')} DH</span>
+        <span class="info-label">Statut :</span>
+        <span>${commande.statut}</span>
+      </div>
+      <div class="total">
+        Total : ${formatPrice(commande.total)}
       </div>
     </div>
   </div>
 </body>
-</html>
-`
-
-serve(async (req) => {
-  try {
-    const body = await req.json()
-    const commande = schemaCommande.parse(body)
-
-    // Envoyer email au client (si pas une notification de statut)
-    if (!commande.notification_statut) {
-      try {
-        const clientEmailResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: RESEND_FROM_EMAIL,
-            to: commande.nom_client, // TODO: Ajouter champ email client dans la commande
-            subject: `Confirmation de commande - Maison Slimani`,
-            html: templateConfirmationClient(commande),
-          }),
-        })
-
-        if (!clientEmailResponse.ok) {
-          console.error('Erreur envoi email client:', await clientEmailResponse.text())
-        }
-      } catch (emailError) {
-        console.error('Erreur lors de l\'envoi de l\'email client:', emailError)
-      }
-    }
-
-    // Envoyer email à l'admin
-    try {
-      const adminEmailResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: RESEND_FROM_EMAIL,
-          to: ADMIN_EMAIL,
-          subject: commande.notification_statut 
-            ? `Commande ${commande.id.substring(0, 8)} - Statut changé`
-            : `Nouvelle commande #${commande.id.substring(0, 8)}`,
-          html: templateNotificationAdmin(commande),
-        }),
-      })
-
-      if (!adminEmailResponse.ok) {
-        console.error('Erreur envoi email admin:', await adminEmailResponse.text())
-      }
-    } catch (emailError) {
-      console.error('Erreur lors de l\'envoi de l\'email admin:', emailError)
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Emails envoyés avec succès',
-      }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
-  } catch (error) {
-    console.error('Erreur lors de l\'envoi des emails:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
-      }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    )
-  }
-})
+</html>`
+}
 

@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { envoyerEmail, ADMIN_EMAIL } from '@/lib/resend/client'
+import { applyRateLimit, getClientIdentifier } from '@/lib/middleware/rate-limit'
 
 const schemaContact = z.object({
   nom: z.string().min(1, 'Le nom est requis'),
@@ -9,48 +10,63 @@ const schemaContact = z.object({
   message: z.string().min(1, 'Le message est requis'),
 })
 
-export async function POST(request: Request) {
+function buildContactEmail(data: z.infer<typeof schemaContact>) {
+  return `
+    <h2>Nouveau message de contact</h2>
+    <p><strong>Nom :</strong> ${data.nom}</p>
+    <p><strong>Email :</strong> ${data.email}</p>
+    ${
+      data.telephone
+        ? `<p><strong>Téléphone :</strong> ${data.telephone}</p>`
+        : ''
+    }
+    <p><strong>Message :</strong></p>
+    <p>${data.message}</p>
+  `
+}
+
+export async function POST(request: NextRequest) {
   try {
+    const identifier = getClientIdentifier(request)
+    const rateLimitResult = applyRateLimit({
+      key: `contact:${identifier}`,
+      limit: 5,
+      windowMs: 60 * 1000,
+    })
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': rateLimitResult.retryAfter.toString() },
+        }
+      )
+    }
+
     const body = await request.json()
     const validatedData = schemaContact.parse(body)
 
-    // Appeler l'Edge Function pour envoyer l'email
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const emailUrl = new URL('/functions/v1/envoyerEmailCommande', supabaseUrl)
-        await fetch(emailUrl.toString(), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`,
-          },
-          body: JSON.stringify({
-            type: 'contact',
-            ...validatedData,
-          }),
-        })
-      } catch (emailError) {
-        console.error('Erreur lors de l\'envoi de l\'email:', emailError)
-        // Ne pas faire échouer la requête si l'email échoue
-      }
+    try {
+      await envoyerEmail({
+        to: ADMIN_EMAIL,
+        subject: `Nouveau message de ${validatedData.nom}`,
+        html: buildContactEmail(validatedData),
+      })
+    } catch (emailError) {
+      console.error("Erreur lors de l'envoi de l'email de contact:", emailError)
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erreur lors de l\'envoi du formulaire de contact:', error)
+    console.error("Erreur lors de l'envoi du formulaire de contact:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.errors[0].message },
         { status: 400 }
       )
     }
-    return NextResponse.json(
-      { error: 'Erreur serveur' },
-      { status: 500 }
-    )
+
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
-

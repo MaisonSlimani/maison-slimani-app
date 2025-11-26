@@ -13,18 +13,17 @@ import CarteProduit from '@/components/CarteProduit'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowUp, ArrowLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from '@tanstack/react-query'
 
 export default function CategoriePage() {
   const params = useParams()
   const categorieSlug = params.categorie as string
   
-  const [produits, setProduits] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [loadingCategory, setLoadingCategory] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('pertinence')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string } | null>(null)
+  const categorieNom = categorieInfo?.nom || null
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -32,30 +31,35 @@ export default function CategoriePage() {
 
   // Charger la catégorie depuis la base de données - DOIT être chargé AVANT le rendu
   useEffect(() => {
+    const controller = new AbortController()
+
     const chargerCategorieDepuisDB = async () => {
       try {
         setLoadingCategory(true)
         if (!categorieSlug || categorieSlug === 'tous') {
-          // Pour "tous", utiliser des valeurs par défaut
           setCategorieInfo({
             nom: 'Tous nos produits',
             image: '/assets/hero-chaussures.jpg',
-            description: 'Explorez notre collection complète de chaussures homme haut de gamme, confectionnées avec passion au Maroc.',
+            description:
+              'Explorez notre collection complète de chaussures homme haut de gamme, confectionnées avec passion au Maroc.',
           })
           setLoadingCategory(false)
           return
         }
 
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from('categories')
-          .select('nom, description, image_url, slug, active')
-          .eq('slug', categorieSlug)
-          .eq('active', true)
-          .single()
+        const response = await fetch(
+          `/api/categories?slug=${encodeURIComponent(categorieSlug)}&active=true`,
+          { signal: controller.signal }
+        )
 
-        if (error || !data) {
-          // Si la catégorie n'existe pas, utiliser des valeurs par défaut
+        if (!response.ok) {
+          throw new Error(`Erreur API catégories: ${response.status}`)
+        }
+
+        const payload = await response.json()
+        const data = payload?.data?.[0]
+
+        if (!data) {
           setCategorieInfo({
             nom: 'Collection',
             image: '/assets/hero-chaussures.jpg',
@@ -65,22 +69,24 @@ export default function CategoriePage() {
           return
         }
 
-        // Vérifier que l'image existe, sinon utiliser un fallback uniquement si vraiment nécessaire
         if (!data.image_url || data.image_url.trim() === '') {
           console.warn(`Catégorie "${data.nom}" n'a pas d'image_url définie`)
           setCategorieInfo({
             nom: data.nom,
-            image: '/assets/hero-chaussures.jpg', // Fallback uniquement si vraiment pas d'image
+            image: '/assets/hero-chaussures.jpg',
             description: data.description || '',
           })
         } else {
           setCategorieInfo({
             nom: data.nom,
-            image: data.image_url, // Utiliser l'image de la base de données
+            image: data.image_url,
             description: data.description || '',
           })
         }
       } catch (e) {
+        if ((e as Error).name === 'AbortError') {
+          return
+        }
         console.error('Erreur lors du chargement de la catégorie:', e)
         setCategorieInfo({
           nom: 'Collection',
@@ -93,6 +99,8 @@ export default function CategoriePage() {
     }
 
     chargerCategorieDepuisDB()
+
+    return () => controller.abort()
   }, [categorieSlug])
 
   // SEO Meta Tags - Dynamic per category
@@ -217,49 +225,56 @@ export default function CategoriePage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  useEffect(() => {
-    const chargerProduits = async () => {
-      setLoading(true)
-      try {
-        const supabase = createClient()
-        
-        let query = supabase.from('produits').select('*')
+  const {
+    data: produits = [],
+    isPending: produitsPending,
+    isFetching: produitsFetching,
+    error: produitsError,
+  } = useQuery({
+    queryKey: ['categorie-produits', categorieSlug, categorieNom, triPrix],
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: categorieSlug === 'tous' || !!categorieNom,
+    queryFn: async ({ signal }) => {
+      const searchParams = new URLSearchParams()
 
-        // Filtrer par catégorie si ce n'est pas "tous"
-        if (categorieSlug !== 'tous') {
-          // Charger d'abord la catégorie pour obtenir son nom
-          const { data: categorieData } = await supabase
-            .from('categories')
-            .select('nom')
-            .eq('slug', categorieSlug)
-            .eq('active', true)
-            .single()
-
-          if (categorieData?.nom) {
-            query = query.eq('categorie', categorieData.nom)
-          }
-        }
-
-        // Appliquer le tri
-        if (triPrix === 'prix-asc') {
-          query = query.order('prix', { ascending: true })
-        } else if (triPrix === 'prix-desc') {
-          query = query.order('prix', { ascending: false })
-        } else {
-          query = query.order('date_ajout', { ascending: false })
-        }
-
-        const { data } = await query
-        setProduits(data || [])
-      } catch (error) {
-        console.error('Erreur lors du chargement des produits:', error)
-      } finally {
-        setLoading(false)
+      if (categorieSlug !== 'tous' && categorieNom) {
+        searchParams.set('categorie', categorieNom)
       }
-    }
 
-    chargerProduits()
-  }, [categorieSlug, triPrix])
+      if (triPrix === 'prix-asc') {
+        searchParams.set('sort', 'prix-asc')
+      } else if (triPrix === 'prix-desc') {
+        searchParams.set('sort', 'prix-desc')
+      } else {
+        searchParams.set('sort', 'recent')
+      }
+
+      searchParams.set('limit', '60')
+
+      const response = await fetch(`/api/produits?${searchParams.toString()}`, {
+        signal,
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur API produits: ${response.status}`)
+      }
+
+      const payload = await response.json()
+      return payload?.data || []
+    },
+  })
+
+  useEffect(() => {
+    if (produitsError) {
+      console.error('Erreur lors du chargement des produits:', produitsError)
+    }
+  }, [produitsError])
+
+  const produitsLoading =
+    produitsPending ||
+    produitsFetching ||
+    (categorieSlug !== 'tous' && !categorieNom)
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -378,7 +393,7 @@ export default function CategoriePage() {
         </motion.div>
 
         {/* Produits avec animations en cascade */}
-        {loading ? (
+        {produitsLoading ? (
           <div className="text-center py-20">
             <motion.div
               animate={{ rotate: 360 }}

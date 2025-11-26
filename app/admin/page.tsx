@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -28,8 +28,25 @@ export default function AdminDashboardPage() {
   const [produits, setProduits] = useState<any[]>([])
   const [produitsRuptureStock, setProduitsRuptureStock] = useState<any[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const lastCommandesIdsRef = useRef<Set<string>>(new Set())
   const supabase = createClient()
+
+  const playDashboardNotification = useCallback((commande?: any) => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.currentTime = 0
+        audioRef.current.play().catch((err) => {
+          console.error('❌ Erreur lors de la lecture du son (dashboard):', err)
+        })
+      } catch (error) {
+        console.error('❌ Erreur lors de la préparation du son (dashboard):', error)
+      }
+    }
+
+    const shortId = commande?.id ? commande.id.substring(0, 8) : 'N/A'
+    toast.success('Nouvelle commande reçue !', {
+      description: `Commande #${shortId} - ${commande?.nom_client || 'Client'}`,
+    })
+  }, [])
 
   // Initialiser l'audio pour la notification
   useEffect(() => {
@@ -53,11 +70,16 @@ export default function AdminDashboardPage() {
         },
         (payload) => {
           console.log('Changement détecté sur le dashboard:', payload)
-          
-          // Les notifications sont gérées globalement dans le layout
-          // Ici, on recharge juste les stats
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') {
-            // Recharger les stats pour toutes les modifications
+
+          if (payload.eventType === 'INSERT') {
+            playDashboardNotification(payload.new)
+          }
+
+          if (
+            payload.eventType === 'INSERT' ||
+            payload.eventType === 'UPDATE' ||
+            payload.eventType === 'DELETE'
+          ) {
             chargerStats()
           }
         }
@@ -75,21 +97,13 @@ export default function AdminDashboardPage() {
         }
       })
 
-    // Polling de secours pour détecter les nouvelles commandes
-    // (au cas où real-time INSERT events ne fonctionnent pas)
-    const pollingInterval = setInterval(() => {
-      console.log('🔍 Polling (dashboard): Vérification des nouvelles commandes...')
-      chargerStats(true) // Silent mode pour le polling
-    }, 5000) // Vérifier toutes les 5 secondes
-
-    // Nettoyer l'abonnement et le polling au démontage
+    // Nettoyer l'abonnement au démontage
     return () => {
-      console.log('Nettoyage de l\'abonnement real-time et polling (dashboard)')
-      clearInterval(pollingInterval)
+      console.log('Nettoyage de l\'abonnement real-time (dashboard)')
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supabase])
+  }, [supabase, playDashboardNotification])
 
   const chargerStats = async (silent = false) => {
     try {
@@ -105,10 +119,6 @@ export default function AdminDashboardPage() {
 
       const commandesResult = await commandesResponse.json()
       const commandes = commandesResult.data || []
-
-      // Mettre à jour les IDs des commandes pour le polling
-      // (Les notifications sont gérées globalement dans le layout)
-      lastCommandesIdsRef.current = new Set(commandes.map((c: any) => c.id))
 
       // Charger les produits
       let produitsData: any[] = []

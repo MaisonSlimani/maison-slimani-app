@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -36,7 +36,29 @@ export default function AdminLayout({
   const [categories, setCategories] = useState<Array<{ slug: string; nom: string }>>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const lastCommandeIdsRef = useRef<Set<string>>(new Set())
+  const commandesEnAttenteRef = useRef(0)
+
+  useEffect(() => {
+    commandesEnAttenteRef.current = commandesEnAttente
+  }, [commandesEnAttente])
+
+  const playGlobalNotificationSound = useCallback(() => {
+    if (!audioRef.current) return
+    try {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch((err) => {
+        console.error('❌ Erreur lors de la lecture du son:', err)
+      })
+    } catch (error) {
+      console.error('❌ Erreur lors de la préparation du son:', error)
+    }
+  }, [])
+
+  const adjustPendingCount = useCallback((delta: number) => {
+    setCommandesEnAttente((prev) => Math.max(0, prev + delta))
+  }, [])
+
+
 
   useEffect(() => {
     // Vérifier la session au chargement
@@ -75,138 +97,132 @@ export default function AdminLayout({
 
   // Charger le nombre de commandes en attente avec real-time et notifications globales
   useEffect(() => {
+    if (loading) return
+
     const supabase = createClient()
-    const chargerCommandesEnAttente = async (silent = false) => {
+
+    const chargerCommandesEnAttente = async (retryCount = 0) => {
+      // Ne pas essayer plus de 3 fois
+      if (retryCount > 3) {
+        console.error('Échec après 3 tentatives de chargement des commandes en attente')
+        setCommandesEnAttente(0)
+        return
+      }
+
       try {
-        const response = await fetch('/api/admin/commandes?statut=En attente')
-        if (response.ok) {
-          const result = await response.json()
-          const commandes = result.data || []
-          
-          // Détecter les nouvelles commandes pour notification globale (polling fallback)
-          // Vérifier même en mode silent (polling) pour détecter les nouvelles commandes
-          const nouvellesCommandesIds = new Set<string>(
-            (commandes as Array<{ id: string }>).map((c) => String(c.id))
-          )
-          const anciennesCommandesIds = lastCommandeIdsRef.current
-          
-          // Si on a déjà des IDs enregistrés, comparer pour trouver les nouvelles
-          // (Seulement si real-time n'a pas déjà déclenché la notification)
-          if (anciennesCommandesIds.size > 0) {
-            const commandesNouvelles = commandes.filter(
-              (c: any) => !anciennesCommandesIds.has(String(c.id))
-            )
-            
-            if (commandesNouvelles.length > 0) {
-              console.log('🆕 Nouvelles commandes détectées via polling (layout):', commandesNouvelles.length, commandesNouvelles)
-              
-              // Jouer le son (même en mode silent/polling) - fallback si real-time n'a pas fonctionné
-              if (audioRef.current) {
-                try {
-                  audioRef.current.currentTime = 0
-                  audioRef.current.play().catch(err => {
-                    console.error('❌ Erreur lors de la lecture du son:', err)
-                  })
-                } catch (error) {
-                  console.error('❌ Erreur lors de la préparation du son:', error)
-                }
-              }
-              
-              // Afficher notification (même en mode silent/polling) - fallback si real-time n'a pas fonctionné
-              toast.success(`Nouvelle commande reçue !`, {
-                description: `${commandesNouvelles.length} commande(s) en attente`,
-              })
-            }
-          }
-          
-          // Mettre à jour les IDs (même si c'était la première fois, pour la prochaine fois)
-          lastCommandeIdsRef.current = nouvellesCommandesIds
-          setCommandesEnAttente(commandes.length)
-        }
-      } catch (error) {
-        console.error('Erreur lors du chargement des commandes en attente:', error)
-      }
-    }
-
-    if (!loading) {
-      // Initialiser lastCommandeIdsRef avec un Set vide pour permettre la détection
-      if (lastCommandeIdsRef.current.size === 0) {
-        // Ne pas initialiser ici, laisser le premier appel charger les IDs
-      }
-      
-      // Charger initialement (pas en mode silent pour initialiser les IDs)
-      chargerCommandesEnAttente(false)
-      
-      // Configurer l'abonnement en temps réel pour les nouvelles commandes
-      // Utiliser un nom de canal simple et stable
-      const channel = supabase
-        .channel('commandes-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'commandes',
+        const encodedStatut = encodeURIComponent('En attente')
+        
+        // Créer un AbortController pour gérer le timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 secondes
+        
+        const response = await fetch(`/api/admin/commandes?statut=${encodedStatut}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          (payload) => {
-            const nouvelleCommande = payload.new as any
-            console.log('🆕 Nouvelle commande détectée via real-time:', nouvelleCommande)
-            
-            // Jouer le son
-            if (audioRef.current) {
-              try {
-                audioRef.current.currentTime = 0
-                audioRef.current.play().catch(err => {
-                  console.error('❌ Erreur lors de la lecture du son:', err)
-                })
-              } catch (error) {
-                console.error('❌ Erreur lors de la préparation du son:', error)
-              }
-            }
-            
-            // Afficher notification (une seule fois)
-            toast.success(`Nouvelle commande reçue !`, {
-              description: `Commande #${nouvelleCommande.id?.substring(0, 8) || 'N/A'} - ${nouvelleCommande.nom_client || 'Client'}`,
-            })
-            
-            // Recharger le nombre de commandes en attente
-            chargerCommandesEnAttente()
-          }
-        )
-        .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Abonnement real-time actif (layout)')
-          } else if (status === 'CHANNEL_ERROR') {
-            // Log error details if available, but don't spam the console
-            if (err) {
-              console.warn('⚠️ Erreur de canal real-time (layout):', err.message || err)
-            } else {
-              console.warn('⚠️ Erreur de canal real-time (layout) - Le polling de secours est actif')
-            }
-            // Real-time failed, but polling will handle updates
-          } else if (status === 'TIMED_OUT') {
-            console.warn('⚠️ Abonnement real-time timeout (layout) - Le polling de secours est actif')
-          } else if (status === 'CLOSED') {
-            // Channel closed is normal when component unmounts, only log if unexpected
-            if (loading === false) {
-              console.log('ℹ️ Canal real-time fermé (layout)')
-            }
-          }
+          signal: controller.signal,
         })
-
-      // Polling de secours pour détecter les nouvelles commandes
-      // (au cas où real-time INSERT events ne fonctionnent pas)
-      const pollingInterval = setInterval(() => {
-        console.log('🔍 Polling (layout): Vérification des nouvelles commandes...')
-        chargerCommandesEnAttente(true) // Silent mode pour le polling
-      }, 5000) // Vérifier toutes les 5 secondes
-      
-      return () => {
-        clearInterval(pollingInterval)
-        supabase.removeChannel(channel)
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          // Si c'est une erreur 401, ne pas réessayer
+          if (response.status === 401) {
+            console.warn('Non autorisé pour charger les commandes en attente')
+            setCommandesEnAttente(0)
+            return
+          }
+          
+          const errorText = await response.text()
+          console.error('Erreur API:', response.status, errorText)
+          
+          // Réessayer pour les erreurs 500 ou réseau
+          if (response.status >= 500 || retryCount < 2) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)))
+            return chargerCommandesEnAttente(retryCount + 1)
+          }
+          
+          throw new Error(`Erreur lors du chargement des commandes en attente: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        const commandes = result.data || []
+        setCommandesEnAttente(commandes.length)
+      } catch (error: any) {
+        // Si c'est une erreur d'abandon, réessayer
+        if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
+          if (retryCount < 2) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)))
+            return chargerCommandesEnAttente(retryCount + 1)
+          }
+        }
+        
+        console.error('Erreur lors du chargement des commandes en attente:', error)
+        // Ne pas bloquer l'interface en cas d'erreur
+        setCommandesEnAttente(0)
       }
     }
-  }, [loading])
+
+    chargerCommandesEnAttente()
+
+    const channel = supabase
+      .channel('commandes-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'commandes' },
+        (payload) => {
+          const nouvelleCommande = payload.new as any
+          if (nouvelleCommande?.statut !== 'En attente') {
+            return
+          }
+
+          adjustPendingCount(1)
+          playGlobalNotificationSound()
+          toast.success(`Nouvelle commande reçue !`, {
+            description: `Commande #${nouvelleCommande.id?.substring(0, 8) || 'N/A'} - ${
+              nouvelleCommande.nom_client || 'Client'
+            }`,
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'commandes' },
+        (payload) => {
+          const nouvelleStatut = payload.new?.statut
+          const ancienStatut = payload.old?.statut
+          const etaitEnAttente = ancienStatut === 'En attente'
+          const estEnAttente = nouvelleStatut === 'En attente'
+
+          if (etaitEnAttente === estEnAttente) {
+            return
+          }
+
+          adjustPendingCount(estEnAttente ? 1 : -1)
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'commandes' },
+        (payload) => {
+          const ancienneCommande = payload.old as any
+          if (ancienneCommande?.statut === 'En attente') {
+            adjustPendingCount(-1)
+          }
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('⚠️ Problème avec le canal real-time (layout):', err)
+          chargerCommandesEnAttente()
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [loading, adjustPendingCount, playGlobalNotificationSound])
 
   // Charger les catégories depuis la base de données
   useEffect(() => {

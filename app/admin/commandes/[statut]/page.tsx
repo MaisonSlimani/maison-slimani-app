@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -57,7 +57,38 @@ export default function AdminCommandesStatutPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const supabase = createClient()
   const isReloadingRef = useRef(false)
-  const lastCommandeIdsRef = useRef<Set<string>>(new Set())
+  const commandesRef = useRef<any[]>([])
+
+  const sortCommandes = useCallback((list: any[]) => {
+    return [...list].sort((a, b) => {
+      const dateA = new Date(a?.date_commande || 0).getTime()
+      const dateB = new Date(b?.date_commande || 0).getTime()
+      return dateB - dateA
+    })
+  }, [])
+
+  const updateCommandesList = useCallback(
+    (updater: (prev: any[]) => any[]) => {
+      setCommandes((prev) => {
+        const next = updater(prev)
+        commandesRef.current = next
+        return next
+      })
+    },
+    []
+  )
+
+  const playNotificationSound = useCallback(() => {
+    if (!audioRef.current) return
+    try {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch((err) => {
+        console.error('❌ Erreur lors de la lecture du son:', err)
+      })
+    } catch (error) {
+      console.error('❌ Erreur lors de la préparation du son:', error)
+    }
+  }, [])
 
   // Initialiser l'audio pour la notification
   useEffect(() => {
@@ -82,123 +113,101 @@ export default function AdminCommandesStatutPage() {
   useEffect(() => {
     window.scrollTo(0, 0)
     chargerCommandes()
-    
-    // Configurer l'abonnement en temps réel
+
     const channelName = `commandes-changes-${statutSlug}-${Date.now()}`
-    const channel = supabase
-      .channel(channelName)
-      
-    // Ajouter un handler catch-all pour voir TOUS les événements
-    channel.on('broadcast', { event: '*' }, (payload) => {
-      console.log('📡 Broadcast reçu:', payload)
-    })
-      
-    // Écouter tous les types d'événements
+    const channel = supabase.channel(channelName)
+
     channel
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'commandes',
-        },
+        { event: 'INSERT', schema: 'public', table: 'commandes' },
         (payload) => {
-          console.log('🎯 INSERT événement reçu:', payload)
           const nouvelleCommande = payload.new as any
-          console.log('📦 Nouvelle commande détectée:', {
-            id: nouvelleCommande?.id,
-            statut: nouvelleCommande?.statut,
-            nom_client: nouvelleCommande?.nom_client,
-            filtreActuel: statutSlug,
-            statutInfoNom: statutInfo.nom
-          })
-          
-          // Vérifier si la nouvelle commande correspond au filtre actuel
-          const commandeCorrespondAuFiltre = 
-            statutSlug === 'toutes' || 
-            nouvelleCommande?.statut === statutInfo.nom
-          
-          console.log('✅ Commande correspond au filtre:', commandeCorrespondAuFiltre)
-          
-          // Si la commande correspond au filtre, recharger immédiatement
-          // (Le son et la notification sont gérés globalement dans le layout)
-          if (commandeCorrespondAuFiltre) {
-            console.log('🔄 Rechargement des commandes...')
-            chargerCommandes()
-          } else {
-            console.log('ℹ️ Commande ne correspond pas au filtre actuel')
+          const correspond =
+            statutSlug === 'toutes' || nouvelleCommande?.statut === statutInfo.nom
+
+          if (!correspond) {
+            return
           }
+
+          playNotificationSound()
+          updateCommandesList((prev) => {
+            const index = prev.findIndex((c) => c.id === nouvelleCommande.id)
+            if (index !== -1) {
+              const next = [...prev]
+              next[index] = nouvelleCommande
+              return sortCommandes(next)
+            }
+
+            return sortCommandes([nouvelleCommande, ...prev])
+          })
         }
       )
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'commandes',
-        },
+        { event: 'UPDATE', schema: 'public', table: 'commandes' },
         (payload) => {
-          console.log('🔄 UPDATE événement reçu:', payload)
           const commandeModifiee = payload.new as any
           const ancienneCommande = payload.old as any
-          
-          // Vérifier si la commande modifiée affecte la liste actuelle
-          const nouvelleStatutCorrespond = statutSlug === 'toutes' || commandeModifiee?.statut === statutInfo.nom
-          const ancienStatutCorrespondait = statutSlug === 'toutes' || ancienneCommande?.statut === statutInfo.nom
-          
-          if (nouvelleStatutCorrespond || ancienStatutCorrespondait) {
-            console.log('🔄 Statut modifié, rechargement...')
-            chargerCommandes()
+
+          const nouvelleCorrespond =
+            statutSlug === 'toutes' || commandeModifiee?.statut === statutInfo.nom
+          const ancienneCorrespondait =
+            statutSlug === 'toutes' || ancienneCommande?.statut === statutInfo.nom
+
+          if (!nouvelleCorrespond && !ancienneCorrespondait) {
+            return
           }
+
+          updateCommandesList((prev) => {
+            let next = [...prev]
+            const index = next.findIndex((c) => c.id === commandeModifiee.id)
+
+            if (nouvelleCorrespond) {
+              if (index !== -1) {
+                next[index] = commandeModifiee
+              } else {
+                next = [commandeModifiee, ...next]
+              }
+            } else if (index !== -1) {
+              next.splice(index, 1)
+            }
+
+            return sortCommandes(next)
+          })
         }
       )
       .on(
         'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'commandes',
-        },
+        { event: 'DELETE', schema: 'public', table: 'commandes' },
         (payload) => {
-          console.log('🗑️ DELETE événement reçu:', payload)
-          console.log('🔄 Commande supprimée, rechargement...')
-          chargerCommandes()
+          const commandeSupprimee = payload.old as any
+          if (
+            statutSlug !== 'toutes' &&
+            commandeSupprimee?.statut !== statutInfo.nom
+          ) {
+            return
+          }
+
+          updateCommandesList((prev) =>
+            prev.filter((commande) => commande.id !== commandeSupprimee.id)
+          )
         }
       )
-      .subscribe((status, err) => {
-        console.log('📡 Statut de l\'abonnement real-time:', status)
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Abonnement real-time actif - En attente d\'événements...')
-          // Test: essayer de recevoir un événement de test
-          console.log('🔍 Test: Abonnement configuré pour écouter:', {
-            schema: 'public',
-            table: 'commandes',
-            event: '*'
-          })
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Erreur de canal real-time:', err)
-        } else if (status === 'TIMED_OUT') {
-          console.warn('⚠️ Abonnement real-time timeout')
-        } else if (status === 'CLOSED') {
-          console.warn('⚠️ Canal real-time fermé')
-        }
-      })
+      .subscribe()
 
-    // Polling de secours pour détecter les nouvelles commandes
-    // (au cas où real-time INSERT events ne fonctionnent pas)
-    const pollingInterval = setInterval(() => {
-      console.log('🔍 Polling: Vérification des nouvelles commandes...')
-      chargerCommandes(true) // Silent mode pour ne pas interférer avec l'UI
-    }, 5000) // Vérifier toutes les 5 secondes
-
-    // Nettoyer l'abonnement et le polling au démontage
     return () => {
-      console.log('Nettoyage de l\'abonnement real-time et polling')
-      clearInterval(pollingInterval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statutSlug, supabase])
+  }, [
+    statutSlug,
+    supabase,
+    statutInfo.nom,
+    playNotificationSound,
+    sortCommandes,
+    updateCommandesList,
+  ])
 
   const chargerCommandes = async (silent = false) => {
     // Prévenir les appels multiples simultanés
@@ -224,31 +233,10 @@ export default function AdminCommandesStatutPage() {
       const result = await response.json()
       const nouvellesCommandes = result.data || []
       
-      // Détecter les nouvelles commandes (pour le polling)
-      // Toujours vérifier, même en mode silent, pour détecter les nouvelles commandes
-      if (lastCommandeIdsRef.current.size > 0) {
-        const nouvellesCommandesIds = new Set(nouvellesCommandes.map((c: any) => c.id))
-        const anciennesCommandesIds = lastCommandeIdsRef.current
-        
-        // Trouver les nouvelles commandes
-        const commandesNouvelles = nouvellesCommandes.filter(
-          (c: any) => !anciennesCommandesIds.has(c.id)
-        )
-        
-        if (commandesNouvelles.length > 0) {
-          console.log('🆕 Nouvelles commandes détectées via polling:', commandesNouvelles.length, commandesNouvelles)
-          // Le son et la notification sont gérés globalement dans le layout
-          // On recharge juste la liste ici
-        }
-      }
-      
-      // Mettre à jour les IDs des commandes
-      lastCommandeIdsRef.current = new Set(nouvellesCommandes.map((c: any) => c.id))
-      
       if (!silent) {
         console.log(`✅ Commandes chargées: ${nouvellesCommandes.length} commande(s)`)
       }
-      setCommandes(nouvellesCommandes)
+      updateCommandesList(() => sortCommandes(nouvellesCommandes))
     } catch (error: any) {
       console.error('❌ Erreur lors du chargement des commandes:', error)
       if (!silent) {

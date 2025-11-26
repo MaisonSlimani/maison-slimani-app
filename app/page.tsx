@@ -13,8 +13,8 @@ import CarteCategorie from '@/components/CarteCategorie'
 import CarteProduit from '@/components/CarteProduit'
 import SoundPlayer from '@/components/SoundPlayer'
 import { Truck, RefreshCcw, Award } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 // Chemins des images (Next.js Image nécessite des chemins relatifs depuis public/)
 const heroImage = '/assets/hero-chaussures.jpg'
@@ -24,8 +24,6 @@ const lookbookAtelier = '/assets/lookbook-atelier.jpg'
 const lookbookLifestyle2 = '/assets/lookbook-lifestyle-2.jpg'
 
 export default function AccueilPage() {
-  const [produitsVedette, setProduitsVedette] = useState<any[]>([])
-  const [loadingVedette, setLoadingVedette] = useState(true)
   const [categories, setCategories] = useState<Array<{
     titre: string
     tagline: string
@@ -33,6 +31,27 @@ export default function AccueilPage() {
     lien: string
   }>>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
+
+  const {
+    data: produitsVedette = [],
+    isPending: loadingVedette,
+  } = useQuery({
+    queryKey: ['produits', 'vedette'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    queryFn: async ({ signal }) => {
+      const response = await fetch('/api/produits?vedette=true&limit=6', {
+        signal,
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erreur API produits: ${response.status}`)
+      }
+
+      const payload = await response.json()
+      return payload?.data || []
+    },
+  })
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -148,58 +167,36 @@ export default function AccueilPage() {
   }, [])
 
   useEffect(() => {
-    const chargerProduitsVedette = async () => {
-      try {
-        const supabase = createClient()
-        
-        // Charger produits vedette depuis la base de données
-        const { data: vedette } = await supabase
-          .from('produits')
-          .select('*')
-          .eq('vedette', true)
-          .limit(6)
-          .order('date_ajout', { ascending: false })
+    const controller = new AbortController()
 
-        setProduitsVedette(vedette || [])
-      } catch (error) {
-        console.error('Erreur lors du chargement des produits vedette:', error)
-      } finally {
-        setLoadingVedette(false)
-      }
-    }
-
-    chargerProduitsVedette()
-  }, [])
-
-  useEffect(() => {
     const chargerCategories = async () => {
       try {
-        const supabase = createClient()
-        
-        // Charger les catégories actives depuis la base de données
-        const { data: categoriesData, error } = await supabase
-          .from('categories')
-          .select('nom, description, image_url, slug, ordre')
-          .eq('active', true)
-          .order('ordre', { ascending: true })
+        const response = await fetch('/api/categories?active=true', {
+          signal: controller.signal,
+        })
 
-        if (error) throw error
+        if (!response.ok) {
+          throw new Error(`Erreur API catégories: ${response.status}`)
+        }
 
-        // Mapper les données de la base vers le format attendu par CarteCategorie
-        // Filtrer les catégories sans image_url pour éviter les fallbacks
-        const categoriesMapped = (categoriesData || [])
-          .filter((cat) => cat.image_url && cat.image_url.trim() !== '') // Seulement les catégories avec image
-          .map((cat) => ({
+        const payload = await response.json()
+        const categoriesData = payload?.data || []
+
+        const categoriesMapped = categoriesData
+          .filter((cat: any) => cat.image_url && cat.image_url.trim() !== '')
+          .map((cat: any) => ({
             titre: cat.nom,
             tagline: cat.description || '',
-            image: cat.image_url, // Pas de fallback - on filtre déjà les vides
+            image: cat.image_url,
             lien: `/boutique/${cat.slug}`,
           }))
 
         setCategories(categoriesMapped)
       } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          return
+        }
         console.error('Erreur lors du chargement des catégories:', error)
-        // En cas d'erreur, laisser categories vide - la section ne s'affichera pas
         setCategories([])
       } finally {
         setLoadingCategories(false)
@@ -207,6 +204,8 @@ export default function AccueilPage() {
     }
 
     chargerCategories()
+
+    return () => controller.abort()
   }, [])
 
 

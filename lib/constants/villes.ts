@@ -1,0 +1,22 @@
+export const villesMaroc = [
+  'Agadir',
+  'Beni Mellal',
+  'Casablanca',
+  'El Jadida',
+  'Fès',
+  'Kenitra',
+  'Khouribga',
+  'Marrakech',
+  'Meknès',
+  'Mohammedia',
+  'Nador',
+  'Oujda',
+  'Rabat',
+  'Safi',
+  'Settat',
+  'Tanger',
+  'Taza',
+  'Tétouan',
+  'Autre',
+] as const
+
