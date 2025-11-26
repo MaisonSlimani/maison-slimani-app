@@ -93,6 +93,10 @@
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },
+  "overrides": {
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7"
+  },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
     "@tailwindcss/typography": "^0.5.16",

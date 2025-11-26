@@ -233,7 +233,7 @@ export default function FavorisPage() {
                 const isOutOfStock = item.stock === undefined || item.stock === null || item.stock <= 0
                 
                 return (
-                  <Card key={item.id} className={`p-6 group hover:shadow-lg transition-shadow relative ${isOutOfStock ? 'opacity-75' : ''}`}>
+                  <Card key={item.id} className={`p-4 md:p-6 group hover:shadow-lg transition-shadow relative flex flex-col ${isOutOfStock ? 'opacity-75' : ''}`}>
                     {/* Badge rupture de stock */}
                     {isOutOfStock && (
                       <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-3 py-1.5">
@@ -269,26 +269,28 @@ export default function FavorisPage() {
                       </p>
                     </Link>
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 mt-auto">
                       {inCart ? (
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => router.push('/panier')}
-                          className="flex-1 border-charbon text-charbon hover:bg-charbon hover:text-background"
+                          className="flex-1 border-charbon text-charbon hover:bg-charbon hover:text-background text-xs sm:text-sm"
                         >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          Aller au panier
+                          <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Aller au panier</span>
+                          <span className="sm:hidden">Panier</span>
                         </Button>
                       ) : (
                         <Button
                           size="sm"
                           onClick={() => handleAddToCart(item)}
                           disabled={addingToCart === item.id || isOutOfStock}
-                          className="flex-1 bg-dore text-charbon hover:bg-dore/90 disabled:opacity-50"
+                          className="flex-1 bg-dore text-charbon hover:bg-dore/90 disabled:opacity-50 text-xs sm:text-sm"
                         >
-                          <ShoppingBag className="w-4 h-4 mr-2" />
-                          {addingToCart === item.id ? 'Ajout...' : 'Ajouter au panier'}
+                          <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">{addingToCart === item.id ? 'Ajout...' : 'Ajouter au panier'}</span>
+                          <span className="sm:hidden">{addingToCart === item.id ? 'Ajout...' : 'Ajouter'}</span>
                         </Button>
                       )}
                       <Button
@@ -298,9 +300,10 @@ export default function FavorisPage() {
                           removeItem(item.id)
                           toast.success('Produit retiré des favoris')
                         }}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0 w-auto sm:w-auto"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="sr-only">Retirer</span>
                       </Button>
                     </div>
 

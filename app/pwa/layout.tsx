@@ -32,12 +32,6 @@ export default function PWALayout({
         })
     }
 
-    // Set PWA mode cookie only if explicitly requested via URL parameter
-    // This prevents the cookie from being set automatically
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('pwa') === 'true') {
-    document.cookie = 'pwa-mode=true; path=/; max-age=31536000'
-    }
     
     // Set viewport meta for PWA
     const viewport = document.querySelector('meta[name="viewport"]')

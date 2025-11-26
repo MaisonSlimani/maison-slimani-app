@@ -7,7 +7,7 @@
   "background_color": "#F5F1E8",
   "theme_color": "#D4AF37",
   "orientation": "portrait-primary",
-  "scope": "/pwa",
+  "scope": "/",
   "icons": [
     {
       "src": "/icons/android-launchericon-48-48.png",

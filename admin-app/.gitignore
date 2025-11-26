@@ -15,3 +15,8 @@
 /admin-app/coverage.lcov.json
 /admin-app/.env.local
 /admin-app/.next
+/admin-app/.next/cache
+/admin-app/.next/cache/
+/admin-app/.next/cache/
+
+/admin-app/android/

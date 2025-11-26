@@ -1,10 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps {
+  children: ReactNode
+}
+
+export function Providers({ children }: ProvidersProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({

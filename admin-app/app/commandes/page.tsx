@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import OrderCard from '@/components/admin-pwa/OrderCard'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -11,6 +11,25 @@ export default function AdminPWACommandesPage() {
   const [commandes, setCommandes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statutFilter, setStatutFilter] = useState<string>('tous')
+
+  const chargerCommandes = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (statutFilter && statutFilter !== 'tous') {
+        params.set('statut', statutFilter)
+      }
+
+      const response = await fetch(`/api/admin/commandes?${params.toString()}`)
+      if (!response.ok) throw new Error('Erreur')
+      const result = await response.json()
+      setCommandes(result.data || [])
+    } catch (error) {
+      toast.error('Erreur lors du chargement')
+    } finally {
+      setLoading(false)
+    }
+  }, [statutFilter])
 
   useEffect(() => {
     const verifierSession = async () => {
@@ -29,26 +48,7 @@ export default function AdminPWACommandesPage() {
 
     verifierSession()
     chargerCommandes()
-  }, [router, statutFilter])
-
-  const chargerCommandes = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams()
-      if (statutFilter && statutFilter !== 'tous') {
-        params.set('statut', statutFilter)
-      }
-
-      const response = await fetch(`/api/admin/commandes?${params.toString()}`)
-      if (!response.ok) throw new Error('Erreur')
-      const result = await response.json()
-      setCommandes(result.data || [])
-    } catch (error) {
-      toast.error('Erreur lors du chargement')
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [router, chargerCommandes])
 
   const handleStatusChange = async (commandeId: string, newStatus: string) => {
     try {

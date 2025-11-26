@@ -48,11 +48,12 @@ export function useWishlist() {
       if (existing) {
         return prev // Ne pas ajouter en double
       }
+      // Utiliser une fonction de mise à jour pour éviter les race conditions
       return [...prev, item]
     })
     
     // Son d'ajout aux favoris
-    if ((window as any).playSuccessSound) {
+    if (typeof window !== 'undefined' && (window as any).playSuccessSound) {
       ;(window as any).playSuccessSound()
     }
   }

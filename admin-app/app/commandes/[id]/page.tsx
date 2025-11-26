@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -43,26 +43,7 @@ export default function AdminPWACommandeDetailPage() {
   const [commande, setCommande] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const verifierSession = async () => {
-      try {
-        const response = await fetch('/api/auth/session')
-        const data = await response.json()
-        if (!data.authenticated) {
-          router.push('/login')
-          return
-        }
-      } catch (error) {
-        router.push('/login')
-        return
-      }
-    }
-
-    verifierSession()
-    chargerCommande()
-  }, [commandeId, router])
-
-  const chargerCommande = async () => {
+  const chargerCommande = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/commandes/${commandeId}`)
@@ -82,7 +63,26 @@ export default function AdminPWACommandeDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [commandeId, router])
+
+  useEffect(() => {
+    const verifierSession = async () => {
+      try {
+        const response = await fetch('/api/auth/session')
+        const data = await response.json()
+        if (!data.authenticated) {
+          router.push('/login')
+          return
+        }
+      } catch (error) {
+        router.push('/login')
+        return
+      }
+    }
+
+    verifierSession()
+    chargerCommande()
+  }, [commandeId, router, chargerCommande])
 
   const handleStatusChange = async (newStatus: string) => {
     try {

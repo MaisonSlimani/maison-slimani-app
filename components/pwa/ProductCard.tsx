@@ -52,6 +52,7 @@ export default function ProductCard({ produit }: ProductCardProps) {
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false)
   const inWishlist = isInWishlist(produit.id)
   const isInCart = items.some(item => item.id === produit.id)
 
@@ -93,10 +94,13 @@ export default function ProductCard({ produit }: ProductCardProps) {
     e.preventDefault()
     e.stopPropagation()
 
+    if (isTogglingWishlist) return
+
+    setIsTogglingWishlist(true)
     try {
       if (inWishlist) {
         removeFromWishlist(produit.id)
-        toast.success('Retiré des favoris')
+        toast.success('Retiré des favoris', { duration: 1000 })
       } else {
         addToWishlist({
           id: produit.id,
@@ -106,10 +110,14 @@ export default function ProductCard({ produit }: ProductCardProps) {
           image: imageUrl,
           stock: produit.stock,
         })
-        toast.success('Ajouté aux favoris')
+        toast.success('Ajouté aux favoris', { duration: 1000 })
       }
     } catch (error) {
-      toast.error('Erreur')
+      console.error('Erreur lors de la modification de la wishlist:', error)
+      toast.error('Erreur lors de la modification')
+    } finally {
+      // Petit délai pour éviter les clics multiples rapides
+      setTimeout(() => setIsTogglingWishlist(false), 300)
     }
   }
 
@@ -193,9 +201,11 @@ export default function ProductCard({ produit }: ProductCardProps) {
           size="sm"
           variant="outline"
           onClick={handleToggleWishlist}
+          disabled={isTogglingWishlist}
           className={cn(
             "px-3 h-9",
-            inWishlist && "bg-dore/20 border-dore text-dore"
+            inWishlist && "bg-dore/20 border-dore text-dore",
+            isTogglingWishlist && "opacity-50"
           )}
         >
           <Heart className={cn("w-3 h-3", inWishlist && "fill-current")} />

@@ -1,14 +1,17 @@
 {
   "appId": "com.maisonslimani.customer",
   "appName": "Maison Slimani",
-  "webDir": ".next",
   "server": {
-    "url": "https://maisonslimani.ma/pwa",
+    "url": "https://maison-slimani-experience.vercel.app/pwa",
     "cleartext": false
   },
   "plugins": {
     "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     },
     "Share": {
       "enabled": true
@@ -27,4 +30,3 @@
     "scheme": "maisonslimani"
   }
 }
-
