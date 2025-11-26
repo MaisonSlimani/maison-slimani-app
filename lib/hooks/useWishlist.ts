@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export interface WishlistItem {
   id: string
@@ -12,71 +12,105 @@ export interface WishlistItem {
   stock?: number
 }
 
+const STORAGE_KEY = 'wishlist'
+
 export function useWishlist() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const isUpdating = useRef(false)
 
-  // Charger la wishlist depuis localStorage au montage
+  // Load wishlist from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedWishlist = localStorage.getItem('wishlist')
-      if (savedWishlist) {
-        try {
-          setItems(JSON.parse(savedWishlist))
-        } catch (error) {
-          console.error('Erreur lors du chargement de la wishlist:', error)
+      try {
+        const savedWishlist = localStorage.getItem(STORAGE_KEY)
+        if (savedWishlist) {
+          const parsed = JSON.parse(savedWishlist)
+          if (Array.isArray(parsed)) {
+            setItems(parsed)
+          }
         }
+      } catch (error) {
+        console.error('Error loading wishlist:', error)
+        localStorage.removeItem(STORAGE_KEY)
       }
       setIsLoaded(true)
     }
   }, [])
 
-  // Sauvegarder la wishlist dans localStorage à chaque changement
+  // Save wishlist to localStorage on changes
   useEffect(() => {
-    if (isLoaded && typeof window !== 'undefined') {
-      localStorage.setItem('wishlist', JSON.stringify(items))
-      
-      // Déclencher un événement pour notifier les autres composants
+    if (isLoaded && typeof window !== 'undefined' && !isUpdating.current) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
       window.dispatchEvent(new Event('wishlistUpdated'))
     }
   }, [items, isLoaded])
 
-  const addItem = (item: WishlistItem) => {
-    setItems((prev) => {
-      // Vérifier si l'item existe déjà
-      const existing = prev.find((i) => i.id === item.id)
-      if (existing) {
-        return prev // Ne pas ajouter en double
+  // Listen for wishlist updates from other tabs/components
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue)
+          if (Array.isArray(parsed)) {
+            isUpdating.current = true
+            setItems(parsed)
+            setTimeout(() => {
+              isUpdating.current = false
+            }, 100)
+          }
+        } catch (error) {
+          console.error('Error syncing wishlist:', error)
+        }
       }
-      // Utiliser une fonction de mise à jour pour éviter les race conditions
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  const addItem = useCallback((item: WishlistItem) => {
+    setItems((prev) => {
+      // Check if item already exists
+      if (prev.some((i) => i.id === item.id)) {
+        return prev
+      }
       return [...prev, item]
     })
-    
-    // Son d'ajout aux favoris
-    if (typeof window !== 'undefined' && (window as any).playSuccessSound) {
-      ;(window as any).playSuccessSound()
-    }
-  }
+  }, [])
 
-  const removeItem = (id: string) => {
+  const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id))
-  }
+  }, [])
 
-  const isInWishlist = (id: string) => {
+  const toggleItem = useCallback((item: WishlistItem) => {
+    setItems((prev) => {
+      const exists = prev.some((i) => i.id === item.id)
+      if (exists) {
+        return prev.filter((i) => i.id !== item.id)
+      }
+      return [...prev, item]
+    })
+  }, [])
+
+  const isInWishlist = useCallback((id: string) => {
     return items.some((item) => item.id === id)
-  }
+  }, [items])
 
-  const clearWishlist = () => {
+  const clearWishlist = useCallback(() => {
     setItems([])
-  }
+  }, [])
 
   return {
     items,
     addItem,
     removeItem,
+    toggleItem,
     isInWishlist,
     clearWishlist,
     isLoaded,
+    count: items.length,
   }
 }
-

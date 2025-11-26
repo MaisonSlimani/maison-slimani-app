@@ -6,13 +6,36 @@ export async function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    const missingVars = []
+    if (!supabaseUrl) missingVars.push('NEXT_PUBLIC_SUPABASE_URL')
+    if (!supabaseAnonKey) missingVars.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    
     throw new Error(
-      'Variables d\'environnement Supabase manquantes. ' +
-      'Assurez-vous que NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont définies dans vos variables d\'environnement Vercel.'
+      `Variables d'environnement Supabase manquantes: ${missingVars.join(', ')}. ` +
+      'Assurez-vous que ces variables sont définies dans votre fichier .env.local ou dans les variables d\'environnement Vercel.'
     )
   }
 
-  const cookieStore = await cookies()
+  // Validate URL format
+  try {
+    new URL(supabaseUrl)
+  } catch {
+    throw new Error(
+      `URL Supabase invalide: ${supabaseUrl}. ` +
+      'Vérifiez que NEXT_PUBLIC_SUPABASE_URL est une URL valide.'
+    )
+  }
+
+  let cookieStore
+  try {
+    cookieStore = await cookies()
+  } catch (cookieError) {
+    // If cookies() fails, throw a more helpful error
+    throw new Error(
+      'Impossible d\'accéder au contexte de cookies. ' +
+      'Assurez-vous que cette fonction est appelée dans un contexte serveur Next.js valide.'
+    )
+  }
 
   return createServerClient(
     supabaseUrl,
@@ -29,6 +52,7 @@ export async function createClient() {
             )
           } catch {
             // Le contexte de cookies n'est pas disponible dans certaines routes
+            // C'est normal dans certains cas (ex: middleware)
           }
         },
       },

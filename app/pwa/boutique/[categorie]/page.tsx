@@ -15,6 +15,7 @@ export default function PWACategoriePage() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('pertinence')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string } | null>(null)
+  const [categorieNom, setCategorieNom] = useState<string | null>(null)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -26,21 +27,44 @@ export default function PWACategoriePage() {
             nom: 'Tous nos produits',
             image: '/assets/hero-chaussures.jpg',
           })
+          setCategorieNom(null)
           return
         }
 
-        const response = await fetch(`/api/categories?slug=${categorieSlug}`)
-        if (!response.ok) throw new Error('Catégorie introuvable')
+        const response = await fetch(`/api/categories?slug=${encodeURIComponent(categorieSlug)}`)
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Erreur API catégories: ${response.status}`)
+        }
         const payload = await response.json()
+        
+        if (!payload.success) {
+          throw new Error(payload.error || 'Catégorie introuvable')
+        }
+        
         const data = payload?.data?.[0]
         if (data) {
           setCategorieInfo({
             nom: data.nom,
             image: data.image_url || '/assets/hero-chaussures.jpg',
           })
+          setCategorieNom(data.nom) // Store category name for products query
+        } else {
+          // Category not found, set default
+          setCategorieInfo({
+            nom: 'Collection',
+            image: '/assets/hero-chaussures.jpg',
+          })
+          setCategorieNom(null)
         }
       } catch (error) {
-        console.error('Erreur:', error)
+        console.error('Erreur lors du chargement de la catégorie:', error)
+        // Set default category info on error
+        setCategorieInfo({
+          nom: 'Collection',
+          image: '/assets/hero-chaussures.jpg',
+        })
+        setCategorieNom(null)
       }
     }
 
@@ -51,12 +75,14 @@ export default function PWACategoriePage() {
     data: produits = [],
     isPending: loading,
   } = useQuery({
-    queryKey: ['produits', 'pwa', 'categorie', categorieSlug, triPrix],
+    queryKey: ['produits', 'pwa', 'categorie', categorieNom, triPrix],
     staleTime: 2 * 60 * 1000,
+    enabled: categorieSlug === 'tous' || categorieNom !== null || categorieInfo !== null, // Wait for category to load
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams()
-      if (categorieSlug && categorieSlug !== 'tous') {
-        params.set('categorie', categorieSlug)
+      // Use category name, not slug
+      if (categorieNom && categorieSlug !== 'tous') {
+        params.set('categorie', categorieNom)
       }
       if (triPrix !== 'pertinence') {
         params.set('sort', triPrix)
@@ -67,10 +93,15 @@ export default function PWACategoriePage() {
       })
 
       if (!response.ok) {
-        throw new Error(`Erreur API produits: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Erreur API produits: ${response.status}`)
       }
 
       const payload = await response.json()
+      if (!payload.success) {
+        throw new Error(payload.error || 'Erreur lors du chargement des produits')
+      }
+      
       return payload?.data || []
     },
   })

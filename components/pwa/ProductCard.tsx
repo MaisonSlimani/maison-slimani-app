@@ -25,9 +25,10 @@ interface ProductCardProps {
     has_colors?: boolean
     couleurs?: any[]
   }
+  priority?: boolean
 }
 
-export default function ProductCard({ produit }: ProductCardProps) {
+export default function ProductCard({ produit, priority = false }: ProductCardProps) {
   const getFirstImage = () => {
     if (produit.images && produit.images.length > 0) {
       const firstImg = produit.images[0]
@@ -130,8 +131,10 @@ export default function ProductCard({ produit }: ProductCardProps) {
             alt={produit.nom}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            priority={priority}
             sizes="(max-width: 768px) 50vw, 33vw"
+            fetchPriority={priority ? 'high' : 'auto'}
           />
           {inWishlist && (
             <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-1.5">

@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 import BottomNav from '@/components/pwa/BottomNav'
-import StickyHeader from '@/components/pwa/StickyHeader'
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt'
+import NativeBackHandler from '@/components/pwa/NativeBackHandler'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 
@@ -58,13 +58,24 @@ export default function PWALayout({
       document.head.appendChild(meta)
     }
 
-    // Set apple-mobile-web-app-capable
+    // Set apple-mobile-web-app-capable (for iOS Safari)
     const appleCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]')
     if (appleCapable) {
       appleCapable.setAttribute('content', 'yes')
     } else {
       const meta = document.createElement('meta')
       meta.name = 'apple-mobile-web-app-capable'
+      meta.content = 'yes'
+      document.head.appendChild(meta)
+    }
+
+    // Set mobile-web-app-capable (modern standard, replaces apple-mobile-web-app-capable)
+    const mobileCapable = document.querySelector('meta[name="mobile-web-app-capable"]')
+    if (mobileCapable) {
+      mobileCapable.setAttribute('content', 'yes')
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'mobile-web-app-capable'
       meta.content = 'yes'
       document.head.appendChild(meta)
     }
@@ -103,12 +114,12 @@ export default function PWALayout({
           max-width: 100vw;
         }
       `}</style>
-      <StickyHeader />
       <main className="flex-1 pb-16 w-full max-w-full overflow-x-hidden">
         {children}
       </main>
       <BottomNav />
       <PWAInstallPrompt />
+      <NativeBackHandler />
       <Toaster />
       <Sonner />
     </div>

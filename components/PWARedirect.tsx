@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 /**
@@ -16,13 +16,19 @@ import { usePathname, useRouter } from 'next/navigation'
 export default function PWARedirect() {
   const pathname = usePathname()
   const router = useRouter()
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
+    // Prevent multiple redirects
+    if (hasRedirected.current) return
+
     // Skip if already on /pwa routes or admin/login routes
     if (
       pathname?.startsWith('/pwa') ||
       pathname?.startsWith('/admin') ||
-      pathname === '/login'
+      pathname === '/login' ||
+      pathname?.startsWith('/api') ||
+      pathname?.startsWith('/_next')
     ) {
       return
     }
@@ -45,13 +51,20 @@ export default function PWARedirect() {
 
     // If in app mode, redirect to PWA version
     if (isStandalone || isCapacitor || isAndroidWebView) {
+      hasRedirected.current = true
       // Build the PWA path
       const pwaPath = pathname === '/' ? '/pwa' : `/pwa${pathname}`
       router.replace(pwaPath)
     }
   }, [pathname, router])
 
+  // Reset redirect flag when pathname changes to non-PWA route
+  useEffect(() => {
+    if (!pathname?.startsWith('/pwa') && !pathname?.startsWith('/admin') && pathname !== '/login') {
+      hasRedirected.current = false
+    }
+  }, [pathname])
+
   // This component doesn't render anything
   return null
 }
-

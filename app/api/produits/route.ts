@@ -15,7 +15,22 @@ export const revalidate = 60
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    // Create Supabase client with error handling
+    let supabase
+    try {
+      supabase = await createClient()
+    } catch (clientError) {
+      console.error('Erreur lors de la création du client Supabase:', clientError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Erreur de configuration Supabase. Vérifiez les variables d\'environnement.',
+          details: clientError instanceof Error ? clientError.message : 'Erreur inconnue',
+        },
+        { status: 500 }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const queryParams = Object.fromEntries(searchParams.entries())
     const validatedParams = produitQuerySchema.safeParse(queryParams)
@@ -64,9 +79,33 @@ export async function GET(request: NextRequest) {
 
     query = query.range(resolvedOffset, resolvedOffset + resolvedLimit - 1)
 
-    const { data, error, count } = await query
+    // Execute query with better error handling
+    let data, error, count
+    try {
+      const result = await query
+      data = result.data
+      error = result.error
+      count = result.count
+    } catch (fetchError) {
+      console.error('Erreur lors de l\'exécution de la requête Supabase:', fetchError)
+      
+      // Check if it's a network/fetch error
+      if (fetchError instanceof Error && fetchError.message.includes('fetch failed')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Erreur de connexion à la base de données. Vérifiez votre connexion réseau et les variables d\'environnement Supabase.',
+            details: fetchError.message,
+          },
+          { status: 503 }
+        )
+      }
+      
+      throw fetchError
+    }
 
     if (error) {
+      console.error('Erreur Supabase:', error)
       throw error
     }
 
@@ -87,17 +126,37 @@ export async function GET(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error('Erreur lors de la récupération des produits:', error)
+    console.error('Erreur lors de la récupération des produits:', {
+      message: error instanceof Error ? error.message : 'Erreur inconnue',
+      details: error instanceof Error ? error.stack : String(error),
+      error,
+    })
+
+    // Provide more specific error messages
+    let errorMessage = 'Erreur inconnue lors de la récupération des produits'
+    let statusCode = 500
+
+    if (error instanceof Error) {
+      if (error.message.includes('fetch failed') || error.message.includes('network')) {
+        errorMessage = 'Erreur de connexion réseau. Impossible de se connecter à la base de données.'
+        statusCode = 503
+      } else if (error.message.includes('Supabase') || error.message.includes('environment')) {
+        errorMessage = 'Erreur de configuration. Vérifiez les variables d\'environnement Supabase.'
+        statusCode = 500
+      } else {
+        errorMessage = error.message
+      }
+    }
 
     return NextResponse.json(
       {
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Erreur inconnue lors de la récupération des produits',
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' 
+          ? (error instanceof Error ? error.stack : String(error))
+          : undefined,
       },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }

@@ -6,8 +6,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useQuery } from '@tanstack/react-query'
-import { ShoppingBag, Truck, RefreshCcw, Award } from 'lucide-react'
+import { Truck, RefreshCcw, Award } from 'lucide-react'
 import ProductCard from '@/components/pwa/ProductCard'
+import StickyHeader from '@/components/pwa/StickyHeader'
 
 const heroImage = '/assets/hero-chaussures.jpg'
 
@@ -74,6 +75,8 @@ export default function PWAPage() {
 
   return (
     <div className="w-full">
+      <StickyHeader />
+      
       {/* Hero Section - Mobile Optimized */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">

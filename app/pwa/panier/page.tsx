@@ -2,18 +2,19 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { ShoppingBag, Trash2, Plus, Minus } from 'lucide-react'
+import { ShoppingBag, Trash2, Plus, Minus, ShoppingCart } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
+import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { toast } from 'sonner'
 
 export default function PWAPanierPage() {
   const router = useRouter()
   const { items, removeItem, updateQuantity, total, isLoaded } = useCart()
+  const { openDrawer } = useCartDrawer()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -29,9 +30,15 @@ export default function PWAPanierPage() {
 
   return (
     <div className="w-full min-h-screen pb-20">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <h1 className="text-2xl font-serif text-foreground">Mon Panier</h1>
-      </div>
+      {/* Header with Centered Title and Icon */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-area-top">
+        <div className="h-14 px-4 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-foreground" />
+            <h1 className="text-xl font-serif text-foreground">Mon Panier</h1>
+          </div>
+        </div>
+      </header>
 
       <div className="px-4 py-6">
         {items.length === 0 ? (
@@ -147,4 +154,3 @@ export default function PWAPanierPage() {
     </div>
   )
 }
-

@@ -191,14 +191,18 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     e.preventDefault()
     e.stopPropagation()
     
+    // Prevent double clicks
     if (isAddingToWishlist) return
     
     setIsAddingToWishlist(true)
     
+    // Store current state before action
+    const wasInWishlist = inWishlist
+    
     try {
-      if (inWishlist) {
+      if (wasInWishlist) {
         removeFromWishlist(produit.id)
-        toast.success('Produit retiré des favoris')
+        toast.success('Produit retiré des favoris', { duration: 1500 })
       } else {
         addToWishlist({
           id: produit.id,
@@ -209,13 +213,16 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
           stock: produit.stock,
           taille: produit.taille,
         })
-        toast.success('Produit ajouté aux favoris')
+        toast.success('Produit ajouté aux favoris', { duration: 1500 })
       }
     } catch (error) {
-      console.error('Erreur lors de la modification de la wishlist:', error)
-      toast.error('Erreur lors de la modification de la wishlist')
+      console.error('Erreur wishlist:', error)
+      toast.error('Une erreur est survenue')
     } finally {
-      setIsAddingToWishlist(false)
+      // Delay to prevent rapid clicks
+      setTimeout(() => {
+        setIsAddingToWishlist(false)
+      }, 400)
     }
   }
 
