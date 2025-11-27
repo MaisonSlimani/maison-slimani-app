@@ -1,23 +1,57 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+.yarn/install-state.gz
 
+# Testing
+coverage
+*.lcov
+.nyc_output
 
-/admin-app/node_modules
-/admin-app/.pnp
-/admin-app/.pnp.js
-/admin-app/.yarn/install-state.gz
-/admin-app/.next
-/admin-app/out
-/admin-app/.swc
-/admin-app/build
-/admin-app/dist
-/admin-app/coverage
-/admin-app/coverage.lcov
-/admin-app/coverage.lcov.json
-/admin-app/.env.local
-/admin-app/.next
-/admin-app/.next/cache
-/admin-app/.next/cache/
-/admin-app/.next/cache/
+# Next.js
+.next/
+out/
+.swc/
 
-/admin-app/android/
-hello
+# Production
+build/
+dist/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TypeScript
+next-env.d.ts
+
+# Capacitor
+android/
+ios/
+capacitor.config.json.local
+
+# PWA
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/fallback-*.js
+
+# Cache
+.next/cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

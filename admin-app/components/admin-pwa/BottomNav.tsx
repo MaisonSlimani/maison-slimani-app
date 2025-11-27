@@ -9,10 +9,10 @@ export default function AdminBottomNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/commandes', icon: ShoppingBag, label: 'Commandes' },
-    { href: '/produits', icon: Package, label: 'Produits' },
-    { href: '/settings', icon: Settings, label: 'Paramètres' },
+    { href: '/pwa', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/pwa/commandes', icon: ShoppingBag, label: 'Commandes' },
+    { href: '/pwa/produits', icon: Package, label: 'Produits' },
+    { href: '/pwa/settings', icon: Settings, label: 'Paramètres' },
   ]
 
   // Don't show on login page
@@ -29,7 +29,8 @@ export default function AdminBottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || 
-            (item.href !== '/' && pathname?.startsWith(item.href))
+            (item.href !== '/pwa' && pathname?.startsWith(item.href)) ||
+            (item.href === '/pwa' && pathname === '/pwa')
           
           return (
             <Link

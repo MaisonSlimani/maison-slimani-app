@@ -1,17 +1,17 @@
 -- ============================================
--- SCRIPT MIGRATION HOÀN CHỈNH CHO SUPABASE
+-- COMPLETE SUPABASE MIGRATION SCRIPT
 -- ============================================
--- Script này chứa toàn bộ schema, functions, triggers, RLS policies
--- để migrate database từ project cũ sang project mới
+-- This script contains the complete schema, functions, triggers, RLS policies
+-- to migrate database from old project to new project
 -- 
--- Sử dụng: Chạy script này trên Supabase project mới
+-- Usage: Run this script in your NEW Supabase project SQL Editor
 -- ============================================
 
 -- ============================================
 -- PART 1: Extensions
 -- ============================================
 
--- Cài đặt extension pg_trgm cho fuzzy search
+-- Install pg_trgm extension for fuzzy search
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- ============================================
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Table search_queries (cho full-text search analytics)
+-- Table search_queries (for full-text search analytics)
 CREATE TABLE IF NOT EXISTS search_queries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   query TEXT NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS search_queries (
 -- PART 3: Indexes
 -- ============================================
 
--- Indexes cho produits
+-- Indexes for produits
 CREATE INDEX IF NOT EXISTS idx_produits_categorie ON produits(categorie);
 CREATE INDEX IF NOT EXISTS idx_produits_vedette ON produits(vedette);
 CREATE INDEX IF NOT EXISTS idx_produits_date_ajout ON produits(date_ajout DESC);
@@ -102,16 +102,16 @@ CREATE INDEX IF NOT EXISTS idx_produits_couleurs ON produits USING GIN (couleurs
 CREATE INDEX IF NOT EXISTS idx_produits_search_vector ON produits USING GIN(search_vector);
 CREATE INDEX IF NOT EXISTS idx_produits_nom_trgm ON produits USING GIN(nom gin_trgm_ops);
 
--- Indexes cho commandes
+-- Indexes for commandes
 CREATE INDEX IF NOT EXISTS idx_commandes_statut ON commandes(statut);
 CREATE INDEX IF NOT EXISTS idx_commandes_date ON commandes(date_commande);
 
--- Indexes cho categories
+-- Indexes for categories
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 CREATE INDEX IF NOT EXISTS idx_categories_active ON categories(active);
 CREATE INDEX IF NOT EXISTS idx_categories_ordre ON categories(ordre);
 
--- Indexes cho search_queries
+-- Indexes for search_queries
 CREATE INDEX IF NOT EXISTS idx_search_queries_query ON search_queries(query);
 CREATE INDEX IF NOT EXISTS idx_search_queries_created_at ON search_queries(created_at DESC);
 
@@ -185,7 +185,7 @@ CREATE POLICY "Allow public read on search_queries" ON search_queries
 -- PART 6: Functions
 -- ============================================
 
--- Function để decrementer stock
+-- Function to decrement stock
 CREATE OR REPLACE FUNCTION decrementer_stock(
   produit_id UUID,
   quantite INTEGER
@@ -198,7 +198,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function để update search vector tự động
+-- Function to automatically update search vector
 CREATE OR REPLACE FUNCTION produits_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW.search_vector := 
@@ -209,7 +209,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function search products với full-text search
+-- Function to search products with full-text search
 CREATE OR REPLACE FUNCTION search_products(
   search_query TEXT,
   category_filter TEXT DEFAULT NULL,
@@ -344,7 +344,7 @@ $$ LANGUAGE plpgsql;
 -- PART 7: Triggers
 -- ============================================
 
--- Trigger để tự động update search_vector
+-- Trigger to automatically update search_vector
 DROP TRIGGER IF EXISTS produits_search_vector_trigger ON produits;
 CREATE TRIGGER produits_search_vector_trigger
   BEFORE INSERT OR UPDATE OF nom, description, categorie ON produits
@@ -454,12 +454,12 @@ VALUES (
 ON CONFLICT DO NOTHING;
 
 -- ============================================
--- KẾT THÚC MIGRATION
+-- MIGRATION COMPLETE
 -- ============================================
 
--- Ghi chú:
--- 1. Script này tạo toàn bộ schema, nhưng KHÔNG import data
--- 2. Để import data, sử dụng script 01_export_database.sh và 02_import_database.sh
--- 3. Để migrate storage files, sử dụng script 03_migrate_storage.sh và 03b_migrate_storage_files.sh
--- 4. Sau khi chạy script này, kiểm tra lại trong Supabase Dashboard
+-- Notes:
+-- 1. This script creates the complete schema, but does NOT import data
+-- 2. To import data, export from old project and import via SQL Editor or Dashboard
+-- 3. To migrate storage files, upload manually via Dashboard or use Supabase CLI
+-- 4. After running this script, verify everything in Supabase Dashboard
 

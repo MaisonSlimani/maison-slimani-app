@@ -4,9 +4,6 @@ import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Providers } from '@/components/Providers'
-import AdminBottomNav from '@/components/admin-pwa/BottomNav'
-import AdminStickyHeader from '@/components/admin-pwa/StickyHeader'
-
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -62,13 +59,9 @@ export default function AdminPWALayout({
         />
       </head>
       <body className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
-        <div className="min-h-screen bg-background flex flex-col safe-area-top safe-area-bottom">
+        <div className="min-h-screen bg-background">
           <Providers>
-            <AdminStickyHeader />
-            <main className="flex-1 pb-16">
-              {children}
-            </main>
-            <AdminBottomNav />
+            {children}
             <Toaster />
             <Sonner />
           </Providers>

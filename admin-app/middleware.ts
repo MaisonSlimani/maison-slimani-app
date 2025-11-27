@@ -19,8 +19,23 @@ async function verifySession(session: string | undefined): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Protect admin routes (except login)
-  if (pathname !== '/login' && pathname !== '/api/auth/login') {
+  // Allow public routes
+  const publicRoutes = ['/login', '/api/auth/login']
+  if (publicRoutes.includes(pathname)) {
+    // Redirect if accessing /login while already logged in
+    if (pathname === '/login') {
+      const session = request.cookies.get('admin_session')?.value
+      const isValid = await verifySession(session)
+
+      if (isValid) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
+    return NextResponse.next()
+  }
+
+  // Protect /admin/* and /pwa/* routes
+  if (pathname.startsWith('/admin') || pathname.startsWith('/pwa')) {
     const session = request.cookies.get('admin_session')?.value
     const isValid = await verifySession(session)
 
@@ -29,14 +44,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect if accessing /login while already logged in
-  if (pathname === '/login') {
-    const session = request.cookies.get('admin_session')?.value
-    const isValid = await verifySession(session)
-
-    if (isValid) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+  // Allow root redirect page
+  if (pathname === '/') {
+    return NextResponse.next()
   }
 
   return NextResponse.next()

@@ -1,88 +1,88 @@
-# ⚡ Quick Start - Supabase Migration
+# ⚡ Quick Start - Manual Migration
 
-Quick guide to migrate your Supabase project in 5 minutes.
+Simple guide to migrate your Supabase project manually using SQL Editor.
 
 ## 🚀 Fastest Way
 
-```bash
-cd scripts/migration
-chmod +x *.sh
-./00_full_migration.sh
-```
+1. **Open your NEW Supabase project** → **SQL Editor**
+2. **Open `05_complete_migration.sql`** from this directory
+3. **Copy the entire file** and paste into SQL Editor
+4. **Click Run** (or Ctrl+Enter)
 
-Choose option `7` to run full automated migration.
-
----
-
-## 📋 Manual Steps
-
-### 1. Export Database
-```bash
-./01_export_database.sh
-```
-
-### 2. Create New Schema
-```bash
-# Method 1: Use complete SQL script (RECOMMENDED)
-psql -h [NEW_HOST] -U postgres -d postgres -f 05_complete_migration.sql
-
-# Method 2: Import from export file (will delete and recreate everything)
-./02_import_database.sh
-```
-
-### 3. Import Data (if using Method 1 in Step 2)
-```bash
-psql -h [NEW_HOST] -U postgres -d postgres -f exports/data_export.sql
-```
-
-### 4. Migrate Storage
-```bash
-# Create buckets and policies
-./03_migrate_storage.sh
-psql -h [NEW_HOST] -U postgres -d postgres -f exports/storage_migration.sql
-
-# Migrate files
-./03b_migrate_storage_files.sh
-```
-
-### 5. Configure Realtime
-```bash
-psql -h [NEW_HOST] -U postgres -d postgres -f 04_migrate_realtime.sql
-```
+Done! Your complete schema is now migrated. ✅
 
 ---
 
-## 📝 Information to Prepare
+## 📋 What You Need
 
-**Old Project:**
-- Database HOST: `db.xxxxx.supabase.co`
-- Database PASSWORD
-- PROJECT REF: `xxxxx`
-- SERVICE ROLE KEY
-
-**New Project:**
-- Database HOST
-- Database PASSWORD
-- PROJECT REF
-- SERVICE ROLE KEY
-
-> Get from: Supabase Dashboard → Settings → API
+- Access to your **NEW** Supabase project
+- SQL Editor access (available in all Supabase projects)
 
 ---
 
-## ✅ Post-Migration Checklist
+## 📝 Step-by-Step
 
-- [ ] Database schema has been created
-- [ ] Data has been imported
-- [ ] Storage buckets have been created
-- [ ] Storage files have been uploaded
-- [ ] Realtime is working
-- [ ] Test API endpoints
-- [ ] Update environment variables
-- [ ] Delete export files: `rm -rf exports/`
+### 1. Run Complete Migration Script
+
+1. Go to https://supabase.com/dashboard
+2. Select your **NEW** project
+3. Click **SQL Editor** in left sidebar
+4. Click **New query**
+5. Open `scripts/migration/05_complete_migration.sql`
+6. Copy all contents (Ctrl+A, Ctrl+C)
+7. Paste into SQL Editor (Ctrl+V)
+8. Click **Run** button
+
+This creates:
+- ✅ All tables (produits, commandes, admins, categories, settings)
+- ✅ All indexes
+- ✅ All RLS policies
+- ✅ All functions (decrementer_stock, search_products, etc.)
+- ✅ All triggers
+- ✅ Storage buckets and policies
+- ✅ Realtime configuration
+
+### 2. Import Data (If Needed)
+
+If you have data to migrate:
+
+**Option A: Via SQL Editor**
+- Export data from old project as INSERT statements
+- Paste and run in SQL Editor
+
+**Option B: Via Dashboard**
+- Go to **Table Editor**
+- Click **Import** button
+- Upload CSV or use manual entry
+
+### 3. Upload Storage Files (If Needed)
+
+1. Go to **Storage** in new project
+2. Open `produits-images` bucket
+3. Click **Upload files**
+4. Select and upload your images
+
+---
+
+## ✅ Verification
+
+After migration, check:
+
+- [ ] Tables exist: Go to **Table Editor** → See all tables
+- [ ] Storage bucket exists: Go to **Storage** → See `produits-images`
+- [ ] RLS is enabled: Go to **Authentication** → **Policies**
+- [ ] Functions work: Try running a query that uses a function
 
 ---
 
 ## 🆘 Having Issues?
 
-See `README.md` for detailed guide and troubleshooting.
+See **`MANUAL_MIGRATION_GUIDE.md`** for detailed instructions and troubleshooting.
+
+---
+
+## 📚 Files Reference
+
+- **`05_complete_migration.sql`** - Complete schema (use this!)
+- **`04_migrate_realtime.sql`** - Realtime only (already in complete script)
+- **`supabase/migrations/`** - Individual migration files (if you prefer step-by-step)
