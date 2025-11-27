@@ -1,4 +1,4 @@
-// File: /root/maison-slimani-experience/admin-app/app/commandes/page.tsx
+// File: /home/maison/maison-slimani-experience/admin-app/app/commandes/page.tsx
 import * as entry from '../../../../app/commandes/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -1,10 +1,29 @@
 import { Resend } from 'resend'
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error('RESEND_API_KEY is not set')
+// Lazy initialization to avoid build-time errors when env var is not set
+let resendInstance: Resend | null = null
+
+function getResend(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error(
+        'RESEND_API_KEY is not set. Please add it to your Vercel environment variables. ' +
+        'Go to Vercel Dashboard → Settings → Environment Variables → Add RESEND_API_KEY'
+      )
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendInstance
 }
 
-export const resend = new Resend(process.env.RESEND_API_KEY)
+// Export a proxy that lazily initializes Resend only when used
+export const resend = new Proxy({} as Resend, {
+  get(_target, prop) {
+    const instance = getResend()
+    const value = (instance as any)[prop]
+    return typeof value === 'function' ? value.bind(instance) : value
+  }
+})
 
 export const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@maisonslimani.com'
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@maisonslimani.com'

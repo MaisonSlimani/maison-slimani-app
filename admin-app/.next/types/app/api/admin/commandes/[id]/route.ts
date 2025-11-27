@@ -1,4 +1,4 @@
-// File: /root/maison-slimani-experience/admin-app/app/api/admin/commandes/[id]/route.ts
+// File: /home/maison/maison-slimani-experience/admin-app/app/api/admin/commandes/[id]/route.ts
 import * as entry from '../../../../../../../app/api/admin/commandes/[id]/route.js'
 import type { NextRequest } from 'next/server.js'
 
