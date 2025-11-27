@@ -227,6 +227,11 @@ export default function PWABoutiquePage() {
             </div>
           </div>
         )}
+        {!loadingCategories && categories.length === 0 && (
+          <div className="px-4 py-2 border-b border-border/50">
+            <p className="text-xs text-muted-foreground text-center">Aucune catégorie disponible</p>
+          </div>
+        )}
         
         {/* Title Bar */}
         {search && (
@@ -251,8 +256,23 @@ export default function PWABoutiquePage() {
           Chargement...
         </div>
       ) : produits.length === 0 ? (
-        <div className="px-4 py-12 text-center">
-          <p className="text-muted-foreground">Aucun produit trouvé</p>
+        <div className="px-4 py-16 text-center">
+          <p className="text-muted-foreground text-lg mb-4">
+            {search 
+              ? `Aucun produit trouvé pour "${search}"`
+              : selectedCategoryName
+              ? `Aucun produit dans la catégorie "${selectedCategoryName}"`
+              : 'Aucun produit disponible pour le moment'}
+          </p>
+          {search && (
+            <Button
+              variant="outline"
+              onClick={clearSearch}
+              className="mt-4"
+            >
+              Effacer la recherche
+            </Button>
+          )}
         </div>
       ) : (
         <div className="px-4 py-4">

@@ -298,7 +298,7 @@ export default function AccueilPage() {
       </section>
 
       {/* Nos Catégories */}
-      {!loadingCategories && categories.length > 0 && (
+      {!loadingCategories && (
         <section className="py-20 px-6 bg-ecru -mt-32 pt-32 md:-mt-32 md:pt-32" style={{ marginTop: '-8rem', marginBottom: '-1px' }}>
           <div className="container max-w-6xl mx-auto">
             <motion.div
@@ -316,25 +316,39 @@ export default function AccueilPage() {
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {categories.map((categorie, index) => (
-                <motion.div
-                  key={categorie.titre}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
+            {categories.length > 0 ? (
+              <div className="grid md:grid-cols-2 gap-6">
+                {categories.map((categorie, index) => (
+                  <motion.div
+                    key={categorie.titre}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1, duration: 0.6 }}
+                  >
+                    <CarteCategorie {...categorie} priority={index === 0} />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-charbon/70 text-lg mb-4">Aucune catégorie disponible pour le moment</p>
+                <Button 
+                  asChild 
+                  variant="outline"
+                  className="border-charbon/30 text-charbon hover:bg-charbon/10"
+                  onClick={handleButtonClick}
                 >
-                  <CarteCategorie {...categorie} priority={index === 0} />
-                </motion.div>
-              ))}
-            </div>
+                  <Link href="/boutique">Découvrir la boutique</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       )}
 
       {/* Produits en Vedette */}
-      {!loadingVedette && produitsVedette.length > 0 && (
+      {!loadingVedette && (
         <section className="py-12 md:py-20 px-3 md:px-6 bg-ecru">
           <div className="container max-w-6xl mx-auto">
             <motion.div
@@ -352,53 +366,70 @@ export default function AccueilPage() {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
-              {produitsVedette.map((produit, index) => (
-                <motion.div
-                  key={produit.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{
-                    delay: index * 0.1,
-                    duration: 0.6,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  whileHover={{ y: -8 }}
-                  className="transition-transform duration-500 h-full"
-                >
-                  <CarteProduit 
-                    produit={{
-                      id: produit.id,
-                      nom: produit.nom,
-                      prix: produit.prix,
-                      image_url: produit.image_url,
-                      image: produit.image_url,
-                      stock: produit.stock,
-                      has_colors: produit.has_colors,
-                      couleurs: produit.couleurs,
-                      taille: produit.taille,
-                      matiere: produit.matiere,
-                      images: produit.images,
-                      slug: produit.slug,
-                    }}
-                    showActions={true}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            {produitsVedette.length > 0 ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
+                  {produitsVedette.map((produit, index) => (
+                    <motion.div
+                      key={produit.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{
+                        delay: index * 0.1,
+                        duration: 0.6,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      whileHover={{ y: -8 }}
+                      className="transition-transform duration-500 h-full"
+                    >
+                      <CarteProduit 
+                        produit={{
+                          id: produit.id,
+                          nom: produit.nom,
+                          prix: produit.prix,
+                          image_url: produit.image_url,
+                          image: produit.image_url,
+                          stock: produit.stock,
+                          has_colors: produit.has_colors,
+                          couleurs: produit.couleurs,
+                          taille: produit.taille,
+                          matiere: produit.matiere,
+                          images: produit.images,
+                          slug: produit.slug,
+                        }}
+                        showActions={true}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
 
-            <div className="text-center mt-12">
-              <Button 
-                asChild 
-                size="lg" 
-                variant="outline"
-                className="border-dore text-dore hover:bg-dore hover:text-charbon"
-                onClick={handleButtonClick}
-              >
-                <Link href="/boutique">Voir toute la collection</Link>
-              </Button>
-            </div>
+                <div className="text-center mt-12">
+                  <Button 
+                    asChild 
+                    size="lg" 
+                    variant="outline"
+                    className="border-dore text-dore hover:bg-dore hover:text-charbon"
+                    onClick={handleButtonClick}
+                  >
+                    <Link href="/boutique">Voir toute la collection</Link>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground text-lg mb-4">Aucun produit disponible pour le moment</p>
+                <Button 
+                  asChild 
+                  size="lg" 
+                  variant="outline"
+                  className="border-dore text-dore hover:bg-dore hover:text-charbon"
+                  onClick={handleButtonClick}
+                >
+                  <Link href="/boutique">Découvrir la boutique</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       )}

@@ -17,6 +17,16 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Apply X-Robots-Tag to ALL routes to prevent indexing
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet, noimageindex, nocache',
+          },
+        ],
+      },
+      {
         source: '/sw.js',
         headers: [
           {
@@ -27,6 +37,10 @@ const nextConfig = {
             key: 'Service-Worker-Allowed',
             value: '/',
           },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet, noimageindex, nocache',
+          },
         ],
       },
       {
@@ -35,6 +49,19 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet, noimageindex, nocache',
+          },
+        ],
+      },
+      {
+        source: '/robots.txt',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet, noimageindex, nocache',
           },
         ],
       },

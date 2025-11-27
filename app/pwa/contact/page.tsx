@@ -12,10 +12,11 @@ import { toast } from 'sonner'
 
 export default function PWAContactPage() {
   const [loading, setLoading] = useState(false)
+  const [loadingSettings, setLoadingSettings] = useState(true)
   const [settings, setSettings] = useState({
-    email_entreprise: 'contact@maisonslimani.com',
-    telephone: '+212 5XX-XXXXXX',
-    adresse: 'Casablanca, Maroc',
+    email_entreprise: '',
+    telephone: '',
+    adresse: '',
   })
   const [formData, setFormData] = useState({
     nom: '',
@@ -29,19 +30,21 @@ export default function PWAContactPage() {
     
     const chargerSettings = async () => {
       try {
-        const response = await fetch('/api/admin/settings')
+        const response = await fetch('/api/settings')
         if (response.ok) {
           const result = await response.json()
-          if (result.data) {
+          if (result.success && result.data) {
             setSettings({
-              email_entreprise: result.data.email_entreprise || 'contact@maisonslimani.com',
-              telephone: result.data.telephone || '+212 5XX-XXXXXX',
-              adresse: result.data.adresse || 'Casablanca, Maroc',
+              email_entreprise: result.data.email_entreprise || '',
+              telephone: result.data.telephone || '',
+              adresse: result.data.adresse || '',
             })
           }
         }
       } catch (error) {
-        console.error('Erreur:', error)
+        console.error('Erreur lors du chargement des paramètres:', error)
+      } finally {
+        setLoadingSettings(false)
       }
     }
 
@@ -81,33 +84,45 @@ export default function PWAContactPage() {
 
       <div className="px-4 py-6 space-y-6 max-w-md mx-auto">
         {/* Contact Info */}
-        <Card className="p-4 space-y-4">
-          <div className="flex items-start gap-3">
-            <Mail className="w-5 h-5 text-dore mt-0.5" />
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <a href={`mailto:${settings.email_entreprise}`} className="text-foreground font-medium">
-                {settings.email_entreprise}
-              </a>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Phone className="w-5 h-5 text-dore mt-0.5" />
-            <div>
-              <p className="text-sm text-muted-foreground">Téléphone</p>
-              <a href={`tel:${settings.telephone}`} className="text-foreground font-medium">
-                {settings.telephone}
-              </a>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-dore mt-0.5" />
-            <div>
-              <p className="text-sm text-muted-foreground">Adresse</p>
-              <p className="text-foreground font-medium">{settings.adresse}</p>
-            </div>
-          </div>
-        </Card>
+        {loadingSettings ? (
+          <Card className="p-4">
+            <div className="text-center text-muted-foreground py-4">Chargement des informations...</div>
+          </Card>
+        ) : (settings.email_entreprise || settings.telephone || settings.adresse) ? (
+          <Card className="p-4 space-y-4">
+            {settings.email_entreprise && (
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-dore mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <a href={`mailto:${settings.email_entreprise}`} className="text-foreground font-medium">
+                    {settings.email_entreprise}
+                  </a>
+                </div>
+              </div>
+            )}
+            {settings.telephone && (
+              <div className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-dore mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Téléphone</p>
+                  <a href={`tel:${settings.telephone}`} className="text-foreground font-medium">
+                    {settings.telephone}
+                  </a>
+                </div>
+              </div>
+            )}
+            {settings.adresse && (
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-dore mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Adresse</p>
+                  <p className="text-foreground font-medium">{settings.adresse}</p>
+                </div>
+              </div>
+            )}
+          </Card>
+        ) : null}
 
         {/* Contact Form */}
         <Card className="p-4">

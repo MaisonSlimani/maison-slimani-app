@@ -160,7 +160,7 @@ export default function BoutiquePage() {
       <EnteteMobile />
 
       {/* Section Catégories avec animations luxueuses */}
-      {!loadingCategories && categories.length > 0 && (
+      {!loadingCategories && (
         <section className="py-20 px-6 bg-ecru">
           <div className="container max-w-6xl mx-auto">
             <motion.div
@@ -177,24 +177,37 @@ export default function BoutiquePage() {
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {categories.map((categorie, index) => (
-                <motion.div
-                  key={categorie.titre}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: index * 0.15,
-                    duration: 0.8,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  whileHover={{ y: -8 }}
-                  className="transition-transform duration-500"
+            {categories.length > 0 ? (
+              <div className="grid md:grid-cols-2 gap-8">
+                {categories.map((categorie, index) => (
+                  <motion.div
+                    key={categorie.titre}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: index * 0.15,
+                      duration: 0.8,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    whileHover={{ y: -8 }}
+                    className="transition-transform duration-500"
+                  >
+                    <CarteCategorie {...categorie} priority={index < 2} />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-charbon/70 text-lg mb-6">Aucune catégorie disponible pour le moment</p>
+                <Button 
+                  asChild 
+                  variant="outline"
+                  className="border-charbon/30 text-charbon hover:bg-charbon/10"
                 >
-                  <CarteCategorie {...categorie} priority={index < 2} />
-                </motion.div>
-              ))}
-            </div>
+                  <Link href="/boutique/tous">Voir tous les produits</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       )}

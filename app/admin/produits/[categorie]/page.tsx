@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -55,7 +55,7 @@ export default function AdminCategorieProduitsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [produitToDelete, setProduitToDelete] = useState<string | null>(null)
 
-  const chargerProduits = async () => {
+  const chargerProduits = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/produits')
       if (!response.ok) throw new Error('Erreur lors du chargement')
@@ -75,13 +75,12 @@ export default function AdminCategorieProduitsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [categorieSlug, categorieNom])
 
   useEffect(() => {
     window.scrollTo(0, 0)
     chargerProduits()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categorieSlug, categorieNom])
+  }, [chargerProduits])
 
 
   // Gestion des couleurs

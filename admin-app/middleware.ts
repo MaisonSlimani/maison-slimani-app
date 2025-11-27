@@ -19,6 +19,9 @@ async function verifySession(session: string | undefined): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Create response
+  let response: NextResponse
+
   // Allow public routes
   const publicRoutes = ['/login', '/api/auth/login']
   if (publicRoutes.includes(pathname)) {
@@ -28,28 +31,34 @@ export async function middleware(request: NextRequest) {
       const isValid = await verifySession(session)
 
       if (isValid) {
-        return NextResponse.redirect(new URL('/', request.url))
+        response = NextResponse.redirect(new URL('/', request.url))
+      } else {
+        response = NextResponse.next()
       }
+    } else {
+      response = NextResponse.next()
     }
-    return NextResponse.next()
-  }
+  } else {
+    // Protect /admin/* and /pwa/* routes
+    if (pathname.startsWith('/admin') || pathname.startsWith('/pwa')) {
+      const session = request.cookies.get('admin_session')?.value
+      const isValid = await verifySession(session)
 
-  // Protect /admin/* and /pwa/* routes
-  if (pathname.startsWith('/admin') || pathname.startsWith('/pwa')) {
-    const session = request.cookies.get('admin_session')?.value
-    const isValid = await verifySession(session)
-
-    if (!isValid) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      if (!isValid) {
+        response = NextResponse.redirect(new URL('/login', request.url))
+      } else {
+        response = NextResponse.next()
+      }
+    } else {
+      // Allow root redirect page
+      response = NextResponse.next()
     }
   }
 
-  // Allow root redirect page
-  if (pathname === '/') {
-    return NextResponse.next()
-  }
-
-  return NextResponse.next()
+  // Add X-Robots-Tag header to ALL responses to prevent indexing
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex, nocache')
+  
+  return response
 }
 
 export const config = {

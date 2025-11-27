@@ -104,7 +104,7 @@ export default function AdminPWASettingsPage() {
                 type="email"
                 value={settings.email_entreprise}
                 onChange={(e) => setSettings({ ...settings, email_entreprise: e.target.value })}
-                placeholder="contact@maisonslimani.com"
+                placeholder="exemple@email.com"
               />
             </div>
 
@@ -115,7 +115,7 @@ export default function AdminPWASettingsPage() {
                 type="tel"
                 value={settings.telephone}
                 onChange={(e) => setSettings({ ...settings, telephone: e.target.value })}
-                placeholder="+212 6XX-XXXXXX"
+                placeholder="Numéro de téléphone"
               />
             </div>
 
@@ -125,7 +125,7 @@ export default function AdminPWASettingsPage() {
                 id="adresse"
                 value={settings.adresse}
                 onChange={(e) => setSettings({ ...settings, adresse: e.target.value })}
-                placeholder="Casablanca, Maroc"
+                placeholder="Adresse complète"
               />
             </div>
 
@@ -135,7 +135,7 @@ export default function AdminPWASettingsPage() {
                 id="description"
                 value={settings.description}
                 onChange={(e) => setSettings({ ...settings, description: e.target.value })}
-                placeholder="Description de l'entreprise..."
+                placeholder="Description..."
                 rows={4}
               />
             </div>

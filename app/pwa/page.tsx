@@ -132,39 +132,45 @@ export default function PWAPage() {
       </section>
 
       {/* Collections Section */}
-      {!loadingCategories && categories.length > 0 && (
+      {!loadingCategories && (
         <section className="pt-12 pb-6 px-4 bg-ecru">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-serif text-foreground mb-8 text-center">Collections</h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {categories.slice(0, 4).map((categorie, index) => (
-                <motion.div
-                  key={categorie.lien}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
-                >
-                  <Link 
-                    href={categorie.lien} 
-                    className="block group"
-                    onClick={() => hapticFeedback('light')}
+            {categories.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {categories.slice(0, 4).map((categorie, index) => (
+                  <motion.div
+                    key={categorie.lien}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.6 }}
                   >
-                    <div className="relative aspect-square rounded-lg overflow-hidden mb-3 border-2 border-transparent group-hover:border-dore transition-all duration-300">
-                      <Image
-                        src={categorie.image}
-                        alt={categorie.titre}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
-                    </div>
-                    <h3 className="font-serif font-medium text-foreground text-center text-sm md:text-base">
-                      {categorie.titre}
-                    </h3>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
+                    <Link 
+                      href={categorie.lien} 
+                      className="block group"
+                      onClick={() => hapticFeedback('light')}
+                    >
+                      <div className="relative aspect-square rounded-lg overflow-hidden mb-3 border-2 border-transparent group-hover:border-dore transition-all duration-300">
+                        <Image
+                          src={categorie.image}
+                          alt={categorie.titre}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                      </div>
+                      <h3 className="font-serif font-medium text-foreground text-center text-sm md:text-base">
+                        {categorie.titre}
+                      </h3>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">Aucune catégorie disponible pour le moment</p>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -220,29 +226,42 @@ export default function PWAPage() {
       <GoldDivider variant="centered" withIcon="sparkles" spacing="lg" />
 
       {/* Sélection Section */}
-      {!loadingVedette && produitsVedette.length > 0 && (
+      {!loadingVedette && (
         <section className="pt-6 pb-6 px-4 bg-ecru/50">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-serif text-foreground">Sélection</h2>
-              <Link href="/pwa/boutique">
-                <Button variant="ghost" size="sm" className="text-dore">
-                  Voir tout <span className="ml-1">{'>'}</span>
-                </Button>
-              </Link>
+              {produitsVedette.length > 0 && (
+                <Link href="/pwa/boutique">
+                  <Button variant="ghost" size="sm" className="text-dore">
+                    Voir tout <span className="ml-1">{'>'}</span>
+                  </Button>
+                </Link>
+              )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {produitsVedette.slice(0, 6).map((produit: any, index: number) => (
-                <motion.div
-                  key={produit.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <ProductCard produit={produit} priority={index < 2} />
-                </motion.div>
-              ))}
-            </div>
+            {produitsVedette.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {produitsVedette.slice(0, 6).map((produit: any, index: number) => (
+                  <motion.div
+                    key={produit.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <ProductCard produit={produit} priority={index < 2} />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">Aucun produit disponible pour le moment</p>
+                <Link href="/pwa/boutique">
+                  <Button variant="outline" className="mt-4">
+                    Voir la boutique
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </section>
       )}

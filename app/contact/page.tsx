@@ -20,9 +20,9 @@ export default function ContactPage() {
   const [envoiEnCours, setEnvoiEnCours] = useState(false)
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [settings, setSettings] = useState({
-    email_entreprise: 'contact@maisonslimani.com',
-    telephone: '+212 5XX-XXXXXX',
-    adresse: 'Casablanca, Maroc',
+    email_entreprise: '',
+    telephone: '',
+    adresse: '',
   })
   const [formData, setFormData] = useState({
     nom: '',
@@ -38,20 +38,19 @@ export default function ContactPage() {
   useEffect(() => {
     const chargerSettings = async () => {
       try {
-        const response = await fetch('/api/admin/settings')
+        const response = await fetch('/api/settings')
         if (response.ok) {
           const result = await response.json()
-          if (result.data) {
+          if (result.success && result.data) {
             setSettings({
-              email_entreprise: result.data.email_entreprise || 'contact@maisonslimani.com',
-              telephone: result.data.telephone || '+212 5XX-XXXXXX',
-              adresse: result.data.adresse || 'Casablanca, Maroc',
+              email_entreprise: result.data.email_entreprise || '',
+              telephone: result.data.telephone || '',
+              adresse: result.data.adresse || '',
             })
           }
         }
       } catch (error) {
         console.error('Erreur lors du chargement des paramètres:', error)
-        // Garder les valeurs par défaut en cas d'erreur
       } finally {
         setLoadingSettings(false)
       }
@@ -199,35 +198,45 @@ export default function ContactPage() {
             </p>
           </header>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="p-6 text-center">
-              <Mail className="w-8 h-8 mx-auto mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Email</h3>
-              <a 
-                href={`mailto:${settings.email_entreprise}`}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {settings.email_entreprise}
-              </a>
-            </Card>
+          {loadingSettings ? (
+            <div className="text-center py-8 text-muted-foreground">Chargement des informations...</div>
+          ) : (settings.email_entreprise || settings.telephone || settings.adresse) ? (
+            <div className="grid md:grid-cols-3 gap-6">
+              {settings.email_entreprise && (
+                <Card className="p-6 text-center">
+                  <Mail className="w-8 h-8 mx-auto mb-4 text-primary" />
+                  <h3 className="font-medium mb-2">Email</h3>
+                  <a 
+                    href={`mailto:${settings.email_entreprise}`}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {settings.email_entreprise}
+                  </a>
+                </Card>
+              )}
 
-            <Card className="p-6 text-center">
-              <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Téléphone</h3>
-              <a 
-                href={`tel:${settings.telephone.replace(/\s/g, '')}`}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {settings.telephone}
-              </a>
-            </Card>
+              {settings.telephone && (
+                <Card className="p-6 text-center">
+                  <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
+                  <h3 className="font-medium mb-2">Téléphone</h3>
+                  <a 
+                    href={`tel:${settings.telephone.replace(/\s/g, '')}`}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {settings.telephone}
+                  </a>
+                </Card>
+              )}
 
-            <Card className="p-6 text-center">
-              <MapPin className="w-8 h-8 mx-auto mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Adresse</h3>
-              <p className="text-sm text-muted-foreground">{settings.adresse}</p>
-            </Card>
-          </div>
+              {settings.adresse && (
+                <Card className="p-6 text-center">
+                  <MapPin className="w-8 h-8 mx-auto mb-4 text-primary" />
+                  <h3 className="font-medium mb-2">Adresse</h3>
+                  <p className="text-sm text-muted-foreground">{settings.adresse}</p>
+                </Card>
+              )}
+            </div>
+          ) : null}
 
           <Card className="p-8">
             <h2 className="text-2xl font-serif mb-6">Envoyez-nous un message</h2>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import ProductCard from '@/components/pwa/ProductCard'
@@ -158,8 +159,19 @@ export default function PWACategoriePage() {
           Chargement...
         </div>
       ) : produits.length === 0 ? (
-        <div className="px-4 py-12 text-center">
-          <p className="text-muted-foreground">Aucun produit trouvé</p>
+        <div className="px-4 py-16 text-center">
+          <p className="text-muted-foreground text-lg mb-4">
+            {categorieInfo 
+              ? `Aucun produit disponible dans la catégorie "${categorieInfo.nom}"`
+              : 'Aucun produit disponible pour le moment'}
+          </p>
+          <Button 
+            asChild 
+            variant="outline"
+            className="mt-4"
+          >
+            <Link href="/pwa/boutique">Retour à la boutique</Link>
+          </Button>
         </div>
       ) : (
         <div className="px-4 py-4">

@@ -26,6 +26,17 @@ export const metadata: Metadata = {
   robots: {
     index: false,
     follow: false,
+    noarchive: true,
+    nosnippet: true,
+    noimageindex: true,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      nosnippet: true,
+      noimageindex: true,
+    },
   },
 }
 
@@ -37,9 +48,19 @@ export default function AdminPWALayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
+        {/* Prevent all search engine indexing */}
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, nocache" />
+        <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        <meta name="slurp" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        <meta name="duckduckbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        <meta name="baiduspider" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        <meta name="yandex" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+        
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="manifest" href="/manifest.json" />
+        <link rel="robots" href="/robots.txt" />
         <meta name="theme-color" content="#1A1A1A" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
