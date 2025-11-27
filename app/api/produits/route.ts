@@ -45,68 +45,121 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { categorie, vedette, search, limit, offset, sort } = validatedParams.data
-
-    let query = supabase
-      .from('produits')
-      .select(PRODUIT_FIELDS, { count: 'exact' })
-
-    if (categorie) {
-      query = query.eq('categorie', categorie)
-    }
-
-    if (vedette !== undefined) {
-      query = query.eq('vedette', vedette)
-    }
-
-    // Search functionality - search in nom and description
-    if (search) {
-      query = query.or(`nom.ilike.%${search}%,description.ilike.%${search}%`)
-    }
+    const { categorie, vedette, search, limit, offset, sort, useFullText } = validatedParams.data
 
     const resolvedLimit =
       limit ??
       (vedette === true ? FEATURED_LIMIT : DEFAULT_LIMIT)
     const resolvedOffset = offset ?? 0
 
-    if (sort === 'prix-asc') {
-      query = query.order('prix', { ascending: true })
-    } else if (sort === 'prix-desc') {
-      query = query.order('prix', { ascending: false })
-    } else {
-      query = query.order('date_ajout', { ascending: false })
-    }
-
-    query = query.range(resolvedOffset, resolvedOffset + resolvedLimit - 1)
-
-    // Execute query with better error handling
     let data, error, count
-    try {
-      const result = await query
-      data = result.data
-      error = result.error
-      count = result.count
-    } catch (fetchError) {
-      console.error('Erreur lors de l\'exécution de la requête Supabase:', fetchError)
-      
-      // Check if it's a network/fetch error
-      if (fetchError instanceof Error && fetchError.message.includes('fetch failed')) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Erreur de connexion à la base de données. Vérifiez votre connexion réseau et les variables d\'environnement Supabase.',
-            details: fetchError.message,
-          },
-          { status: 503 }
-        )
+    let usedFullTextSearch = false
+
+    // Use full-text search RPC if search query and useFullText is true
+    if (search && useFullText === true) {
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('search_products', {
+          search_query: search,
+          category_filter: categorie || null,
+          limit_count: resolvedLimit,
+          offset_count: resolvedOffset,
+        })
+
+        if (rpcError) {
+          console.error('Erreur RPC search_products:', rpcError)
+          throw rpcError
+        }
+
+        // Transform RPC results to match expected format (remove rank field)
+        data = rpcData?.map((item: any) => {
+          const { rank, ...product } = item
+          return product
+        }) || []
+
+        // Get count separately for full-text search
+        const { count: fullCount } = await supabase
+          .from('produits')
+          .select('*', { count: 'exact', head: true })
+          .or(`nom.ilike.%${search}%,description.ilike.%${search}%`)
+        
+        count = fullCount ?? data.length
+        usedFullTextSearch = true
+
+        // Log search query for analytics
+        if (search.trim()) {
+          try {
+            await supabase.from('search_queries').insert({
+              query: search.trim(),
+              results_count: data.length,
+            })
+          } catch (analyticsError) {
+            // Don't fail the request if analytics logging fails
+            console.warn('Failed to log search query:', analyticsError)
+          }
+        }
+      } catch (rpcError) {
+        console.error('Erreur lors de l\'exécution de search_products RPC:', rpcError)
+        // Will fall through to regular search below
       }
-      
-      throw fetchError
     }
 
-    if (error) {
-      console.error('Erreur Supabase:', error)
-      throw error
+    // Regular query path (fallback or when useFullText is false)
+    if (!usedFullTextSearch) {
+      let query = supabase
+        .from('produits')
+        .select(PRODUIT_FIELDS, { count: 'exact' })
+
+      if (categorie) {
+        query = query.eq('categorie', categorie)
+      }
+
+      if (vedette !== undefined) {
+        query = query.eq('vedette', vedette)
+      }
+
+      // Search functionality - search in nom and description
+      if (search) {
+        query = query.or(`nom.ilike.%${search}%,description.ilike.%${search}%`)
+      }
+
+      if (sort === 'prix-asc') {
+        query = query.order('prix', { ascending: true })
+      } else if (sort === 'prix-desc') {
+        query = query.order('prix', { ascending: false })
+      } else {
+        query = query.order('date_ajout', { ascending: false })
+      }
+
+      query = query.range(resolvedOffset, resolvedOffset + resolvedLimit - 1)
+
+      // Execute query with better error handling
+      try {
+        const result = await query
+        data = result.data
+        error = result.error
+        count = result.count
+      } catch (fetchError) {
+        console.error('Erreur lors de l\'exécution de la requête Supabase:', fetchError)
+        
+        // Check if it's a network/fetch error
+        if (fetchError instanceof Error && fetchError.message.includes('fetch failed')) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Erreur de connexion à la base de données. Vérifiez votre connexion réseau et les variables d\'environnement Supabase.',
+              details: fetchError.message,
+            },
+            { status: 503 }
+          )
+        }
+        
+        throw fetchError
+      }
+
+      if (error) {
+        console.error('Erreur Supabase:', error)
+        throw error
+      }
     }
 
     const response = NextResponse.json({

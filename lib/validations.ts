@@ -30,6 +30,10 @@ export const produitQuerySchema = z.object({
   sort: z
     .enum(['recent', 'prix-asc', 'prix-desc'])
     .optional(),
+  useFullText: z
+    .string()
+    .transform((value) => value === 'true')
+    .optional(),
 })
 
 export const commandeProduitSchema = z.object({

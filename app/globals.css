@@ -183,5 +183,40 @@ Toutes les couleurs DOIVENT être en HSL.
   .text-balance {
     text-wrap: balance;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Gold Shimmer Animation for Luxury Effects */
+@keyframes gold-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(39, 46%, 45%) 0%,
+    hsl(39, 46%, 65%) 25%,
+    hsl(39, 46%, 75%) 50%,
+    hsl(39, 46%, 65%) 75%,
+    hsl(39, 46%, 45%) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 3s linear infinite;
 }
 

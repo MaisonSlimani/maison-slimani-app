@@ -5,12 +5,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ShoppingBag, Heart, Check } from 'lucide-react'
+import { ShoppingBag, Heart, Check, Sparkles } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
+import { hapticFeedback } from '@/lib/haptics'
 
 interface ProductCardProps {
   produit: {
@@ -24,6 +25,8 @@ interface ProductCardProps {
     taille?: string
     has_colors?: boolean
     couleurs?: any[]
+    vedette?: boolean
+    created_at?: string
   }
   priority?: boolean
 }
@@ -57,6 +60,10 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
   const inWishlist = isInWishlist(produit.id)
   const isInCart = items.some(item => item.id === produit.id)
 
+  // Check if product is new (created within last 30 days)
+  const isNew = produit.created_at && 
+    new Date().getTime() - new Date(produit.created_at).getTime() < 30 * 24 * 60 * 60 * 1000
+
   const isOutOfStock = () => {
     if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
       return !produit.couleurs.some(c => (c.stock || 0) > 0)
@@ -70,6 +77,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
 
     if (isAddingToCart || isOutOfStock()) return
 
+    hapticFeedback('medium')
     setIsAddingToCart(true)
     try {
       await addItem({
@@ -82,9 +90,11 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
         stock: produit.stock,
       })
       setAddedToCart(true)
+      hapticFeedback('success')
       toast.success('Ajouté au panier', { duration: 1000 })
       setTimeout(() => setAddedToCart(false), 2000)
     } catch (error) {
+      hapticFeedback('error')
       toast.error(error instanceof Error ? error.message : 'Erreur')
     } finally {
       setIsAddingToCart(false)
@@ -97,6 +107,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
 
     if (isTogglingWishlist) return
 
+    hapticFeedback('light')
     setIsTogglingWishlist(true)
     try {
       if (inWishlist) {
@@ -111,19 +122,20 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
           image: imageUrl,
           stock: produit.stock,
         })
+        hapticFeedback('success')
         toast.success('Ajouté aux favoris', { duration: 1000 })
       }
     } catch (error) {
       console.error('Erreur lors de la modification de la wishlist:', error)
+      hapticFeedback('error')
       toast.error('Erreur lors de la modification')
     } finally {
-      // Petit délai pour éviter les clics multiples rapides
       setTimeout(() => setIsTogglingWishlist(false), 300)
     }
   }
 
   return (
-    <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col h-full bg-card">
+    <Card className="group overflow-hidden border border-border/50 shadow-sm hover:shadow-lg transition-all duration-300 relative flex flex-col h-full bg-card">
       <Link href={href} className="block flex-1 flex flex-col">
         <div className="aspect-square overflow-hidden bg-muted relative">
           <Image
@@ -136,16 +148,29 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
             sizes="(max-width: 768px) 50vw, 33vw"
             fetchPriority={priority ? 'high' : 'auto'}
           />
+          
+          {/* Badges */}
+          <div className="absolute top-2 left-2 z-20 flex flex-col gap-2">
+            {isNew && (
+              <div className="bg-dore/95 backdrop-blur-sm rounded-md px-2 py-1 border border-dore/50">
+                <span className="text-charbon text-[10px] font-bold uppercase tracking-wide">Nouveau</span>
+              </div>
+            )}
+          </div>
+
           {inWishlist && (
-            <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-1.5">
+            <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-1.5 border border-dore/50">
               <Heart className="w-3 h-3 text-charbon fill-current" />
             </div>
           )}
           {isOutOfStock() && (
-            <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-2 py-1">
+            <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-2 py-1 border border-red-700/50">
               <span className="text-white text-[10px] font-semibold uppercase">Rupture</span>
             </div>
           )}
+
+          {/* Gold accent on hover */}
+          <div className="absolute inset-0 border-2 border-transparent group-hover:border-dore/30 transition-all duration-300 rounded-t-lg" />
         </div>
 
         <div className="p-3 flex-1 flex flex-col justify-between">
@@ -217,4 +242,3 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
     </Card>
   )
 }
-

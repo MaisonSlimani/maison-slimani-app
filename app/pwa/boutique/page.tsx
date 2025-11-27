@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowUp, Search, X, SlidersHorizontal } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import SearchOverlay from '@/components/search/SearchOverlay'
 
 export default function PWABoutiquePage() {
   const searchParams = useSearchParams()
@@ -24,6 +26,13 @@ export default function PWABoutiquePage() {
   const [triPrix, setTriPrix] = useState<string>('pertinence')
   const [searchQuery, setSearchQuery] = useState(search)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false)
+  const [categories, setCategories] = useState<Array<{
+    nom: string
+    slug: string
+  }>>([])
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null)
+  const [loadingCategories, setLoadingCategories] = useState(true)
 
   // Sync searchQuery with URL params
   useEffect(() => {
@@ -35,15 +44,16 @@ export default function PWABoutiquePage() {
     isPending: loading,
     refetch,
   } = useQuery({
-    queryKey: ['produits', 'pwa', categorie, search, triPrix],
+    queryKey: ['produits', 'pwa', categorie, search, triPrix, selectedCategoryName],
     staleTime: 2 * 60 * 1000,
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams()
-      if (categorie && categorie !== 'tous') {
-        params.set('categorie', categorie)
+      if (selectedCategoryName) {
+        params.set('categorie', selectedCategoryName)
       }
       if (search) {
         params.set('search', search)
+        params.set('useFullText', 'true')
       }
       if (triPrix !== 'pertinence') {
         params.set('sort', triPrix)
@@ -64,6 +74,36 @@ export default function PWABoutiquePage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [categorie])
+
+  // Load categories and set selected category name
+  useEffect(() => {
+    const chargerCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?active=true')
+        if (!response.ok) throw new Error(`Erreur API catégories: ${response.status}`)
+        const payload = await response.json()
+        const categoriesData = payload?.data || []
+        setCategories(categoriesData.map((cat: any) => ({
+          nom: cat.nom,
+          slug: cat.slug,
+        })))
+        
+        // Find category name from slug
+        if (categorie && categorie !== 'tous') {
+          const foundCat = categoriesData.find((cat: any) => cat.slug === categorie)
+          setSelectedCategoryName(foundCat?.nom || null)
+        } else {
+          setSelectedCategoryName(null)
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des catégories:', error)
+        setCategories([])
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+    chargerCategories()
   }, [categorie])
 
   useEffect(() => {
@@ -98,25 +138,17 @@ export default function PWABoutiquePage() {
       {/* Search and Filter Header - Side by Side */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-area-top">
         <div className="h-14 px-4 flex items-center gap-2">
-          <form onSubmit={handleSearch} className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10 pointer-events-none" />
             <Input
               type="search"
               placeholder="Rechercher..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 h-10 bg-muted border-0"
+              onFocus={() => setIsSearchOverlayOpen(true)}
+              className="pl-10 h-10 bg-muted border-0"
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </form>
+          </div>
           
           {/* Filter Button with Dropdown */}
           <DropdownMenu>
@@ -159,6 +191,43 @@ export default function PWABoutiquePage() {
           </DropdownMenu>
         </div>
         
+        {/* Categories Row - Horizontal Scrollable */}
+        {!loadingCategories && categories.length > 0 && (
+          <div className="px-4 py-2 border-b border-border/50">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
+              <button
+                onClick={() => {
+                  router.push('/pwa/boutique')
+                }}
+                className={cn(
+                  "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  categorie === 'tous' || !categorie
+                    ? "bg-dore text-charbon"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+              >
+                Tous
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.slug}
+                  onClick={() => {
+                    router.push(`/pwa/boutique?categorie=${cat.slug}`)
+                  }}
+                  className={cn(
+                    "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                    categorie === cat.slug
+                      ? "bg-dore text-charbon"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {cat.nom}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Title Bar */}
         {search && (
           <div className="px-4 pb-2">
@@ -168,6 +237,13 @@ export default function PWABoutiquePage() {
           </div>
         )}
       </header>
+
+      {/* Search Overlay - Same as main page, but linked to boutique */}
+      <SearchOverlay 
+        isOpen={isSearchOverlayOpen} 
+        onClose={() => setIsSearchOverlayOpen(false)}
+        basePath="/pwa/boutique"
+      />
 
       {/* Products Grid */}
       {loading ? (

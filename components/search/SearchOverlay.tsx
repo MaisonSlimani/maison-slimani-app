@@ -160,7 +160,12 @@ export default function SearchOverlay({
   const handleSearch = useCallback(() => {
     if (debouncedQuery.trim()) {
       addSearch(debouncedQuery)
-      router.push(`${basePath}/boutique?search=${encodeURIComponent(debouncedQuery)}`)
+      // If basePath already includes /boutique, just update query params
+      if (basePath.includes('/boutique')) {
+        router.push(`${basePath}?search=${encodeURIComponent(debouncedQuery)}`)
+      } else {
+        router.push(`${basePath}/boutique?search=${encodeURIComponent(debouncedQuery)}`)
+      }
       onClose()
     }
   }, [debouncedQuery, basePath, router, onClose, addSearch])
@@ -175,7 +180,12 @@ export default function SearchOverlay({
           onClose()
           break
         case 'category':
-          router.push(`${basePath}/boutique/${item.data.slug}`)
+          // If basePath already includes /boutique, use it directly
+          if (basePath.includes('/boutique')) {
+            router.push(`${basePath}?categorie=${item.data.slug}`)
+          } else {
+            router.push(`${basePath}/boutique/${item.data.slug}`)
+          }
           onClose()
           break
         case 'trending':
@@ -288,6 +298,17 @@ export default function SearchOverlay({
                   )}
                 </div>
                 <button
+                  type="submit"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleSearch()
+                  }}
+                  className="flex items-center justify-center w-12 h-12 rounded-xl bg-dore hover:bg-dore/90 transition-colors text-charbon"
+                  aria-label="Rechercher"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+                <button
                   type="button"
                   onClick={onClose}
                   className="flex items-center justify-center w-12 h-12 rounded-xl bg-muted hover:bg-muted/80 transition-colors text-foreground"
@@ -317,7 +338,7 @@ export default function SearchOverlay({
                           return (
                             <Link
                               key={cat.slug}
-                              href={`${basePath}/boutique/${cat.slug}`}
+                              href={basePath.includes('/boutique') ? `${basePath}?categorie=${cat.slug}` : `${basePath}/boutique/${cat.slug}`}
                               onClick={() => onClose()}
                               className={cn(
                                 'flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-dore/20 transition-colors text-sm',
