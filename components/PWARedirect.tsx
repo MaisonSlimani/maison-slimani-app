@@ -7,11 +7,11 @@ import { usePathname, useRouter } from 'next/navigation'
  * Client-side PWA detection and redirect
  * 
  * Detects:
- * - Standalone mode (installed PWA)
- * - iOS standalone mode
- * - Capacitor WebView (Android/iOS app)
+ * 1. Installed PWA (Standalone)
+ * 2. WebView App (Capacitor / Android WebView)
+ * 3. Normal Mobile Browser
  * 
- * Redirects to /pwa if in app mode and not already on /pwa routes
+ * Redirects to /pwa if in app mode or mobile browser
  */
 export default function PWARedirect() {
   const pathname = usePathname()
@@ -33,24 +33,25 @@ export default function PWARedirect() {
       return
     }
 
-    // Detect standalone mode (installed PWA)
+    const ua = navigator.userAgent
+
+    // 1. Detect installed PWA (Standalone)
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      // iOS standalone detection
       (window.navigator as any).standalone === true
 
-    // Detect Capacitor WebView
-    const isCapacitor =
-      typeof (window as any).Capacitor !== 'undefined' ||
-      window.navigator.userAgent.includes('Capacitor')
+    // 2. Detect WebView App (Capacitor / Android WebView)
+    const isWebView =
+      ua.includes('wv') ||
+      ua.includes('Capacitor') ||
+      typeof (window as any).Capacitor !== 'undefined'
 
-    // Detect Android WebView
-    const isAndroidWebView =
-      window.navigator.userAgent.includes('wv') &&
-      window.navigator.userAgent.includes('Android')
+    // 3. Detect normal mobile browser (UA only, NOT screen width)
+    const isMobileBrowser =
+      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
 
-    // If in app mode, redirect to PWA version
-    if (isStandalone || isCapacitor || isAndroidWebView) {
+    // Redirect to PWA version if any condition is true
+    if (isStandalone || isWebView || isMobileBrowser) {
       hasRedirected.current = true
       // Build the PWA path
       const pwaPath = pathname === '/' ? '/pwa' : `/pwa${pathname}`

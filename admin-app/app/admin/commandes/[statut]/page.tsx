@@ -80,34 +80,74 @@ export default function AdminCommandesStatutPage() {
 
   const playNotificationSound = useCallback(() => {
     if (!audioRef.current) return
+    
+    // Vérifier si l'audio est prêt à être joué
+    if (audioRef.current.readyState < 2) {
+      // Si l'audio n'est pas encore chargé, essayer de le charger
+      audioRef.current.load()
+      return
+    }
+    
     try {
       audioRef.current.currentTime = 0
-      audioRef.current.play().catch((err) => {
-        console.error('❌ Erreur lors de la lecture du son:', err)
-      })
+      const playPromise = audioRef.current.play()
+      
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          // Erreur silencieuse - l'audio n'est pas critique pour le fonctionnement
+          console.debug('Audio playback failed (non-critical):', err)
+        })
+      }
     } catch (error) {
-      console.error('❌ Erreur lors de la préparation du son:', error)
+      // Erreur silencieuse
+      console.debug('Audio preparation failed (non-critical):', error)
     }
   }, [])
 
   // Initialiser l'audio pour la notification
   useEffect(() => {
+    let audio: HTMLAudioElement | null = null
+    
     try {
-      const audio = new Audio('/sounds/new_command.mp3')
+      audio = new Audio('/sounds/new_command.mp3')
       audio.volume = 0.7
       audio.preload = 'auto'
       
-      // Gérer les erreurs de chargement
+      // Gérer les erreurs de chargement de manière silencieuse
       audio.addEventListener('error', (e) => {
-        console.error('❌ Erreur de chargement audio:', e)
+        // Ne pas logger l'erreur complète, juste indiquer que l'audio n'est pas disponible
+        console.debug('Audio file not available, notifications will be silent')
+        audioRef.current = null
       })
       
-      // Précharger l'audio pour éviter les problèmes de timing
-      audio.load()
-      audioRef.current = audio
-      console.log('✅ Audio initialisé:', audio.src)
+      // Vérifier quand l'audio est prêt
+      audio.addEventListener('canplaythrough', () => {
+        audioRef.current = audio
+      })
+      
+      // Gérer les erreurs de chargement réseau
+      audio.addEventListener('loadstart', () => {
+        // Le chargement a commencé
+      })
+      
+      // Précharger l'audio
+      audio.load().catch(() => {
+        // Si le chargement échoue, ne pas bloquer l'application
+        audioRef.current = null
+      })
     } catch (error) {
-      console.error('❌ Erreur lors de l\'initialisation audio:', error)
+      // Erreur lors de la création de l'audio - ne pas bloquer l'application
+      console.debug('Audio initialization failed (non-critical):', error)
+      audioRef.current = null
+    }
+    
+    // Cleanup
+    return () => {
+      if (audio) {
+        audio.pause()
+        audio.src = ''
+        audio.load()
+      }
     }
   }, [])
 

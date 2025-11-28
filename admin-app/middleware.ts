@@ -1,15 +1,29 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { SignJWT, jwtVerify } from 'jose'
+import { jwtVerify } from 'jose'
 
-const secretKey = process.env.ADMIN_SESSION_SECRET || 'default-secret-change-in-production'
+// Validate that ADMIN_SESSION_SECRET is set and has minimum length
+const secretKey = process.env.ADMIN_SESSION_SECRET
+if (!secretKey || secretKey.length < 32) {
+  throw new Error(
+    'ADMIN_SESSION_SECRET environment variable is required and must be at least 32 characters long. ' +
+    'Please set it in your .env.local or environment variables.'
+  )
+}
 const encodedKey = new TextEncoder().encode(secretKey)
+
+// JWT issuer and audience for additional security
+const JWT_ISSUER = 'maison-slimani-admin'
+const JWT_AUDIENCE = 'maison-slimani-admin-app'
 
 async function verifySession(session: string | undefined): Promise<boolean> {
   if (!session) return false
 
   try {
-    await jwtVerify(session, encodedKey)
+    await jwtVerify(session, encodedKey, {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    })
     return true
   } catch {
     return false

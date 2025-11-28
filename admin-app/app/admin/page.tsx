@@ -128,10 +128,21 @@ export default function AdminDashboardPage() {
       ])
       
       if (!commandesResponse.ok) {
-        throw new Error('Erreur lors du chargement des commandes')
+        const errorData = await commandesResponse.json().catch(() => ({ error: 'Erreur inconnue' }))
+        const errorMessage = errorData.error || errorData.details || 'Erreur lors du chargement des commandes'
+        console.error('Erreur API commandes:', {
+          status: commandesResponse.status,
+          statusText: commandesResponse.statusText,
+          error: errorMessage,
+        })
+        
+        if (!silent) {
+          throw new Error(errorMessage)
+        }
+        // En mode silencieux, continuer avec des données vides
       }
 
-      const commandesResult = await commandesResponse.json()
+      const commandesResult = await commandesResponse.json().catch(() => ({ data: [] }))
       const commandes = commandesResult.data || []
 
       // Charger les produits
@@ -188,8 +199,24 @@ export default function AdminDashboardPage() {
       setDernieresCommandes(dernieres)
       setProduits(produitsData)
       setProduitsRuptureStock(produitsRuptureStockList)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du chargement des statistiques:', error)
+      
+      // Si c'est une erreur d'authentification, rediriger vers la page de connexion
+      if (error?.message?.includes('Non autorisé') || error?.message?.includes('401')) {
+        if (!silent) {
+          toast.error('Session expirée. Redirection vers la connexion...')
+          setTimeout(() => {
+            window.location.href = '/login'
+          }, 1500)
+        }
+        return
+      }
+      
+      if (!silent) {
+        const errorMessage = error?.message || error?.error || 'Erreur lors du chargement des statistiques'
+        toast.error(errorMessage)
+      }
     } finally {
       setLoading(false)
     }

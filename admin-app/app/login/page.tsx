@@ -48,7 +48,21 @@ export default function AdminPWALoginPage() {
       }
 
       toast.success('Connexion réussie')
-      router.push('/')
+      
+      // Use full page reload to ensure cookie is available to middleware
+      // Detect device type and redirect accordingly - prioritize window width for dev tools
+      const isMobile = 
+        (typeof window !== 'undefined' && window.innerWidth < 768) ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      // Small delay to ensure toast is visible, then full page reload
+      setTimeout(() => {
+        if (isMobile) {
+          window.location.href = '/pwa'
+        } else {
+          window.location.href = '/admin'
+        }
+      }, 500)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur de connexion')
     } finally {

@@ -1,10 +1,28 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyPassword } from '@/lib/auth/hash'
 import { createAdminSession } from '@/lib/auth/session'
+import { applyRateLimit, getClientIdentifier } from '@/lib/middleware/rate-limit'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting to prevent brute force attacks
+    const identifier = getClientIdentifier(request)
+    const rateLimitResult = applyRateLimit({
+      key: `login:${identifier}`,
+      limit: 5, // 5 attempts per window
+      windowMs: 15 * 60 * 1000, // 15 minutes
+    })
+
+    if (!rateLimitResult.success) {
+      const response = NextResponse.json(
+        { error: 'Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.' },
+        { status: 429 }
+      )
+      response.headers.set('Retry-After', rateLimitResult.retryAfter.toString())
+      return response
+    }
+
     const { email, password } = await request.json()
 
     if (!email || !password) {

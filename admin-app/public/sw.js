@@ -4,15 +4,30 @@ const RUNTIME_CACHE = 'maison-slimani-admin-runtime-v1'
 // Assets to cache on install
 const PRECACHE_ASSETS = [
   '/',
-  '/commandes',
-  '/produits',
+  '/admin',
+  '/login',
 ]
 
 // Install event - precache assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS)
+      // Use addAll but catch errors for individual assets
+      // This prevents the entire install from failing if one asset fails
+      return Promise.allSettled(
+        PRECACHE_ASSETS.map((url) =>
+          fetch(url)
+            .then((response) => {
+              if (response.ok) {
+                return cache.put(url, response)
+              }
+              console.warn(`Failed to cache ${url}: ${response.status}`)
+            })
+            .catch((error) => {
+              console.warn(`Failed to fetch ${url} for caching:`, error)
+            })
+        )
+      )
     })
   )
   self.skipWaiting()

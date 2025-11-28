@@ -191,10 +191,6 @@ export default function PWAPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-charbon/90 via-charbon/70 to-charbon/50" />
             
-            {/* N Badge */}
-            <div className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-charbon/80 backdrop-blur-sm border border-dore/50 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
 
             {/* Content Overlay */}
             <div className="absolute inset-0 flex flex-col justify-center items-center px-6 md:px-12 z-10">
@@ -208,7 +204,7 @@ export default function PWAPage() {
                 <p className="text-2xl md:text-3xl lg:text-4xl font-serif text-white mb-6 md:mb-8 italic leading-relaxed drop-shadow-lg">
                   "Chaque paire raconte l'histoire d'un savoir-faire ancestral"
                 </p>
-                <div className="flex justify-start md:justify-center">
+                <div className="flex justify-center">
                   <Link 
                     href="/pwa/boutique"
                     className="text-dore hover:text-dore/80 font-serif text-base md:text-lg flex items-center gap-2 transition-colors"

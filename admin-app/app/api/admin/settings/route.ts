@@ -11,11 +11,13 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('settings')
-      .select('*')
+      .select('email_entreprise, telephone, adresse, description')
       .limit(1)
       .single()
 
-    if (error) throw error
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      throw error
+    }
 
     return NextResponse.json({ data: data || null })
   } catch (error: any) {

@@ -8,7 +8,7 @@ import NavigationDesktop from '@/components/NavigationDesktop'
 import MenuBasNavigation from '@/components/MenuBasNavigation'
 import Footer from '@/components/Footer'
 
-const lookbookImage = '/assets/lookbook-1.jpg'
+const lookbookImage = '/assets/lookbook-atelier.jpg'
 
 export default function MaisonPage() {
   useEffect(() => {

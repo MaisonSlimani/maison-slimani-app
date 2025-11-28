@@ -65,18 +65,24 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Sanitize id to prevent XSS - only allow alphanumeric and hyphens
+  const sanitizedId = id.replace(/[^a-zA-Z0-9-]/g, '');
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${sanitizedId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    // Sanitize color value - only allow hex colors, rgb, rgba, or CSS color names
+    const sanitizedColor = color && /^[#a-zA-Z0-9(),.\s-]+$/.test(color) ? color : '';
+    return sanitizedColor ? `  --color-${key.replace(/[^a-zA-Z0-9-]/g, '')}: ${sanitizedColor};` : null;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,

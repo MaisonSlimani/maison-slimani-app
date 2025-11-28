@@ -54,8 +54,7 @@ RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL=noreply@maisonslimani.com
 ADMIN_EMAIL=admin@maisonslimani.com
 
-# Admin
-ADMIN_SESSION_SECRET=your_random_secret_key_here_min_32_chars
+# Note: ADMIN_SESSION_SECRET is only needed for admin-app, not the main app
 ```
 
 3. Initialiser Supabase :
@@ -113,7 +112,7 @@ const bcrypt = require('bcryptjs');
 const hash = await bcrypt.hash('votre_mot_de_passe', 12);
 ```
 
-2. Se connecter sur `/login`
+2. Se connecter via admin-app (separate application)
 
 ## Fonctionnalités
 
