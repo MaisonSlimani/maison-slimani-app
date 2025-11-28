@@ -131,6 +131,17 @@ export default function GalerieProduit({
   // Preload adjacent images for instant switching
   useEffect(() => {
     if (filteredImages.length > 1) {
+      // Clean up old preload links first
+      const existingPreloads = document.querySelectorAll('link[rel="preload"][as="image"]')
+      existingPreloads.forEach((link) => {
+        const href = link.getAttribute('href')
+        // Only keep preloads for current filtered images
+        const isCurrentImage = filteredImages.some(img => img.url === href)
+        if (!isCurrentImage) {
+          link.remove()
+        }
+      })
+
       // Preload previous and next images
       const prevIndex = currentImageIndex === 0 ? filteredImages.length - 1 : currentImageIndex - 1
       const nextIndex = currentImageIndex === filteredImages.length - 1 ? 0 : currentImageIndex + 1
@@ -149,8 +160,22 @@ export default function GalerieProduit({
             link.rel = 'preload'
             link.as = 'image'
             link.href = img.url
+            // Add fetchpriority to indicate this is important
+            link.setAttribute('fetchpriority', 'high')
             document.head.appendChild(link)
           }
+        }
+      })
+    }
+
+    // Cleanup function to remove preload links when component unmounts or images change
+    return () => {
+      const preloads = document.querySelectorAll('link[rel="preload"][as="image"]')
+      preloads.forEach((link) => {
+        const href = link.getAttribute('href')
+        const isCurrentImage = filteredImages.some(img => img.url === href)
+        if (!isCurrentImage) {
+          link.remove()
         }
       })
     }

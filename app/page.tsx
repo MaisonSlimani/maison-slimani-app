@@ -19,9 +19,6 @@ import { useQuery } from '@tanstack/react-query'
 // Chemins des images (Next.js Image nécessite des chemins relatifs depuis public/)
 const heroImage = '/assets/hero-chaussures.jpg'
 const lookbookImage = '/assets/lookbook-1.jpg'
-const lookbookLifestyle1 = '/assets/lookbook-lifestyle-1.jpg'
-const lookbookAtelier = '/assets/lookbook-atelier.jpg'
-const lookbookLifestyle2 = '/assets/lookbook-lifestyle-2.jpg'
 
 export default function AccueilPage() {
   const [categories, setCategories] = useState<Array<{
@@ -209,12 +206,6 @@ export default function AccueilPage() {
   }, [])
 
 
-
-  const lookbookImages = [
-    { src: lookbookLifestyle1, caption: "L'élégance marocaine contemporaine" },
-    { src: lookbookAtelier, caption: "Nos maîtres artisans au travail" },
-    { src: lookbookLifestyle2, caption: 'Le souci du détail' },
-  ]
 
   const handleButtonClick = () => {
     if ((window as any).playClickSound) {
@@ -486,63 +477,58 @@ export default function AccueilPage() {
         </motion.div>
       </section>
 
-      {/* Lookbook / Inspiration */}
-      <section className="py-20">
-        <div className="container max-w-7xl mx-auto px-0">
+      {/* Craftsmanship Timeline - Desktop */}
+      <section className="py-24 px-6 bg-ecru">
+        <div className="container max-w-7xl mx-auto">
           <motion.div
-            className="text-center mb-16 px-6"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl md:text-5xl font-serif mb-4">
-              Inspiration
+            <h2 className="text-4xl md:text-5xl font-serif text-charbon mb-4">
+              Du cuir brut à l'excellence
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              L'élégance marocaine contemporaine
+            <p className="text-lg text-muted-foreground uppercase tracking-wide">
+              NOTRE PROCESSUS DE FABRICATION
             </p>
           </motion.div>
-
-          <div className="space-y-0">
-            {lookbookImages.map((item, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:gap-12">
+            {[
+              { image: '/assets/etape1.jpg', title: 'Sélection', desc: 'Cuir premium sélectionné' },
+              { image: '/assets/etape2.jpg', title: 'Découpe', desc: 'Précision artisanale' },
+              { image: '/assets/etape3.jpg', title: 'Assemblage', desc: 'Techniques traditionnelles' },
+              { image: '/assets/etape4.jpg', title: 'Finitions', desc: 'Détails méticuleux' },
+              { image: '/assets/etape5.jpg', title: 'Excellence', desc: 'Qualité garantie' },
+            ].map((step, index) => (
               <motion.div
                 key={index}
-                className="relative h-[70vh] overflow-hidden"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true, margin: '-100px' }}
-                transition={{ duration: 1 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ delay: index * 0.15, duration: 0.6 }}
+                className="text-center group"
               >
-                <motion.div
-                  className="absolute inset-0"
-                  initial={{ scale: 1.1 }}
-                  whileInView={{ scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 2, ease: 'easeOut' }}
-                >
+                <div className="relative w-48 h-48 lg:w-56 lg:h-56 mx-auto mb-6 rounded-lg overflow-hidden shadow-xl border-2 border-dore/20 group-hover:border-dore/50 transition-all duration-300">
                   <Image
-                    src={item.src}
-                    alt={item.caption}
+                    src={step.image}
+                    alt={step.title}
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, 224px"
                     loading="lazy"
-                    sizes="100vw"
                   />
-                </motion.div>
-                {/* Overlay dégradé pour améliorer la lisibilité */}
-                <div className="absolute inset-0 bg-gradient-to-t from-charbon/80 via-charbon/30 to-transparent" />
-                <motion.div
-                  className="absolute bottom-12 left-0 right-0 text-center px-6 z-10"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3, duration: 0.8 }}
-                >
-                  <p className="text-2xl md:text-3xl font-serif text-[#f8f5f0] drop-shadow-lg">
-                    {item.caption}
-                  </p>
-                </motion.div>
+                  {/* Step number badge - hidden on mobile, shown on desktop */}
+                  <div className="hidden md:flex absolute top-2 left-2 bg-dore text-charbon rounded-full w-8 h-8 items-center justify-center font-serif font-bold text-sm">
+                    {index + 1}
+                  </div>
+                </div>
+                <h3 className="font-serif font-semibold text-charbon mb-3 text-2xl lg:text-3xl">
+                  <span className="md:hidden">{String(index + 1).padStart(2, '0')}. </span>
+                  {step.title}
+                </h3>
+                <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </div>
