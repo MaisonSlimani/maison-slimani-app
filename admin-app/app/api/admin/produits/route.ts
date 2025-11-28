@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyAdminSession } from '@/lib/auth/session'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -211,7 +212,7 @@ export async function PUT(request: NextRequest) {
     // Revalidate cache for the updated product
     try {
       // Revalidate cache tags (this works for API routes)
-      revalidateTag('products')
+      revalidateTag(PRODUCTS_CACHE_TAG)
       // Also revalidate paths for page routes
       revalidatePath(`/produit/${id}`, 'page')
       revalidatePath(`/produits`, 'page')
