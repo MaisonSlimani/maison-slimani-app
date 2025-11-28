@@ -130,11 +130,8 @@ export default function AdminCommandesStatutPage() {
         // Le chargement a commencé
       })
       
-      // Précharger l'audio
-      audio.load().catch(() => {
-        // Si le chargement échoue, ne pas bloquer l'application
-        audioRef.current = null
-      })
+      // Précharger l'audio (errors are handled by the 'error' event listener above)
+      audio.load()
     } catch (error) {
       // Erreur lors de la création de l'audio - ne pas bloquer l'application
       console.debug('Audio initialization failed (non-critical):', error)
