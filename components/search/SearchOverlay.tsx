@@ -346,7 +346,7 @@ export default function SearchOverlay({
               </form>
               
               {/* Filter Button */}
-              <div className="flex justify-end">
+              <div className="flex justify-center">
                 <ProductFilter
                   onFilterChange={setFilters}
                   currentFilters={filters}

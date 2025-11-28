@@ -132,7 +132,6 @@ export async function PUT(request: Request) {
     try {
       revalidateTag(CATEGORIES_CACHE_TAG)
       revalidateTag(PRODUCTS_CACHE_TAG) // Products might reference categories
-      revalidatePath(`/api/categories`, 'route')
       revalidatePath(`/boutique`, 'page')
       revalidatePath(`/pwa/boutique`, 'page')
     } catch (revalidateError) {
@@ -214,7 +213,6 @@ export async function DELETE(request: Request) {
     try {
       revalidateTag(CATEGORIES_CACHE_TAG)
       revalidateTag(PRODUCTS_CACHE_TAG) // Products might reference categories
-      revalidatePath(`/api/categories`, 'route')
       revalidatePath(`/boutique`, 'page')
       revalidatePath(`/pwa/boutique`, 'page')
     } catch (revalidateError) {

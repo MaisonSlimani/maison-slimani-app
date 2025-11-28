@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 export interface FilterState {
   minPrice?: number
   maxPrice?: number
-  taille?: string
+  taille?: string[] // Changed to array for multiple selections
   inStock?: boolean
   couleur?: string
   categorie?: string // Only for global search
@@ -58,7 +58,7 @@ export default function ProductFilter({
     let count = 0
     if (localFilters.minPrice !== undefined && localFilters.minPrice > 0) count++
     if (localFilters.maxPrice !== undefined && localFilters.maxPrice < (filterOptions?.maxPrice || Infinity)) count++
-    if (localFilters.taille) count++
+    if (localFilters.taille && localFilters.taille.length > 0) count++
     if (localFilters.inStock !== undefined) count++
     if (localFilters.couleur) count++
     if (localFilters.categorie && !categoryName) count++ // Only count category if not in category page
@@ -152,31 +152,60 @@ export default function ProductFilter({
             </div>
           )}
 
-          {/* Taille */}
+          {/* Taille - Multiple selection with checkboxes */}
           {filterOptions && filterOptions.tailles && filterOptions.tailles.length > 0 && (
             <div>
-              <Label htmlFor="taille">Taille</Label>
-              <Select
-                value={localFilters.taille || 'all'}
-                onValueChange={(value) =>
-                  setLocalFilters({
-                    ...localFilters,
-                    taille: value === 'all' ? undefined : value,
-                  })
-                }
-              >
-                <SelectTrigger id="taille">
-                  <SelectValue placeholder="Toutes les tailles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les tailles</SelectItem>
-                  {filterOptions.tailles.map((taille: string) => (
-                    <SelectItem key={taille} value={taille}>
-                      {taille}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Taille</Label>
+              <div className="space-y-2 mt-2 max-h-[200px] overflow-y-auto">
+                {filterOptions.tailles.map((taille: string) => {
+                  const isChecked = localFilters.taille?.includes(taille) || false
+                  return (
+                    <div key={taille} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`taille-${taille}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => {
+                          const currentTailles = localFilters.taille || []
+                          if (checked) {
+                            setLocalFilters({
+                              ...localFilters,
+                              taille: [...currentTailles, taille],
+                            })
+                          } else {
+                            setLocalFilters({
+                              ...localFilters,
+                              taille: currentTailles.filter((t) => t !== taille),
+                            })
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`taille-${taille}`}
+                        className="font-normal cursor-pointer text-sm"
+                      >
+                        {taille}
+                      </Label>
+                    </div>
+                  )
+                })}
+              </div>
+              {localFilters.taille && localFilters.taille.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 h-7 text-xs"
+                  onClick={() => {
+                    setLocalFilters({
+                      ...localFilters,
+                      taille: undefined,
+                    })
+                  }}
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Effacer
+                </Button>
+              )}
             </div>
           )}
 

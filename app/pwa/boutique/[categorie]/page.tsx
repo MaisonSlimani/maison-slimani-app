@@ -107,8 +107,10 @@ export default function PWACategoriePage() {
       if (filters.maxPrice !== undefined) {
         params.set('maxPrice', filters.maxPrice.toString())
       }
-      if (filters.taille) {
-        params.set('taille', filters.taille)
+      if (filters.taille && filters.taille.length > 0) {
+        filters.taille.forEach((t) => {
+          params.append('taille', t)
+        })
       }
       if (filters.inStock !== undefined) {
         params.set('inStock', filters.inStock.toString())
@@ -196,7 +198,7 @@ export default function PWACategoriePage() {
         </div>
         
         {/* Filter and Sort Buttons */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-start gap-2">
           <Select value={triPrix} onValueChange={setTriPrix}>
             <SelectTrigger className="h-9 text-sm w-[140px]">
               <SelectValue placeholder="Trier" />

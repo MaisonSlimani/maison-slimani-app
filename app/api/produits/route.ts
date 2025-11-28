@@ -83,8 +83,29 @@ export async function GET(request: NextRequest) {
         if (maxPrice !== undefined) {
           data = data.filter((p: any) => p.prix <= maxPrice)
         }
-        if (taille) {
-          data = data.filter((p: any) => p.taille === taille)
+        if (taille && Array.isArray(taille) && taille.length > 0) {
+          data = data.filter((p: any) => {
+            // Check if product has any of the selected tailles
+            // 1. Check product.taille field (comma-separated string like "40, 41, 42")
+            if (p.taille) {
+              const productTailles = p.taille.split(',').map((t: string) => t.trim())
+              if (taille.some((selectedTaille: string) => productTailles.includes(selectedTaille))) {
+                return true
+              }
+            }
+            // 2. Check couleurs array - each couleur can have a taille field
+            if (p.has_colors && p.couleurs && Array.isArray(p.couleurs)) {
+              for (const couleur of p.couleurs) {
+                if (couleur.taille) {
+                  const couleurTailles = couleur.taille.split(',').map((t: string) => t.trim())
+                  if (taille.some((selectedTaille: string) => couleurTailles.includes(selectedTaille))) {
+                    return true
+                  }
+                }
+              }
+            }
+            return false
+          })
         }
         if (inStock !== undefined) {
           if (inStock) {
@@ -166,10 +187,8 @@ export async function GET(request: NextRequest) {
         query = query.lte('prix', maxPrice)
       }
 
-      // Taille filter
-      if (taille) {
-        query = query.eq('taille', taille)
-      }
+      // Taille filter - will be applied after fetching since taille can be in multiple places
+      // (product.taille field or in couleurs array)
 
       // Stock filter
       if (inStock !== undefined) {
@@ -199,6 +218,34 @@ export async function GET(request: NextRequest) {
         data = result.data
         error = result.error
         count = result.count
+
+        // Apply taille filter post-query (taille can be in product.taille or couleurs array)
+        if (taille && Array.isArray(taille) && taille.length > 0 && data) {
+          data = data.filter((p: any) => {
+            // Check if product has any of the selected tailles
+            // 1. Check product.taille field (comma-separated string like "40, 41, 42")
+            if (p.taille) {
+              const productTailles = p.taille.split(',').map((t: string) => t.trim())
+              if (taille.some((selectedTaille: string) => productTailles.includes(selectedTaille))) {
+                return true
+              }
+            }
+            // 2. Check couleurs array - each couleur can have a taille field
+            if (p.has_colors && p.couleurs && Array.isArray(p.couleurs)) {
+              for (const couleur of p.couleurs) {
+                if (couleur.taille) {
+                  const couleurTailles = couleur.taille.split(',').map((t: string) => t.trim())
+                  if (taille.some((selectedTaille: string) => couleurTailles.includes(selectedTaille))) {
+                    return true
+                  }
+                }
+              }
+            }
+            return false
+          })
+          // Update count after filtering
+          count = data.length
+        }
 
         // Apply color filter post-query (colors are in JSONB)
         if (couleur && data) {

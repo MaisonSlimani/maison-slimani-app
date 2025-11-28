@@ -270,8 +270,11 @@ export default function CategoriePage() {
       if (filters.maxPrice !== undefined) {
         searchParams.set('maxPrice', filters.maxPrice.toString())
       }
-      if (filters.taille) {
-        searchParams.set('taille', filters.taille)
+      if (filters.taille && filters.taille.length > 0) {
+        // Pass multiple tailles as comma-separated or multiple params
+        filters.taille.forEach((t) => {
+          searchParams.append('taille', t)
+        })
       }
       if (filters.inStock !== undefined) {
         searchParams.set('inStock', filters.inStock.toString())
@@ -432,7 +435,7 @@ export default function CategoriePage() {
           </div>
           
           {/* Filter and Sort Buttons */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-start gap-3">
             <Select value={triPrix} onValueChange={setTriPrix}>
               <SelectTrigger className="h-11 w-[180px]">
                 <SelectValue placeholder="Trier" />

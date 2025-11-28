@@ -46,11 +46,20 @@ export const produitQuerySchema = z.object({
     .pipe(z.number().positive())
     .optional(),
   taille: z
-    .string()
-    .trim()
-    .min(1)
-    .max(50)
-    .optional(),
+    .union([
+      z.string().trim().min(1).max(50),
+      z.array(z.string().trim().min(1).max(50))
+    ])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined
+      if (Array.isArray(val)) return val
+      // Handle comma-separated string or single value
+      if (typeof val === 'string' && val.includes(',')) {
+        return val.split(',').map(t => t.trim()).filter(t => t.length > 0)
+      }
+      return [val]
+    }),
   inStock: z
     .string()
     .transform((value) => value === 'true')
