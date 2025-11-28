@@ -17,9 +17,6 @@ export default function StickyHeader() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-area-top w-full max-w-full">
-        {/* Subtle gold gradient border */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-dore/30 to-transparent" />
-        
         <div className="h-14 px-4 flex items-center justify-between gap-3 w-full max-w-full">
           {/* Logo */}
           <Link 
