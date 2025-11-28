@@ -211,7 +211,7 @@ export default function GalerieProduit({
     <div className={cn('space-y-4', className)}>
       {/* Image principale avec zoom au hover (desktop) et clic pour galerie (mobile) */}
       <div
-        className="relative aspect-square overflow-hidden rounded-lg bg-muted group cursor-zoom-in md:cursor-zoom-in cursor-pointer"
+        className="relative aspect-square overflow-hidden rounded-lg bg-muted group cursor-zoom-in md:cursor-zoom-in cursor-pointer w-full"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -229,7 +229,7 @@ export default function GalerieProduit({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="relative w-full h-full"
+            className="absolute inset-0 w-full h-full"
           >
             <Image
               src={currentImage.url}
@@ -244,7 +244,7 @@ export default function GalerieProduit({
                   ? `${hoverPosition.x}% ${hoverPosition.y}%`
                   : 'center',
               }}
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 28vw, 25vw"
               priority={currentImageIndex === 0}
               loading={currentImageIndex === 0 ? 'eager' : 'eager'}
               unoptimized={false}

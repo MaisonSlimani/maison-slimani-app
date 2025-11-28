@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('produits')
-      .select('id, nom, prix, categorie, stock, image_url')
+      .select('id, nom, description, prix, stock, categorie, image_url, taille, vedette, has_colors, images, couleurs, date_ajout')
       .order('date_ajout', { ascending: false })
 
     if (error) {
@@ -42,6 +42,163 @@ export async function GET(request: NextRequest) {
     console.error('Erreur serveur:', error)
     return NextResponse.json(
       { error: 'Erreur serveur' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const email = await verifyAdminSession()
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const {
+      nom,
+      description,
+      prix,
+      stock,
+      categorie,
+      vedette,
+      image_url,
+      taille,
+      has_colors,
+      images,
+      couleurs,
+    } = body
+
+    // Validation
+    if (!nom || !description || prix === undefined) {
+      return NextResponse.json(
+        { error: 'Nom, description et prix sont requis' },
+        { status: 400 }
+      )
+    }
+
+    const produitData: any = {
+      nom,
+      description,
+      prix: parseFloat(prix),
+      stock: has_colors ? 0 : parseInt(stock || '0'),
+      categorie: categorie || null,
+      vedette: vedette || false,
+      image_url: image_url || null,
+      taille: taille || null,
+      has_colors: has_colors || false,
+      images: images || [],
+      couleurs: couleurs || [],
+    }
+
+    const { data, error } = await supabase
+      .from('produits')
+      .insert(produitData)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Erreur lors de la création:', error)
+      return NextResponse.json(
+        { error: error.message || 'Erreur lors de la création du produit' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+    })
+  } catch (error: any) {
+    console.error('Erreur serveur:', error)
+    return NextResponse.json(
+      { error: error.message || 'Erreur serveur' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const email = await verifyAdminSession()
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const {
+      id,
+      nom,
+      description,
+      prix,
+      stock,
+      categorie,
+      vedette,
+      image_url,
+      taille,
+      has_colors,
+      images,
+      couleurs,
+    } = body
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID du produit requis' },
+        { status: 400 }
+      )
+    }
+
+    // Validation
+    if (!nom || !description || prix === undefined) {
+      return NextResponse.json(
+        { error: 'Nom, description et prix sont requis' },
+        { status: 400 }
+      )
+    }
+
+    const produitData: any = {
+      nom,
+      description,
+      prix: parseFloat(prix),
+      stock: has_colors ? 0 : parseInt(stock || '0'),
+      categorie: categorie || null,
+      vedette: vedette || false,
+      image_url: image_url || null,
+      taille: taille || null,
+      has_colors: has_colors || false,
+      images: images || [],
+      couleurs: couleurs || [],
+    }
+
+    const { data, error } = await supabase
+      .from('produits')
+      .update(produitData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Erreur lors de la mise à jour:', error)
+      return NextResponse.json(
+        { error: error.message || 'Erreur lors de la mise à jour du produit' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data,
+    })
+  } catch (error: any) {
+    console.error('Erreur serveur:', error)
+    return NextResponse.json(
+      { error: error.message || 'Erreur serveur' },
       { status: 500 }
     )
   }

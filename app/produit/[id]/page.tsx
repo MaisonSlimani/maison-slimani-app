@@ -390,7 +390,7 @@ export default function ProduitPage() {
 
       {/* Contenu principal */}
       <div className="container max-w-7xl mx-auto px-6 pb-20">
-        <div className="grid md:grid-cols-2 gap-12 lg:gap-16">
+        <div className="grid md:grid-cols-[35%_65%] gap-12 lg:gap-16">
           {/* Galerie d'images */}
           <motion.div
             className="relative"

@@ -1,5 +1,13 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Explicitly set the workspace root to silence the lockfile warning
+  outputFileTracingRoot: __dirname,
   images: {
     formats: ['image/webp', 'image/avif'],
     remotePatterns: [

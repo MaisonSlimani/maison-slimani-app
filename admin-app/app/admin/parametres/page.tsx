@@ -58,8 +58,17 @@ export default function AdminParametresPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la sauvegarde')
+        let errorMessage = 'Erreur lors de la sauvegarde'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const error = await response.json()
+            errorMessage = error.error || errorMessage
+          }
+        } catch {
+          // If parsing fails, use default error message
+        }
+        throw new Error(errorMessage)
       }
 
       toast.success('Paramètres sauvegardés avec succès')

@@ -72,10 +72,23 @@ export default function AdminPWASettingsPage() {
         body: JSON.stringify(settings),
       })
 
-      if (!response.ok) throw new Error('Erreur')
+      if (!response.ok) {
+        let errorMessage = 'Erreur lors de la sauvegarde'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          }
+        } catch {
+          // If parsing fails, use default error message
+        }
+        throw new Error(errorMessage)
+      }
+      
       toast.success('Paramètres sauvegardés')
     } catch (error) {
-      toast.error('Erreur lors de la sauvegarde')
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde')
     } finally {
       setSaving(false)
     }

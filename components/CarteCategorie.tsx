@@ -23,9 +23,9 @@ const CarteCategorie = ({ titre, tagline, image, lien, priority = false }: Carte
       transition={{ duration: 0.6 }}
     >
       <Link href={lien}>
-        <div className="aspect-[4/3] overflow-hidden relative">
+        <div className="aspect-[4/3] overflow-hidden relative w-full">
           <motion.div
-            className="absolute inset-0"
+            className="absolute inset-0 w-full h-full"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
@@ -33,10 +33,10 @@ const CarteCategorie = ({ titre, tagline, image, lien, priority = false }: Carte
               src={image}
               alt={titre}
               fill
-              className="object-cover"
+              className="object-cover w-full h-full"
               loading={priority ? undefined : "lazy"}
               priority={priority}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 32vw, 21vw"
             />
           </motion.div>
         

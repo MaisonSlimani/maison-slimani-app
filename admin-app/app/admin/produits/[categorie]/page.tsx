@@ -219,11 +219,15 @@ export default function AdminCategorieProduitsPage() {
         // Validation: chaque couleur doit avoir au moins une image
         for (const couleur of couleurs) {
           if (!couleur.nom) {
-            throw new Error(`Tous les noms de couleur doivent être remplis`)
+            toast.error('Tous les noms de couleur doivent être remplis')
+            setUploading(false)
+            return
           }
           const totalImages = couleur.images.length + couleur.imageUrls.length
           if (totalImages === 0) {
-            throw new Error(`La couleur "${couleur.nom}" doit avoir au moins une image`)
+            toast.error(`La couleur "${couleur.nom}" doit avoir au moins une image`)
+            setUploading(false)
+            return
           }
         }
 
@@ -244,7 +248,9 @@ export default function AdminCategorieProduitsPage() {
           couleurImages.push(...couleur.imageUrls)
 
           if (couleurImages.length === 0) {
-            throw new Error(`La couleur "${couleur.nom}" doit avoir au moins une image`)
+            toast.error(`La couleur "${couleur.nom}" doit avoir au moins une image`)
+            setUploading(false)
+            return
           }
 
           couleursData.push({
@@ -263,7 +269,9 @@ export default function AdminCategorieProduitsPage() {
       } else {
         // Produit SANS couleurs - images générales
         if (imagesGeneralesUrls.length === 0) {
-          throw new Error('Au moins une image est requise pour les produits sans couleurs')
+          toast.error('Au moins une image est requise pour les produits sans couleurs')
+          setUploading(false)
+          return
         }
 
         images = imagesGeneralesUrls.map(img => ({ url: img.url, ordre: img.ordre }))
@@ -302,8 +310,23 @@ export default function AdminCategorieProduitsPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors de la sauvegarde')
+        let errorMessage = 'Erreur lors de la sauvegarde'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+            console.error('❌ Erreur API:', errorData)
+          } else {
+            const text = await response.text()
+            console.error('❌ Erreur API (non-JSON):', text)
+            errorMessage = text || errorMessage
+          }
+        } catch (parseError) {
+          console.error('❌ Erreur lors du parsing de la réponse:', parseError)
+          // If parsing fails, use default error message
+        }
+        throw new Error(errorMessage)
       }
 
       toast.success(editingProduit ? 'Produit mis à jour' : 'Produit créé')
@@ -962,40 +985,45 @@ export default function AdminCategorieProduitsPage() {
                             onClick={() => {
                               setEditingProduit(produit)
                               setFormData({
-                                nom: produit.nom,
+                                nom: produit.nom || '',
                                 description: produit.description || '',
-                                prix: produit.prix.toString(),
-                                stock: produit.stock.toString(),
+                                prix: produit.prix ? produit.prix.toString() : '',
+                                stock: produit.stock !== null && produit.stock !== undefined ? produit.stock.toString() : '',
                                 categorie: produit.categorie || '',
-                                vedette: produit.vedette || false,
+                                vedette: produit.vedette === true,
                                 image_url: produit.image_url || '',
                                 taille: produit.taille || '',
-                                has_colors: produit.has_colors || false,
+                                has_colors: produit.has_colors === true,
                               })
                               
                               // Charger selon le type de produit
-                              if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+                              if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
                                 // Produit AVEC couleurs
                                 const couleursData = produit.couleurs.map((c: any) => ({
                                   nom: c.nom || '',
                                   code: c.code || '#000000',
-                                  stock: c.stock || 0,
+                                  stock: c.stock !== null && c.stock !== undefined ? c.stock : 0,
                                   taille: c.taille || '',
                                   images: [],
-                                  imageUrls: c.images || [],
+                                  imageUrls: Array.isArray(c.images) ? c.images : [],
                                 }))
                                 setCouleurs(couleursData)
                                 setImagesGenerales([])
-                              } else if (produit.images && Array.isArray(produit.images)) {
+                              } else if (produit.images && Array.isArray(produit.images) && produit.images.length > 0) {
                                 // Produit SANS couleurs - images générales
                                 const generales = produit.images.map((img: any) => ({
                                   file: null,
-                                  url: typeof img === 'string' ? img : img.url,
+                                  url: typeof img === 'string' ? img : (img?.url || img),
                                 }))
                                 setImagesGenerales(generales)
                                 setCouleurs([])
                               } else {
-                                setImagesGenerales([])
+                                // Fallback: utiliser image_url si disponible
+                                if (produit.image_url) {
+                                  setImagesGenerales([{ file: null, url: produit.image_url }])
+                                } else {
+                                  setImagesGenerales([])
+                                }
                                 setCouleurs([])
                               }
                               setDialogOpen(true)
@@ -1105,40 +1133,45 @@ export default function AdminCategorieProduitsPage() {
                       onClick={() => {
                         setEditingProduit(produit)
                         setFormData({
-                          nom: produit.nom,
+                          nom: produit.nom || '',
                           description: produit.description || '',
-                          prix: produit.prix.toString(),
-                          stock: produit.stock.toString(),
+                          prix: produit.prix ? produit.prix.toString() : '',
+                          stock: produit.stock !== null && produit.stock !== undefined ? produit.stock.toString() : '',
                           categorie: produit.categorie || categorieNom,
-                          vedette: produit.vedette || false,
+                          vedette: produit.vedette === true,
                           image_url: produit.image_url || '',
                           taille: produit.taille || '',
-                          has_colors: produit.has_colors || false,
+                          has_colors: produit.has_colors === true,
                         })
                         
                         // Charger selon le type de produit
-                        if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+                        if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
                           // Produit AVEC couleurs
                           const couleursData = produit.couleurs.map((c: any) => ({
                             nom: c.nom || '',
                             code: c.code || '#000000',
-                            stock: c.stock || 0,
+                            stock: c.stock !== null && c.stock !== undefined ? c.stock : 0,
                             taille: c.taille || '',
                             images: [],
-                            imageUrls: c.images || [],
+                            imageUrls: Array.isArray(c.images) ? c.images : [],
                           }))
                           setCouleurs(couleursData)
                           setImagesGenerales([])
-                        } else if (produit.images && Array.isArray(produit.images)) {
+                        } else if (produit.images && Array.isArray(produit.images) && produit.images.length > 0) {
                           // Produit SANS couleurs - images générales
                           const generales = produit.images.map((img: any) => ({
                             file: null,
-                            url: typeof img === 'string' ? img : img.url,
+                            url: typeof img === 'string' ? img : (img?.url || img),
                           }))
                           setImagesGenerales(generales)
                           setCouleurs([])
                         } else {
-                          setImagesGenerales([])
+                          // Fallback: utiliser image_url si disponible
+                          if (produit.image_url) {
+                            setImagesGenerales([{ file: null, url: produit.image_url }])
+                          } else {
+                            setImagesGenerales([])
+                          }
                           setCouleurs([])
                         }
                         setDialogOpen(true)
