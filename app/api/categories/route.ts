@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { CATEGORIES_CACHE_TAG } from '@/lib/cache/tags'
 
 const querySchema = z.object({
   slug: z.string().min(1).optional(),
@@ -98,6 +99,7 @@ export async function GET(request: NextRequest) {
       'Cache-Control',
       'public, s-maxage=120, stale-while-revalidate=120'
     )
+    response.headers.set('x-vercel-cache-tags', CATEGORIES_CACHE_TAG)
 
     return response
   } catch (error) {

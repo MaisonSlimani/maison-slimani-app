@@ -325,8 +325,17 @@ export default function AdminCommandesStatutPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors de la suppression')
+        let errorMessage = 'Erreur lors de la suppression'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          }
+        } catch {
+          // If parsing fails, use default error message
+        }
+        throw new Error(errorMessage)
       }
 
       toast.success('Commande supprimée')

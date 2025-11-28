@@ -26,6 +26,7 @@ export default function PWAPage() {
     lien: string
   }>>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
+  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null)
 
   const {
     data: produitsVedette = [],
@@ -76,7 +77,32 @@ export default function PWAPage() {
       }
     }
 
+    const chargerSettings = async () => {
+      try {
+        const response = await fetch('/api/settings')
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data?.telephone) {
+            // Format phone number for WhatsApp: remove spaces, dashes, and ensure it starts with country code
+            let phone = result.data.telephone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')
+            // If it doesn't start with 212, add it (Morocco country code)
+            if (!phone.startsWith('212')) {
+              // Remove leading 0 if present
+              if (phone.startsWith('0')) {
+                phone = phone.substring(1)
+              }
+              phone = '212' + phone
+            }
+            setWhatsappNumber(phone)
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des paramètres:', error)
+      }
+    }
+
     chargerCategories()
+    chargerSettings()
   }, [])
 
   return (
@@ -341,18 +367,19 @@ export default function PWAPage() {
       </section>
 
       {/* Floating WhatsApp Button */}
-      <motion.a
-        href="https://wa.me/212XXXXXXXXX"
-        target="_blank"
-        rel="noopener noreferrer"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#20BA5A] rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
-        onClick={() => hapticFeedback('medium')}
-        aria-label="Contacter sur WhatsApp"
-      >
+      {whatsappNumber && (
+        <motion.a
+          href={`https://wa.me/${whatsappNumber}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#20BA5A] rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
+          onClick={() => hapticFeedback('medium')}
+          aria-label="Contacter sur WhatsApp"
+        >
         {/* Authentic WhatsApp Icon SVG */}
         <svg
           width="28"
@@ -368,6 +395,7 @@ export default function PWAPage() {
           />
         </svg>
       </motion.a>
+      )}
 
     </div>
   )

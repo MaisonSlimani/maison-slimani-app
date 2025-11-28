@@ -363,8 +363,17 @@ export default function AdminCategorieProduitsPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors de la suppression')
+        let errorMessage = 'Erreur lors de la suppression'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          }
+        } catch {
+          // If parsing fails, use default error message
+        }
+        throw new Error(errorMessage)
       }
 
       toast.success('Produit supprimé')
@@ -620,7 +629,7 @@ export default function AdminCategorieProduitsPage() {
               {!formData.has_colors && (
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between mb-3">
-              <div>
+                    <div>
                       <Label className="text-base font-semibold flex items-center gap-2">
                         <ImageIcon className="w-4 h-4" />
                         Images du produit *
@@ -631,47 +640,67 @@ export default function AdminCategorieProduitsPage() {
                     </div>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="default"
                       size="sm"
-                      onClick={addImageGenerale}
+                      className="bg-dore text-charbon hover:bg-dore/90"
+                      onClick={() => {
+                        const input = document.createElement('input')
+                        input.type = 'file'
+                        input.accept = 'image/jpeg,image/jpg,image/png,image/webp'
+                        input.multiple = true
+                        input.onchange = (e) => {
+                          const files = Array.from((e.target as HTMLInputElement).files || [])
+                          files.forEach((file) => {
+                            addImageGenerale()
+                            const newIndex = imagesGenerales.length
+                            setTimeout(() => {
+                              handleImageGeneraleChange(newIndex, file)
+                            }, 0)
+                          })
+                        }
+                        input.click()
+                      }}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Ajouter une image
+                      <Upload className="w-4 h-4 mr-2" />
+                      Sélectionner des images
                     </Button>
                   </div>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {imagesGenerales.map((img, index) => (
-                      <div key={index} className="flex gap-3 items-start p-3 border rounded-lg">
-                        <div className="flex-1">
-                <Input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0] || null
-                              handleImageGeneraleChange(index, file)
-                            }}
-                  className="cursor-pointer"
-                />
-                        </div>
-                        {img.url && (
-                          <div className="relative w-20 h-20 rounded overflow-hidden border">
-                            <img src={img.url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                      <div key={index} className="relative group border rounded-lg overflow-hidden bg-muted/50">
+                        {img.url ? (
+                          <>
+                            <div className="relative aspect-square">
+                              <img src={img.url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                              onClick={() => removeImageGenerale(index)}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="aspect-square flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+                            <div className="text-center p-2">
+                              <ImageIcon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground">Image {index + 1}</p>
+                            </div>
                           </div>
                         )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeImageGenerale(index)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
                       </div>
                     ))}
                     {imagesGenerales.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
-                        Aucune image ajoutée. Cliquez sur "Ajouter une image" pour commencer.
-                      </p>
+                      <div className="col-span-full">
+                        <div className="text-center py-8 border-2 border-dashed rounded-lg bg-muted/30">
+                          <ImageIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground mb-2">Aucune image ajoutée</p>
+                          <p className="text-xs text-muted-foreground">Cliquez sur "Sélectionner des images" pour commencer</p>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -787,21 +816,25 @@ export default function AdminCategorieProduitsPage() {
                           </Label>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="default"
                             size="sm"
+                            className="bg-dore text-charbon hover:bg-dore/90"
                             onClick={() => {
                               const input = document.createElement('input')
                               input.type = 'file'
                               input.accept = 'image/jpeg,image/jpg,image/png,image/webp'
+                              input.multiple = true
                               input.onchange = (e) => {
-                                const file = (e.target as HTMLInputElement).files?.[0]
-                                if (file) addImageToCouleur(couleurIndex, file)
+                                const files = Array.from((e.target as HTMLInputElement).files || [])
+                                files.forEach((file) => {
+                                  addImageToCouleur(couleurIndex, file)
+                                })
                               }
                               input.click()
                             }}
                           >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Ajouter une image
+                            <Upload className="w-4 h-4 mr-2" />
+                            Sélectionner des images
                           </Button>
                         </div>
                         <div className="space-y-3">

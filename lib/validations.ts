@@ -34,6 +34,33 @@ export const produitQuerySchema = z.object({
     .string()
     .transform((value) => value === 'true')
     .optional(),
+  // Filter parameters
+  minPrice: z
+    .string()
+    .transform((value) => Number(value))
+    .pipe(z.number().nonnegative())
+    .optional(),
+  maxPrice: z
+    .string()
+    .transform((value) => Number(value))
+    .pipe(z.number().positive())
+    .optional(),
+  taille: z
+    .string()
+    .trim()
+    .min(1)
+    .max(50)
+    .optional(),
+  inStock: z
+    .string()
+    .transform((value) => value === 'true')
+    .optional(),
+  couleur: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .optional(),
 })
 
 export const commandeProduitSchema = z.object({

@@ -11,9 +11,13 @@ import MenuBasNavigation from '@/components/MenuBasNavigation'
 import Footer from '@/components/Footer'
 import CarteProduit from '@/components/CarteProduit'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowUp, ArrowLeft } from 'lucide-react'
+import { ArrowUp, ArrowLeft, Search, ShoppingCart } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
+import { useCart } from '@/lib/hooks/useCart'
+import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 
 export default function CategoriePage() {
   const params = useParams()
@@ -23,7 +27,11 @@ export default function CategoriePage() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('pertinence')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<FilterState>({})
   const categorieNom = categorieInfo?.nom || null
+  const { openDrawer } = useCartDrawer()
+  const { totalItems } = useCart()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -231,7 +239,7 @@ export default function CategoriePage() {
     isFetching: produitsFetching,
     error: produitsError,
   } = useQuery({
-    queryKey: ['categorie-produits', categorieSlug, categorieNom, triPrix],
+    queryKey: ['categorie-produits', categorieSlug, categorieNom, triPrix, searchQuery, filters],
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: categorieSlug === 'tous' || !!categorieNom,
@@ -248,6 +256,28 @@ export default function CategoriePage() {
         searchParams.set('sort', 'prix-desc')
       } else {
         searchParams.set('sort', 'recent')
+      }
+
+      // Add search query
+      if (searchQuery.trim()) {
+        searchParams.set('search', searchQuery.trim())
+      }
+
+      // Add filters
+      if (filters.minPrice !== undefined) {
+        searchParams.set('minPrice', filters.minPrice.toString())
+      }
+      if (filters.maxPrice !== undefined) {
+        searchParams.set('maxPrice', filters.maxPrice.toString())
+      }
+      if (filters.taille) {
+        searchParams.set('taille', filters.taille)
+      }
+      if (filters.inStock !== undefined) {
+        searchParams.set('inStock', filters.inStock.toString())
+      }
+      if (filters.couleur) {
+        searchParams.set('couleur', filters.couleur)
       }
 
       searchParams.set('limit', '60')
@@ -365,30 +395,60 @@ export default function CategoriePage() {
         </motion.div>
       </section>
 
-      {/* Contenu avec filtres et produits */}
+      {/* Contenu avec recherche et produits */}
       <div className="container px-4 md:px-6 py-8 md:py-12 mx-auto">
-        {/* Filtres avec animation */}
+        {/* Barre de recherche avec icône panier, filtre et tri */}
         <motion.div
-          className="flex flex-wrap items-center gap-4 mb-8 md:mb-12"
+          className="space-y-4 mb-8 md:mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <label htmlFor="filter-select" className="text-sm font-medium text-muted-foreground hidden sm:inline">
-              Filtrer:
-            </label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10 pointer-events-none" />
+              <Input
+                type="search"
+                placeholder={`Rechercher dans ${categorieInfo?.nom || 'cette catégorie'}...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-11 bg-muted border-0"
+              />
+            </div>
+            
+            {/* Bouton panier */}
+            <button
+              onClick={() => openDrawer()}
+              className="relative flex items-center justify-center w-11 h-11 rounded-lg bg-muted hover:bg-muted/80 transition-colors border border-transparent hover:border-dore/30 flex-shrink-0"
+              aria-label="Panier"
+            >
+              <ShoppingCart className="w-5 h-5 text-foreground" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-dore rounded-full shadow-lg">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+            </button>
+          </div>
+          
+          {/* Filter and Sort Buttons */}
+          <div className="flex items-center justify-end gap-3">
             <Select value={triPrix} onValueChange={setTriPrix}>
-              <SelectTrigger id="filter-select" className="w-1/2 sm:w-[240px] md:w-[280px]">
-                <SelectValue placeholder="Filtrer" />
+              <SelectTrigger className="h-11 w-[180px]">
+                <SelectValue placeholder="Trier" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pertinence">Filtrer</SelectItem>
+                <SelectItem value="pertinence">Pertinence</SelectItem>
                 <SelectItem value="prix-asc">Prix croissant</SelectItem>
                 <SelectItem value="prix-desc">Prix décroissant</SelectItem>
                 <SelectItem value="nouveaute">Nouveautés</SelectItem>
               </SelectContent>
             </Select>
+            <ProductFilter
+              onFilterChange={setFilters}
+              currentFilters={filters}
+              categoryName={categorieNom || undefined}
+            />
           </div>
         </motion.div>
 

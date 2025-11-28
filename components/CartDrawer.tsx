@@ -43,7 +43,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0">
+      <SheetContent side="right" className="w-[85vw] sm:w-[60vw] sm:max-w-[500px] flex flex-col p-0">
         <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle className="text-2xl font-serif flex items-center gap-2">
             <ShoppingBag className="w-6 h-6" />

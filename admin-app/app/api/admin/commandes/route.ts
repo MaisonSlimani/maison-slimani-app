@@ -67,3 +67,64 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const email = await verifyAdminSession()
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID de la commande requis' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier si la commande existe
+    const { data: commande, error: fetchError } = await supabase
+      .from('commandes')
+      .select('id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !commande) {
+      return NextResponse.json(
+        { error: 'Commande non trouvée' },
+        { status: 404 }
+      )
+    }
+
+    // Supprimer la commande
+    const { error: deleteError } = await supabase
+      .from('commandes')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) {
+      console.error('Erreur lors de la suppression:', deleteError)
+      return NextResponse.json(
+        { error: deleteError.message || 'Erreur lors de la suppression de la commande' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Commande supprimée avec succès',
+    })
+  } catch (error: any) {
+    console.error('Erreur serveur:', error)
+    return NextResponse.json(
+      { error: error.message || 'Erreur serveur' },
+      { status: 500 }
+    )
+  }
+}
+

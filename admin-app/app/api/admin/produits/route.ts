@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyAdminSession } from '@/lib/auth/session'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -108,6 +109,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Revalidate cache for new product
+    try {
+      if (data?.id) {
+        revalidateTag('products')
+        revalidatePath(`/produit/${data.id}`, 'page')
+        revalidatePath(`/produits`, 'page')
+        revalidatePath(`/pwa/produit/${data.id}`, 'page')
+        revalidatePath(`/pwa/boutique`, 'page')
+        revalidatePath(`/api/produits`, 'route')
+        revalidatePath(`/api/produits/${data.id}`, 'route')
+      }
+    } catch (revalidateError) {
+      console.error('Erreur lors de la revalidation du cache:', revalidateError)
+      // Continue even if revalidation fails
+    }
+
     return NextResponse.json({
       success: true,
       data,
@@ -191,9 +208,100 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Revalidate cache for the updated product
+    try {
+      // Revalidate cache tags (this works for API routes)
+      revalidateTag('products')
+      // Also revalidate paths for page routes
+      revalidatePath(`/produit/${id}`, 'page')
+      revalidatePath(`/produits`, 'page')
+      revalidatePath(`/pwa/produit/${id}`, 'page')
+      revalidatePath(`/pwa/boutique`, 'page')
+      revalidatePath(`/api/produits`, 'route')
+      revalidatePath(`/api/produits/${id}`, 'route')
+    } catch (revalidateError) {
+      console.error('Erreur lors de la revalidation du cache:', revalidateError)
+      // Continue even if revalidation fails
+    }
+
     return NextResponse.json({
       success: true,
       data,
+    })
+  } catch (error: any) {
+    console.error('Erreur serveur:', error)
+    return NextResponse.json(
+      { error: error.message || 'Erreur serveur' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const email = await verifyAdminSession()
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID du produit requis' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier si le produit existe
+    const { data: produit, error: fetchError } = await supabase
+      .from('produits')
+      .select('id, images, couleurs')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !produit) {
+      return NextResponse.json(
+        { error: 'Produit non trouvé' },
+        { status: 404 }
+      )
+    }
+
+    // Supprimer le produit
+    const { error: deleteError } = await supabase
+      .from('produits')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) {
+      console.error('Erreur lors de la suppression:', deleteError)
+      return NextResponse.json(
+        { error: deleteError.message || 'Erreur lors de la suppression du produit' },
+        { status: 500 }
+      )
+    }
+
+    // Revalidate cache after deletion
+    try {
+      revalidateTag('products')
+      revalidatePath(`/produit/${id}`, 'page')
+      revalidatePath(`/produits`, 'page')
+      revalidatePath(`/pwa/produit/${id}`, 'page')
+      revalidatePath(`/pwa/boutique`, 'page')
+      revalidatePath(`/api/produits`, 'route')
+      revalidatePath(`/api/produits/${id}`, 'route')
+    } catch (revalidateError) {
+      console.error('Erreur lors de la revalidation du cache:', revalidateError)
+      // Continue even if revalidation fails
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Produit supprimé avec succès',
     })
   } catch (error: any) {
     console.error('Erreur serveur:', error)

@@ -6,9 +6,13 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import ProductCard from '@/components/pwa/ProductCard'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { ArrowUp } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ArrowUp, Search, ShoppingCart } from 'lucide-react'
+import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
+import { useCart } from '@/lib/hooks/useCart'
+import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 
 export default function PWACategoriePage() {
   const params = useParams()
@@ -17,6 +21,10 @@ export default function PWACategoriePage() {
   const [triPrix, setTriPrix] = useState<string>('pertinence')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string } | null>(null)
   const [categorieNom, setCategorieNom] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<FilterState>({})
+  const { openDrawer } = useCartDrawer()
+  const { totalItems } = useCart()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -76,7 +84,7 @@ export default function PWACategoriePage() {
     data: produits = [],
     isPending: loading,
   } = useQuery({
-    queryKey: ['produits', 'pwa', 'categorie', categorieNom, triPrix],
+    queryKey: ['produits', 'pwa', 'categorie', categorieNom, triPrix, searchQuery, filters],
     staleTime: 2 * 60 * 1000,
     enabled: categorieSlug === 'tous' || categorieNom !== null || categorieInfo !== null, // Wait for category to load
     queryFn: async ({ signal }) => {
@@ -87,6 +95,26 @@ export default function PWACategoriePage() {
       }
       if (triPrix !== 'pertinence') {
         params.set('sort', triPrix)
+      }
+      // Add search query
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim())
+      }
+      // Add filters
+      if (filters.minPrice !== undefined) {
+        params.set('minPrice', filters.minPrice.toString())
+      }
+      if (filters.maxPrice !== undefined) {
+        params.set('maxPrice', filters.maxPrice.toString())
+      }
+      if (filters.taille) {
+        params.set('taille', filters.taille)
+      }
+      if (filters.inStock !== undefined) {
+        params.set('inStock', filters.inStock.toString())
+      }
+      if (filters.couleur) {
+        params.set('couleur', filters.couleur)
       }
 
       const response = await fetch(`/api/produits?${params.toString()}`, {
@@ -138,19 +166,54 @@ export default function PWACategoriePage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <Select value={triPrix} onValueChange={setTriPrix}>
-          <SelectTrigger className="w-full h-9 text-sm">
-            <SelectValue placeholder="Trier par" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pertinence">Pertinence</SelectItem>
-            <SelectItem value="prix-asc">Prix croissant</SelectItem>
-            <SelectItem value="prix-desc">Prix décroissant</SelectItem>
-            <SelectItem value="nouveaute">Nouveautés</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Search Bar with Cart Icon, Filter and Sort */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10 pointer-events-none" />
+            <Input
+              type="search"
+              placeholder={`Rechercher dans ${categorieInfo?.nom || 'cette catégorie'}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10 bg-muted border-0"
+            />
+          </div>
+          
+          {/* Cart Button */}
+          <button
+            onClick={() => openDrawer()}
+            className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-muted hover:bg-muted/80 transition-colors border border-transparent hover:border-dore/30 flex-shrink-0"
+            aria-label="Panier"
+          >
+            <ShoppingCart className="w-5 h-5 text-foreground" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-dore rounded-full shadow-lg">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
+          </button>
+        </div>
+        
+        {/* Filter and Sort Buttons */}
+        <div className="flex items-center justify-end gap-2">
+          <Select value={triPrix} onValueChange={setTriPrix}>
+            <SelectTrigger className="h-9 text-sm w-[140px]">
+              <SelectValue placeholder="Trier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pertinence">Pertinence</SelectItem>
+              <SelectItem value="prix-asc">Prix croissant</SelectItem>
+              <SelectItem value="prix-desc">Prix décroissant</SelectItem>
+              <SelectItem value="nouveaute">Nouveautés</SelectItem>
+            </SelectContent>
+          </Select>
+          <ProductFilter
+            onFilterChange={setFilters}
+            currentFilters={filters}
+            categoryName={categorieNom || undefined}
+          />
+        </div>
       </div>
 
       {/* Products Grid */}

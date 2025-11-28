@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { verifyAdminSession } from '@/lib/auth/session'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { CATEGORIES_CACHE_TAG, PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -69,6 +71,17 @@ export async function POST(request: Request) {
 
     if (error) throw error
 
+    // Revalidate cache for new category
+    try {
+      revalidateTag(CATEGORIES_CACHE_TAG)
+      revalidateTag(PRODUCTS_CACHE_TAG)
+      revalidatePath(`/api/categories`, 'route')
+      revalidatePath(`/boutique`, 'page')
+      revalidatePath(`/pwa/boutique`, 'page')
+    } catch (revalidateError) {
+      console.error('Erreur lors de la revalidation du cache:', revalidateError)
+    }
+
     return NextResponse.json({ data })
   } catch (error: any) {
     console.error('Erreur lors de la création de la catégorie:', error)
@@ -116,6 +129,17 @@ export async function PUT(request: Request) {
 
     if (error) throw error
 
+    // Revalidate cache for updated category
+    try {
+      revalidateTag(CATEGORIES_CACHE_TAG)
+      revalidateTag(PRODUCTS_CACHE_TAG) // Products might reference categories
+      revalidatePath(`/api/categories`, 'route')
+      revalidatePath(`/boutique`, 'page')
+      revalidatePath(`/pwa/boutique`, 'page')
+    } catch (revalidateError) {
+      console.error('Erreur lors de la revalidation du cache:', revalidateError)
+    }
+
     return NextResponse.json({ data })
   } catch (error: any) {
     console.error('Erreur lors de la mise à jour de la catégorie:', error)
@@ -152,11 +176,25 @@ export async function DELETE(request: Request) {
       SUPABASE_SERVICE_ROLE_KEY
     )
 
-    // Vérifier si des produits utilisent cette catégorie
+    // Récupérer le nom de la catégorie à supprimer
+    const { data: categorie, error: categorieError } = await supabase
+      .from('categories')
+      .select('nom')
+      .eq('id', id)
+      .single()
+
+    if (categorieError || !categorie) {
+      return NextResponse.json(
+        { error: 'Catégorie non trouvée' },
+        { status: 404 }
+      )
+    }
+
+    // Vérifier si des produits utilisent cette catégorie (par nom, pas par ID)
     const { data: produits } = await supabase
       .from('produits')
       .select('id')
-      .eq('categorie', id)
+      .eq('categorie', categorie.nom)
       .limit(1)
 
     if (produits && produits.length > 0) {
@@ -172,6 +210,17 @@ export async function DELETE(request: Request) {
       .eq('id', id)
 
     if (error) throw error
+
+    // Revalidate cache after deletion
+    try {
+      revalidateTag(CATEGORIES_CACHE_TAG)
+      revalidateTag(PRODUCTS_CACHE_TAG) // Products might reference categories
+      revalidatePath(`/api/categories`, 'route')
+      revalidatePath(`/boutique`, 'page')
+      revalidatePath(`/pwa/boutique`, 'page')
+    } catch (revalidateError) {
+      console.error('Erreur lors de la revalidation du cache:', revalidateError)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

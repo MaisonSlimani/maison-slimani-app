@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react'
+import { Plus, Edit, Trash2, Image as ImageIcon, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
@@ -167,8 +167,17 @@ export default function AdminCategoriesPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors de la suppression')
+        let errorMessage = 'Erreur lors de la suppression'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          }
+        } catch {
+          // If parsing fails, use default error message
+        }
+        throw new Error(errorMessage)
       }
 
       toast.success('Catégorie supprimée')
@@ -264,33 +273,55 @@ export default function AdminCategoriesPage() {
               </div>
               <div>
                 <Label htmlFor="image">Image de la catégorie</Label>
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
-                {imagePreview && (
-                  <div className="mt-4">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full max-w-md h-48 object-cover rounded-lg border border-border"
-                    />
+                <div className="mt-2 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      className="bg-dore text-charbon hover:bg-dore/90"
+                      onClick={() => {
+                        const input = document.getElementById('image') as HTMLInputElement
+                        input?.click()
+                      }}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Sélectionner une image
+                    </Button>
+                    {imageFile && (
+                      <span className="text-sm text-muted-foreground">
+                        {imageFile.name}
+                      </span>
+                    )}
                   </div>
-                )}
-                {!imagePreview && formData.image_url && (
-                  <div className="mt-4">
-                    <Image
-                      src={formData.image_url}
-                      alt="Image actuelle"
-                      width={400}
-                      height={200}
-                      className="rounded-lg border border-border"
-                    />
-                  </div>
-                )}
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  {imagePreview && (
+                    <div className="mt-4">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full max-w-md h-48 object-cover rounded-lg border border-border"
+                      />
+                    </div>
+                  )}
+                  {!imagePreview && formData.image_url && (
+                    <div className="mt-4">
+                      <Image
+                        src={formData.image_url}
+                        alt="Image actuelle"
+                        width={400}
+                        height={200}
+                        className="rounded-lg border border-border"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input

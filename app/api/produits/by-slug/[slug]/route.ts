@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 
 const PRODUCT_FIELDS =
   'id, nom, description, prix, stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout'
@@ -15,6 +16,7 @@ const slugify = (value: string) =>
     .replace(/-+/g, '-')
 
 export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: Request,
@@ -51,7 +53,9 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ success: true, data: matched })
+    const response = NextResponse.json({ success: true, data: matched })
+    response.headers.set('x-vercel-cache-tags', PRODUCTS_CACHE_TAG)
+    return response
   } catch (error) {
     console.error('Erreur lors de la récupération du produit par slug:', error)
     return NextResponse.json(

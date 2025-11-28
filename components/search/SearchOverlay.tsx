@@ -9,6 +9,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useRecentSearches } from './useRecentSearches'
+import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 
 interface SearchOverlayProps {
   isOpen: boolean
@@ -48,6 +49,7 @@ export default function SearchOverlay({
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [filters, setFilters] = useState<FilterState>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -71,6 +73,7 @@ export default function SearchOverlay({
       setSearchQuery('')
       setDebouncedQuery('')
       setSelectedIndex(-1)
+      setFilters({})
     }
   }, [isOpen])
 
@@ -158,17 +161,41 @@ export default function SearchOverlay({
 
   // Handle search submission
   const handleSearch = useCallback(() => {
-    if (debouncedQuery.trim()) {
-      addSearch(debouncedQuery)
+    const trimmedQuery = debouncedQuery.trim()
+    if (trimmedQuery) {
+      addSearch(trimmedQuery)
+      const params = new URLSearchParams()
+      params.set('search', trimmedQuery)
+      
+      // Add filters to URL
+      if (filters.minPrice !== undefined) {
+        params.set('minPrice', filters.minPrice.toString())
+      }
+      if (filters.maxPrice !== undefined) {
+        params.set('maxPrice', filters.maxPrice.toString())
+      }
+      if (filters.taille) {
+        params.set('taille', filters.taille)
+      }
+      if (filters.inStock !== undefined) {
+        params.set('inStock', filters.inStock.toString())
+      }
+      if (filters.couleur) {
+        params.set('couleur', filters.couleur)
+      }
+      if (filters.categorie) {
+        params.set('categorie', filters.categorie)
+      }
+      
       // If basePath already includes /boutique, just update query params
       if (basePath.includes('/boutique')) {
-        router.push(`${basePath}?search=${encodeURIComponent(debouncedQuery)}`)
+        router.push(`${basePath}?${params.toString()}`)
       } else {
-        router.push(`${basePath}/boutique?search=${encodeURIComponent(debouncedQuery)}`)
+        router.push(`${basePath}/boutique?${params.toString()}`)
       }
       onClose()
     }
-  }, [debouncedQuery, basePath, router, onClose, addSearch])
+  }, [debouncedQuery, basePath, router, onClose, addSearch, filters])
 
   // Handle item selection
   const handleItemSelect = useCallback(
@@ -266,7 +293,7 @@ export default function SearchOverlay({
             className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border shadow-xl max-h-[85vh] overflow-hidden flex flex-col"
           >
             {/* Search Header */}
-            <div className="p-4 border-b border-border">
+            <div className="p-4 border-b border-border space-y-3">
               <form onSubmit={handleSubmit} className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -317,6 +344,15 @@ export default function SearchOverlay({
                   <X className="w-5 h-5" />
                 </button>
               </form>
+              
+              {/* Filter Button */}
+              <div className="flex justify-end">
+                <ProductFilter
+                  onFilterChange={setFilters}
+                  currentFilters={filters}
+                  basePath={basePath}
+                />
+              </div>
             </div>
 
             {/* Results Area */}

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { categorie, vedette, search, limit, offset, sort, useFullText } = validatedParams.data
+    const { categorie, vedette, search, limit, offset, sort, useFullText, minPrice, maxPrice, taille, inStock, couleur } = validatedParams.data
 
     const resolvedLimit =
       limit ??
@@ -76,13 +76,49 @@ export async function GET(request: NextRequest) {
           return product
         }) || []
 
+        // Apply filters to full-text search results
+        if (minPrice !== undefined) {
+          data = data.filter((p: any) => p.prix >= minPrice)
+        }
+        if (maxPrice !== undefined) {
+          data = data.filter((p: any) => p.prix <= maxPrice)
+        }
+        if (taille) {
+          data = data.filter((p: any) => p.taille === taille)
+        }
+        if (inStock !== undefined) {
+          if (inStock) {
+            data = data.filter((p: any) => p.stock > 0)
+          } else {
+            data = data.filter((p: any) => p.stock === 0)
+          }
+        }
+        if (couleur) {
+          data = data.filter((product: any) => {
+            if (!product.has_colors || !product.couleurs) return false
+            try {
+              const couleurs = typeof product.couleurs === 'string' 
+                ? JSON.parse(product.couleurs) 
+                : product.couleurs
+              if (Array.isArray(couleurs)) {
+                return couleurs.some((c: any) => 
+                  c.nom?.toLowerCase() === couleur.toLowerCase()
+                )
+              }
+              return false
+            } catch {
+              return false
+            }
+          })
+        }
+
         // Get count separately for full-text search
         const { count: fullCount } = await supabase
           .from('produits')
           .select('*', { count: 'exact', head: true })
           .or(`nom.ilike.%${search}%,description.ilike.%${search}%`)
         
-        count = fullCount ?? data.length
+        count = data.length // Use filtered count
         usedFullTextSearch = true
 
         // Log search query for analytics
@@ -122,6 +158,31 @@ export async function GET(request: NextRequest) {
         query = query.or(`nom.ilike.%${search}%,description.ilike.%${search}%`)
       }
 
+      // Price range filter
+      if (minPrice !== undefined) {
+        query = query.gte('prix', minPrice)
+      }
+      if (maxPrice !== undefined) {
+        query = query.lte('prix', maxPrice)
+      }
+
+      // Taille filter
+      if (taille) {
+        query = query.eq('taille', taille)
+      }
+
+      // Stock filter
+      if (inStock !== undefined) {
+        if (inStock) {
+          query = query.gt('stock', 0)
+        } else {
+          query = query.eq('stock', 0)
+        }
+      }
+
+      // Note: Color filter will be applied after fetching, as colors are stored in JSONB
+      // This is handled in the post-processing step below
+
       if (sort === 'prix-asc') {
         query = query.order('prix', { ascending: true })
       } else if (sort === 'prix-desc') {
@@ -138,6 +199,28 @@ export async function GET(request: NextRequest) {
         data = result.data
         error = result.error
         count = result.count
+
+        // Apply color filter post-query (colors are in JSONB)
+        if (couleur && data) {
+          data = data.filter((product: any) => {
+            if (!product.has_colors || !product.couleurs) return false
+            try {
+              const couleurs = typeof product.couleurs === 'string' 
+                ? JSON.parse(product.couleurs) 
+                : product.couleurs
+              if (Array.isArray(couleurs)) {
+                return couleurs.some((c: any) => 
+                  c.nom?.toLowerCase() === couleur.toLowerCase()
+                )
+              }
+              return false
+            } catch {
+              return false
+            }
+          })
+          // Update count after filtering
+          count = data.length
+        }
       } catch (fetchError) {
         console.error('Erreur lors de l\'exécution de la requête Supabase:', fetchError)
         

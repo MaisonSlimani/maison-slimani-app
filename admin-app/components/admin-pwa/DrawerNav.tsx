@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  FolderTree,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,7 @@ export default function DrawerNav() {
     { href: '/', label: 'Tableau de bord', icon: LayoutDashboard },
     { href: '/commandes', label: 'Commandes', icon: ShoppingBag },
     { href: '/produits', label: 'Produits', icon: Package },
+    { href: '/categories', label: 'Catégories', icon: FolderTree },
     { href: '/settings', label: 'Paramètres', icon: Settings },
   ]
 
