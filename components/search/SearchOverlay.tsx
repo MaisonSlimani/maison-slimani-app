@@ -174,8 +174,10 @@ export default function SearchOverlay({
       if (filters.maxPrice !== undefined) {
         params.set('maxPrice', filters.maxPrice.toString())
       }
-      if (filters.taille) {
-        params.set('taille', filters.taille)
+      if (filters.taille && filters.taille.length > 0) {
+        filters.taille.forEach((t) => {
+          params.append('taille', t)
+        })
       }
       if (filters.inStock !== undefined) {
         params.set('inStock', filters.inStock.toString())

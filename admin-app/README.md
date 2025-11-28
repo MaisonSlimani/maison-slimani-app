@@ -76,5 +76,7 @@ Déployer sur Vercel avec le domaine `admin.maisonslimani.ma`
 
 ## Setup
 
-See [SETUP.md](./SETUP.md) for detailed environment variable configuration.
+See [SETUP.md](./SETUP.md) for detailed environment variable configuration..
+
+
 
