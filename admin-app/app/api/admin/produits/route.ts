@@ -118,8 +118,6 @@ export async function POST(request: NextRequest) {
         revalidatePath(`/produits`, 'page')
         revalidatePath(`/pwa/produit/${data.id}`, 'page')
         revalidatePath(`/pwa/boutique`, 'page')
-        revalidatePath(`/api/produits`, 'route')
-        revalidatePath(`/api/produits/${data.id}`, 'route')
       }
     } catch (revalidateError) {
       console.error('Erreur lors de la revalidation du cache:', revalidateError)
@@ -218,8 +216,6 @@ export async function PUT(request: NextRequest) {
       revalidatePath(`/produits`, 'page')
       revalidatePath(`/pwa/produit/${id}`, 'page')
       revalidatePath(`/pwa/boutique`, 'page')
-      revalidatePath(`/api/produits`, 'route')
-      revalidatePath(`/api/produits/${id}`, 'route')
     } catch (revalidateError) {
       console.error('Erreur lors de la revalidation du cache:', revalidateError)
       // Continue even if revalidation fails
@@ -293,8 +289,6 @@ export async function DELETE(request: NextRequest) {
       revalidatePath(`/produits`, 'page')
       revalidatePath(`/pwa/produit/${id}`, 'page')
       revalidatePath(`/pwa/boutique`, 'page')
-      revalidatePath(`/api/produits`, 'route')
-      revalidatePath(`/api/produits/${id}`, 'route')
     } catch (revalidateError) {
       console.error('Erreur lors de la revalidation du cache:', revalidateError)
       // Continue even if revalidation fails

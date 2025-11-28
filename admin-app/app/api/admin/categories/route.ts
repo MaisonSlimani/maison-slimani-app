@@ -75,7 +75,6 @@ export async function POST(request: Request) {
     try {
       revalidateTag(CATEGORIES_CACHE_TAG)
       revalidateTag(PRODUCTS_CACHE_TAG)
-      revalidatePath(`/api/categories`, 'route')
       revalidatePath(`/boutique`, 'page')
       revalidatePath(`/pwa/boutique`, 'page')
     } catch (revalidateError) {
