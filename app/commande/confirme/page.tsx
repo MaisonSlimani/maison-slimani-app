@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import EnteteMobile from '@/components/EnteteMobile'
@@ -9,10 +9,24 @@ import MenuBasNavigation from '@/components/MenuBasNavigation'
 import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
+import UpsellProducts from '@/components/UpsellProducts'
 
 export default function CommandeConfirmePage() {
+  const [lastProductId, setLastProductId] = useState<string>('')
+
   useEffect(() => {
     window.scrollTo(0, 0)
+    // Get last ordered product ID from localStorage
+    if (typeof window !== 'undefined') {
+      const productId = localStorage.getItem('lastOrderProductId') || ''
+      setLastProductId(productId)
+      // Clean up after use
+      if (productId) {
+        setTimeout(() => {
+          localStorage.removeItem('lastOrderProductId')
+        }, 5000)
+      }
+    }
   }, [])
 
   return (
@@ -146,6 +160,13 @@ export default function CommandeConfirmePage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Upsell Products */}
+      {lastProductId && (
+        <div className="container max-w-7xl mx-auto px-6 pb-20">
+          <UpsellProducts productId={lastProductId} />
+        </div>
+      )}
 
       <Footer />
       <MenuBasNavigation />

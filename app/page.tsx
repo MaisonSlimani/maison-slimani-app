@@ -292,7 +292,16 @@ export default function AccueilPage() {
           transition={{ delay: 0.4, duration: 0.9 }}
         >
           <h1 className="text-5xl md:text-7xl font-serif text-[#f8f5f0] mb-6 text-balance leading-tight drop-shadow-lg">
-            L'excellence du cuir <span className="text-dore">marocain</span>
+            L'excellence du cuir{' '}
+            <span 
+              className="text-dore relative inline-block"
+              style={{
+                textShadow: '2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 165, 116, 0.5)',
+                filter: 'drop-shadow(0 0 10px rgba(212, 165, 116, 0.6))',
+              }}
+            >
+              marocain
+            </span>
           </h1>
           <p className="text-xl md:text-2xl text-[#f8f5f0]/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
             Chaussures homme haut de gamme, confectionnées avec passion

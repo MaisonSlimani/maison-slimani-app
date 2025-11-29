@@ -16,6 +16,7 @@ import {
   Truck,
   CheckCircle,
   XCircle,
+  TrendingUp,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -270,6 +271,7 @@ export default function AdminLayout({
 
   const menuItems = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
+    { href: '/admin/upsells', label: 'Upsells', icon: TrendingUp },
   ]
 
   const statutsCommandes = [

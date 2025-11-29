@@ -17,6 +17,7 @@ import Footer from '@/components/Footer'
 import MenuBasNavigation from '@/components/MenuBasNavigation'
 import SoundPlayer from '@/components/SoundPlayer'
 import GalerieProduit from '@/components/GalerieProduit'
+import SimilarProducts from '@/components/SimilarProducts'
 
 interface ImageItem {
   url: string
@@ -750,19 +751,13 @@ export default function ProduitSlugPage() {
           </motion.div>
         </div>
 
-        <motion.div className="mt-20 pt-20 border-t border-border" initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-serif mb-4">Découvrez aussi</h2>
-            <p className="text-muted-foreground text-lg">D'autres créations de la même catégorie</p>
-          </div>
-          <div className="text-center">
-            <Button asChild variant="outline" size="lg" className="border-dore text-dore hover:bg-dore hover:text-charbon px-8 py-6 text-lg">
-              <Link href={`/boutique/${produit.categorie.toLowerCase().replace(/\s+/g, '-').replace('é', 'e').replace('è', 'e').replace('ê', 'e')}`}>
-                Voir toute la catégorie {produit.categorie}
-              </Link>
-            </Button>
-          </div>
-        </motion.div>
+        {/* Produits similaires */}
+        {produit && produit.categorie && (
+          <SimilarProducts
+            productId={produit.id}
+            productCategory={produit.categorie}
+          />
+        )}
       </div>
 
       <Footer />

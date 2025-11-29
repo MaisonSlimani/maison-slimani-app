@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       has_colors,
       images,
       couleurs,
+      upsell_products,
     } = body
 
     // Validation
@@ -161,6 +162,7 @@ export async function PUT(request: NextRequest) {
       has_colors,
       images,
       couleurs,
+      upsell_products,
     } = body
 
     if (!id) {
@@ -190,6 +192,7 @@ export async function PUT(request: NextRequest) {
       has_colors: has_colors || false,
       images: images || [],
       couleurs: couleurs || [],
+      upsell_products: upsell_products || [],
     }
 
     const { data, error } = await supabase

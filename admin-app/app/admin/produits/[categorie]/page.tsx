@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -49,7 +49,7 @@ export default function AdminCategorieProduitsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [produitToDelete, setProduitToDelete] = useState<string | null>(null)
 
-  const chargerCategories = async () => {
+  const chargerCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/categories')
       if (!response.ok) throw new Error('Erreur lors du chargement des catégories')
@@ -77,7 +77,7 @@ export default function AdminCategorieProduitsPage() {
       console.error('Erreur lors du chargement des catégories:', error)
       toast.error('Erreur lors du chargement des catégories')
     }
-  }
+  }, [categorieSlug])
 
   const chargerProduits = async () => {
     try {
@@ -104,7 +104,7 @@ export default function AdminCategorieProduitsPage() {
   useEffect(() => {
     window.scrollTo(0, 0)
     chargerCategories()
-  }, [categorieSlug])
+  }, [chargerCategories])
 
   useEffect(() => {
     if (categories.length > 0) {

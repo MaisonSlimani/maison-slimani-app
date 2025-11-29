@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import GalerieProduit from '@/components/GalerieProduit'
+import SimilarProducts from '@/components/SimilarProducts'
 
 interface Couleur {
   nom: string
@@ -640,6 +641,14 @@ export default function PWAProduitPage() {
             </motion.div>
           )}
         </motion.div>
+
+        {/* Produits similaires */}
+        {produit && produit.categorie && (
+          <SimilarProducts
+            productId={produit.id}
+            productCategory={produit.categorie}
+          />
+        )}
       </div>
     </div>
   )

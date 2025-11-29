@@ -41,14 +41,44 @@ export async function GET(request: NextRequest) {
     const minPrice = Math.min(...prices)
     const maxPrice = Math.max(...prices)
 
-    // Extract unique tailles
+    // Extract unique tailles - split comma-separated values into individual sizes
     const taillesSet = new Set<string>()
     produits.forEach((p: any) => {
+      // Check product.taille field (comma-separated string like "40, 41, 42")
       if (p.taille) {
-        taillesSet.add(p.taille)
+        const productTailles = p.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+        productTailles.forEach((taille: string) => {
+          taillesSet.add(taille)
+        })
+      }
+      // Check couleurs array - each couleur can have a taille field
+      if (p.has_colors && p.couleurs) {
+        try {
+          const couleurs = typeof p.couleurs === 'string' ? JSON.parse(p.couleurs) : p.couleurs
+          if (Array.isArray(couleurs)) {
+            couleurs.forEach((c: any) => {
+              if (c.taille) {
+                const couleurTailles = c.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                couleurTailles.forEach((taille: string) => {
+                  taillesSet.add(taille)
+                })
+              }
+            })
+          }
+        } catch {
+          // Skip invalid JSON
+        }
       }
     })
-    const tailles = Array.from(taillesSet).sort()
+    // Sort tailles numerically if they're numbers, otherwise alphabetically
+    const tailles = Array.from(taillesSet).sort((a, b) => {
+      const numA = parseInt(a, 10)
+      const numB = parseInt(b, 10)
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB
+      }
+      return a.localeCompare(b)
+    })
 
     // Extract unique couleurs
     const couleursSet = new Set<string>()

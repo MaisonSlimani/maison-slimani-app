@@ -180,6 +180,11 @@ export default function CheckoutPage() {
 
       const data = result
 
+      // Store first product ID for upsells before clearing cart
+      if (items.length > 0) {
+        localStorage.setItem('lastOrderProductId', items[0].id)
+      }
+
       // Succès - Marquer la commande comme complétée et rediriger
       setOrderComplete(true)
       // Vider le panier immédiatement

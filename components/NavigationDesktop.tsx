@@ -173,8 +173,8 @@ const NavigationDesktop = () => {
                       ? 'text-[#f8f5f0] drop-shadow-md'
                       : 'text-[#f8f5f0]/90 hover:text-[#f8f5f0] drop-shadow-md'
                     : isActive
-                      ? 'text-foreground font-semibold'
-                      : 'text-foreground/80 hover:text-foreground' // Changé de muted-foreground à foreground/80 pour meilleure visibilité
+                      ? 'text-charbon font-semibold'
+                      : 'text-charbon/90 hover:text-charbon'
                 )}
                 onClick={() => {
                   if ((window as any).playClickSound) {
