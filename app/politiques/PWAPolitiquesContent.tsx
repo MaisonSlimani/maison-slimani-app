@@ -6,7 +6,7 @@ import { FileText, Mail, Phone, ArrowLeft, CheckCircle, XCircle, ArrowRight, Dol
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
-export default function PWAPolitiquesPage() {
+export default function PWAPolitiquesContent() {
   const [settings, setSettings] = useState({
     email_entreprise: 'support@maisonslimani.ma',
     telephone: '',
@@ -38,6 +38,7 @@ export default function PWAPolitiquesPage() {
 
     getSettings()
   }, [])
+
   return (
     <div className="w-full min-h-screen pb-20">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">

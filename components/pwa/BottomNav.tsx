@@ -13,10 +13,10 @@ export default function BottomNav() {
   const { totalItems } = useCart()
 
   const navItems = [
-    { href: '/pwa', icon: Home, label: 'Accueil' },
-    { href: '/pwa/boutique', icon: ShoppingBag, label: 'Boutique' },
-    { href: '/pwa/panier', icon: ShoppingCart, label: 'Panier', badge: totalItems },
-    { href: '/pwa/menu', icon: Menu, label: 'Menu' },
+    { href: '/', icon: Home, label: 'Accueil' },
+    { href: '/boutique', icon: ShoppingBag, label: 'Boutique' },
+    { href: '/panier', icon: ShoppingCart, label: 'Panier', badge: totalItems },
+    { href: '/menu', icon: Menu, label: 'Menu' },
   ]
 
   // Helper to check if a route is active
@@ -24,16 +24,16 @@ export default function BottomNav() {
     if (!currentPath) return false
     
     // Home page - exact match only
-    if (href === '/pwa') {
-      return currentPath === '/pwa' || currentPath === '/pwa/'
+    if (href === '/') {
+      return currentPath === '/' || currentPath === ''
     }
     
     // Menu page - also active for contact, faq, and politiques
-    if (href === '/pwa/menu') {
-      return currentPath === '/pwa/menu' || 
-             currentPath === '/pwa/contact' || 
-             currentPath === '/pwa/faq' || 
-             currentPath === '/pwa/politiques'
+    if (href === '/menu') {
+      return currentPath === '/menu' || 
+             currentPath === '/contact' || 
+             currentPath === '/faq' || 
+             currentPath === '/politiques'
     }
     
     // Other routes - check if pathname starts with href

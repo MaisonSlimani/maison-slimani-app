@@ -19,7 +19,7 @@ import { ArrowUp, Search, X, SlidersHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SearchOverlay from '@/components/search/SearchOverlay'
 
-export default function PWABoutiquePage() {
+export default function PWABoutiqueContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const categorie = searchParams.get('categorie') || 'tous'

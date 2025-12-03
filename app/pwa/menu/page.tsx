@@ -7,7 +7,7 @@ import Link from 'next/link'
 export default function PWAMenuPage() {
   const menuItems = [
     {
-      href: '/pwa/contact',
+      href: '/contact',
       icon: Mail,
       title: 'Contact',
       description: 'Contactez notre équipe',
@@ -16,7 +16,7 @@ export default function PWAMenuPage() {
       iconColor: 'text-blue-500'
     },
     {
-      href: '/pwa/faq',
+      href: '/faq',
       icon: HelpCircle,
       title: 'FAQ',
       description: 'Questions fréquentes',
@@ -25,7 +25,7 @@ export default function PWAMenuPage() {
       iconColor: 'text-dore'
     },
     {
-      href: '/pwa/politiques',
+      href: '/politiques',
       icon: FileText,
       title: 'Politique de Retour',
       description: 'Conditions et procédures',

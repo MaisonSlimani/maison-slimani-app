@@ -118,7 +118,7 @@ export default function PWACommandeConfirmePage() {
               variant="outline" 
               className="w-full text-base py-6 border-charbon/20 hover:border-charbon/40 transition-all duration-300"
             >
-              <Link href="/pwa/boutique">Continuer mes achats</Link>
+              <Link href="/boutique">Continuer mes achats</Link>
             </Button>
             <Button 
               asChild 

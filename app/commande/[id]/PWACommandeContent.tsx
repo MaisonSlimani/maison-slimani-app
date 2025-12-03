@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { CheckCircle } from 'lucide-react'
 
-export default function PWACommandePage() {
+export default function PWACommandeContent() {
   const params = useParams()
   const commandeId = params.id as string
 

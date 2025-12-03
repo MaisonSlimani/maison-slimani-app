@@ -5,10 +5,6 @@ import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import EnteteMobile from '@/components/EnteteMobile'
-import NavigationDesktop from '@/components/NavigationDesktop'
-import MenuBasNavigation from '@/components/MenuBasNavigation'
-import Footer from '@/components/Footer'
 import CarteProduit from '@/components/CarteProduit'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,8 +14,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { useCart } from '@/lib/hooks/useCart'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
+import { useIsPWA } from '@/lib/hooks/useIsPWA'
+import PWACategorieContent from './PWACategorieContent'
 
 export default function CategoriePage() {
+  const { isPWA, isLoading } = useIsPWA()
   const params = useParams()
   const categorieSlug = params.categorie as string
   
@@ -313,28 +312,57 @@ export default function CategoriePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Show loading state while detecting device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWACategorieContent />
+  }
+
   // Ne pas rendre le contenu principal tant que la catégorie n'est pas chargée
   if (loadingCategory || !categorieInfo) {
     return (
       <div className="pb-24 md:pb-0 pt-0 md:pt-20">
-        <NavigationDesktop />
-        <EnteteMobile />
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dore mx-auto mb-4"></div>
             <p className="text-muted-foreground">Chargement...</p>
           </div>
         </div>
-        <Footer />
-        <MenuBasNavigation />
       </div>
     )
   }
 
+  // Show loading state while detecting device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWACategorieContent />
+  }
+
+  // Render desktop version
   return (
     <div className="pb-24 md:pb-0 pt-0 md:pt-20">
-      <NavigationDesktop />
-      <EnteteMobile />
 
       {/* Header de présentation avec overlay et animations */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
@@ -517,8 +545,6 @@ export default function CategoriePage() {
         </motion.div>
       )}
 
-      <Footer />
-      <MenuBasNavigation />
     </div>
   )
 }

@@ -12,6 +12,8 @@ import { usePathname, useRouter } from 'next/navigation'
  * 3. Normal Mobile Browser
  * 
  * Redirects to /pwa if in app mode or mobile browser
+ * 
+ * Can be disabled via NEXT_PUBLIC_DISABLE_PWA_REDIRECT environment variable
  */
 export default function PWARedirect() {
   const pathname = usePathname()
@@ -19,6 +21,12 @@ export default function PWARedirect() {
   const hasRedirected = useRef(false)
 
   useEffect(() => {
+    // Check if redirect is disabled via environment variable
+    const isRedirectDisabled = process.env.NEXT_PUBLIC_DISABLE_PWA_REDIRECT === 'true'
+    if (isRedirectDisabled) {
+      return
+    }
+
     // Prevent multiple redirects
     if (hasRedirected.current) return
 
@@ -33,30 +41,22 @@ export default function PWARedirect() {
       return
     }
 
-    const ua = navigator.userAgent
+    // IMPORTANT: With unified URLs, we don't redirect anymore
+    // The pages themselves handle conditional rendering based on device
+    // Only redirect if explicitly enabled via environment variable
+    // For now, we disable automatic redirects to support unified URLs
+    return
 
-    // 1. Detect installed PWA (Standalone)
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true
-
-    // 2. Detect WebView App (Capacitor / Android WebView)
-    const isWebView =
-      ua.includes('wv') ||
-      ua.includes('Capacitor') ||
-      typeof (window as any).Capacitor !== 'undefined'
-
-    // 3. Detect normal mobile browser (UA only, NOT screen width)
-    const isMobileBrowser =
-      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
-
-    // Redirect to PWA version if any condition is true
-    if (isStandalone || isWebView || isMobileBrowser) {
-      hasRedirected.current = true
-      // Build the PWA path
-      const pwaPath = pathname === '/' ? '/pwa' : `/pwa${pathname}`
-      router.replace(pwaPath)
-    }
+    // OLD REDIRECT LOGIC (disabled for unified URLs):
+    // const ua = navigator.userAgent
+    // const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true
+    // const isWebView = ua.includes('wv') || ua.includes('Capacitor') || typeof (window as any).Capacitor !== 'undefined'
+    // const isMobileBrowser = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+    // if (isStandalone || isWebView || isMobileBrowser) {
+    //   hasRedirected.current = true
+    //   const pwaPath = pathname === '/' ? '/pwa' : `/pwa${pathname}`
+    //   router.replace(pwaPath)
+    // }
   }, [pathname, router])
 
   // Reset redirect flag when pathname changes to non-PWA route

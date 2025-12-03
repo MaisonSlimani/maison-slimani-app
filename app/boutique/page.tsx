@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import EnteteMobile from '@/components/EnteteMobile'
-import NavigationDesktop from '@/components/NavigationDesktop'
-import MenuBasNavigation from '@/components/MenuBasNavigation'
-import Footer from '@/components/Footer'
 import CarteCategorie from '@/components/CarteCategorie'
 import { Button } from '@/components/ui/button'
+import { useIsPWA } from '@/lib/hooks/useIsPWA'
+import PWABoutiqueContent from './PWABoutiqueContent'
 
 export default function BoutiquePage() {
+  const { isPWA, isLoading } = useIsPWA()
   const [categories, setCategories] = useState<Array<{
     titre: string
     tagline: string
@@ -154,10 +153,26 @@ export default function BoutiquePage() {
     document.head.appendChild(script)
   }, [categories, loadingCategories])
 
+  // Show loading state while detecting device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWABoutiqueContent />
+  }
+
+  // Render desktop version
   return (
     <div className="pb-24 md:pb-0 pt-0 md:pt-20">
-      <NavigationDesktop />
-      <EnteteMobile />
 
       {/* Section Catégories avec animations luxueuses */}
       {!loadingCategories && (
@@ -257,9 +272,6 @@ export default function BoutiquePage() {
           </motion.div>
         </div>
       </section>
-
-      <Footer />
-      <MenuBasNavigation />
     </div>
   )
 }

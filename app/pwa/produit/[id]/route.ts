@@ -4,7 +4,7 @@ import { slugify } from '@/lib/utils/product-urls'
 
 /**
  * Redirect from old PWA product URL structure to new hierarchical structure
- * /pwa/produit/[id] -> /pwa/boutique/[categorie]/[slug]
+ * /pwa/produit/[id] -> /boutique/[categorie]/[slug] (unified URL)
  */
 export async function GET(
   request: NextRequest,
@@ -14,7 +14,7 @@ export async function GET(
     const { id } = await params
     
     if (!id) {
-      return NextResponse.redirect(new URL('/pwa/boutique', request.url), 302)
+      return NextResponse.redirect(new URL('/boutique', request.url), 302)
     }
 
     const supabase = await createClient()
@@ -27,12 +27,12 @@ export async function GET(
       .maybeSingle()
 
     if (productError || !produit) {
-      return NextResponse.redirect(new URL('/pwa/boutique', request.url), 302)
+      return NextResponse.redirect(new URL('/boutique', request.url), 302)
     }
 
     if (!produit.categorie) {
       // No category, redirect to boutique
-      return NextResponse.redirect(new URL('/pwa/boutique', request.url), 302)
+      return NextResponse.redirect(new URL('/boutique', request.url), 302)
     }
 
     // Get category slug
@@ -44,17 +44,17 @@ export async function GET(
       .maybeSingle()
 
     if (categoryError || !category) {
-      return NextResponse.redirect(new URL('/pwa/boutique', request.url), 302)
+      return NextResponse.redirect(new URL('/boutique', request.url), 302)
     }
 
-    // Redirect to hierarchical URL
+    // Redirect to hierarchical URL (unified)
     const productSlug = produit.slug || slugify(produit.nom || '')
-    const newUrl = new URL(`/pwa/boutique/${category.slug}/${productSlug}`, request.url)
+    const newUrl = new URL(`/boutique/${category.slug}/${productSlug}`, request.url)
     return NextResponse.redirect(newUrl, 301)
   } catch (error) {
     console.error('Error redirecting PWA product:', error)
     // Fallback: redirect to boutique
-    return NextResponse.redirect(new URL('/pwa/boutique', request.url), 302)
+    return NextResponse.redirect(new URL('/boutique', request.url), 302)
   }
 }
 

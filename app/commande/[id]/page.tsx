@@ -3,23 +3,39 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import EnteteMobile from '@/components/EnteteMobile'
-import NavigationDesktop from '@/components/NavigationDesktop'
-import MenuBasNavigation from '@/components/MenuBasNavigation'
-import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { CheckCircle } from 'lucide-react'
+import { useIsPWA } from '@/lib/hooks/useIsPWA'
+import PWACommandeContent from './PWACommandeContent'
 
 export default function CommandePage() {
+  const { isPWA, isLoading } = useIsPWA()
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
+  // Show loading state while detecting device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWACommandeContent />
+  }
+
+  // Render desktop version
   return (
     <div className="pb-24 md:pb-0 pt-0 md:pt-20 min-h-screen bg-gradient-to-b from-ecru to-background flex items-center justify-center">
-      <NavigationDesktop />
-      <EnteteMobile />
 
       <div className="container px-6 py-8 mx-auto max-w-2xl w-full">
         <motion.div
@@ -96,9 +112,6 @@ export default function CommandePage() {
           </Card>
         </motion.div>
       </div>
-
-      <Footer />
-      <MenuBasNavigation />
     </div>
   )
 }

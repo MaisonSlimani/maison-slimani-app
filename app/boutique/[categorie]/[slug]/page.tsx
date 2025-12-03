@@ -11,14 +11,12 @@ import { ShoppingBag, ArrowLeft, Package, Share2, Check, CheckCircle, ShoppingCa
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import NavigationDesktop from '@/components/NavigationDesktop'
-import EnteteMobile from '@/components/EnteteMobile'
-import Footer from '@/components/Footer'
-import MenuBasNavigation from '@/components/MenuBasNavigation'
 import SoundPlayer from '@/components/SoundPlayer'
 import GalerieProduit from '@/components/GalerieProduit'
 import SimilarProducts from '@/components/SimilarProducts'
 import { createClient } from '@/lib/supabase/client'
+import { useIsPWA } from '@/lib/hooks/useIsPWA'
+import PWAProduitContent from './PWAProduitContent'
 
 interface ImageItem {
   url: string
@@ -52,6 +50,7 @@ interface Produit {
 }
 
 export default function ProduitSlugPage() {
+  const { isPWA, isLoading: isDetecting } = useIsPWA()
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -552,6 +551,23 @@ export default function ProduitSlugPage() {
     handleButtonClick()
   }
 
+  // Show loading state while detecting device
+  if (isDetecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWAProduitContent />
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -567,11 +583,10 @@ export default function ProduitSlugPage() {
     return null
   }
 
+  // Render desktop version
   return (
     <div className="min-h-screen pb-24 md:pb-0 pt-0 md:pt-20">
       <SoundPlayer enabled={true} />
-      <NavigationDesktop />
-      <EnteteMobile />
 
       <div className="container px-6 py-6">
         <motion.div
@@ -907,9 +922,6 @@ export default function ProduitSlugPage() {
           />
         )}
       </div>
-
-      <Footer />
-      <MenuBasNavigation />
     </div>
   )
 }

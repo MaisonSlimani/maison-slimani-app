@@ -203,28 +203,6 @@ export default function SimilarProducts({
           </motion.div>
         ))}
       </div>
-
-      {/* View all category link */}
-      <div className="text-center mt-12 px-4 md:px-6">
-        <Button
-          asChild
-          variant="outline"
-          size="lg"
-          className="border-dore text-dore hover:bg-dore hover:text-charbon px-4 md:px-8 py-6 text-base md:text-lg max-w-full mx-auto inline-block"
-        >
-          <Link
-            href={`/boutique/${productCategory
-              .toLowerCase()
-              .replace(/\s+/g, '-')
-              .replace('é', 'e')
-              .replace('è', 'e')
-              .replace('ê', 'e')}`}
-            className="whitespace-normal text-center break-words"
-          >
-            Voir toute la catégorie {productCategory}
-          </Link>
-        </Button>
-      </div>
     </motion.div>
   )
 }

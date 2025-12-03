@@ -5,39 +5,16 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
-import { useIsPWA } from '@/lib/hooks/useIsPWA'
-import PWACommandeConfirmeContent from './PWACommandeConfirmeContent'
 
-export default function CommandeConfirmePage() {
-  const { isPWA, isLoading } = useIsPWA()
-
+export default function PWACommandeConfirmeContent() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  // Show loading state while detecting device
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Render PWA version
-  if (isPWA) {
-    return <PWACommandeConfirmeContent />
-  }
-
-  // Render desktop version
   return (
-    <div className="pb-24 md:pb-0 pt-0 md:pt-20">
-
-      {/* Section de confirmation élégante */}
-      <section className="py-20 md:py-32 px-6 bg-gradient-to-b from-ecru via-ecru/95 to-background">
+    <div className="w-full min-h-screen pb-20">
+      {/* Section de confirmation */}
+      <section className="py-20 px-6 bg-gradient-to-b from-ecru via-ecru/95 to-background">
         <div className="container max-w-4xl mx-auto">
           <motion.div
             className="text-center space-y-8"
@@ -45,7 +22,7 @@ export default function CommandeConfirmePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* Icône de succès avec animation douce */}
+            {/* Icône de succès */}
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -59,7 +36,7 @@ export default function CommandeConfirmePage() {
               className="mb-8"
             >
               <div className="relative inline-block">
-                <CheckCircle className="w-20 h-20 md:w-24 md:h-24 mx-auto text-green-600" />
+                <CheckCircle className="w-20 h-20 mx-auto text-green-600" />
                 <motion.div
                   className="absolute inset-0"
                   initial={{ scale: 0, opacity: 0 }}
@@ -71,12 +48,12 @@ export default function CommandeConfirmePage() {
                     repeatDelay: 2
                   }}
                 >
-                  <CheckCircle className="w-20 h-20 md:w-24 md:h-24 mx-auto text-green-400/40" />
+                  <CheckCircle className="w-20 h-20 mx-auto text-green-400/40" />
                 </motion.div>
               </div>
             </motion.div>
 
-            {/* Titre principal avec animation élégante */}
+            {/* Titre principal */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -86,7 +63,7 @@ export default function CommandeConfirmePage() {
                 ease: [0.22, 1, 0.36, 1] 
               }}
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif mb-6 text-charbon leading-tight">
+              <h1 className="text-4xl md:text-5xl font-serif mb-6 text-charbon leading-tight">
                 Merci pour votre
                 <span className="block text-dore mt-2">achat</span>
               </h1>
@@ -101,7 +78,7 @@ export default function CommandeConfirmePage() {
                 duration: 0.8, 
                 ease: [0.22, 1, 0.36, 1] 
               }}
-              className="text-lg md:text-xl text-charbon/80 mb-6 max-w-2xl mx-auto leading-relaxed"
+              className="text-lg text-charbon/80 mb-6 max-w-2xl mx-auto leading-relaxed"
             >
               Votre commande a été confirmée avec succès.
             </motion.p>
@@ -115,7 +92,7 @@ export default function CommandeConfirmePage() {
                 duration: 0.8, 
                 ease: [0.22, 1, 0.36, 1] 
               }}
-              className="text-base md:text-lg text-charbon/70 mb-8 max-w-2xl mx-auto leading-relaxed"
+              className="text-base text-charbon/70 mb-8 max-w-2xl mx-auto leading-relaxed"
             >
               Nous vous contacterons dans les plus brefs délais pour finaliser les détails de livraison.
             </motion.p>
@@ -134,35 +111,21 @@ export default function CommandeConfirmePage() {
               duration: 0.8, 
               ease: [0.22, 1, 0.36, 1] 
             }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="flex flex-col gap-4 justify-center"
           >
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-              className="w-full sm:w-auto"
+            <Button 
+              asChild 
+              variant="outline" 
+              className="w-full text-base py-6 border-charbon/20 hover:border-charbon/40 transition-all duration-300"
             >
-              <Button 
-                asChild 
-                variant="outline" 
-                className="w-full sm:w-[200px] text-base md:text-lg py-6 px-8 border-charbon/20 hover:border-charbon/40 transition-all duration-300"
-              >
-                <Link href="/boutique">Continuer mes achats</Link>
-              </Button>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-              className="w-full sm:w-auto"
+              <Link href="/boutique">Continuer mes achats</Link>
+            </Button>
+            <Button 
+              asChild 
+              className="w-full text-base py-6 bg-dore text-charbon hover:bg-dore/90 transition-all duration-300"
             >
-              <Button 
-                asChild 
-                className="w-full sm:w-[200px] text-base md:text-lg py-6 px-8 bg-dore text-charbon hover:bg-dore/90 transition-all duration-300"
-              >
-                <Link href="/">Retour à l'accueil</Link>
-              </Button>
-            </motion.div>
+              <Link href="/pwa">Retour à l'accueil</Link>
+            </Button>
           </motion.div>
         </div>
       </section>

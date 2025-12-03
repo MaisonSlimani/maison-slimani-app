@@ -37,8 +37,8 @@ Paiement en ligne (si activé sur le site)
  10. Comment contacter le service client ?
  Vous pouvez nous contacter via :
  📩
- Email  Maisondeslimani@gmail.com
+ Email  Maisondeslimani@gmail.com (dynamic too)
  📱
- WhatsApp : (ajoute ton numéro si tu veux)
+ WhatsApp : dynamic based on settings
  📘
- Facebook / Instagram  Maison Slimani
+ Facebook / Instagram  Maison Slimani (that one too)

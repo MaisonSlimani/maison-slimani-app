@@ -5,22 +5,21 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import EnteteMobile from '@/components/EnteteMobile'
-import NavigationDesktop from '@/components/NavigationDesktop'
-import MenuBasNavigation from '@/components/MenuBasNavigation'
-import Footer from '@/components/Footer'
 import CarteCategorie from '@/components/CarteCategorie'
 import CarteProduit from '@/components/CarteProduit'
 import SoundPlayer from '@/components/SoundPlayer'
 import { Truck, RefreshCcw, Award } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useIsPWA } from '@/lib/hooks/useIsPWA'
+import PWAHomeContent from './PWAHomeContent'
 
 // Chemins des images (Next.js Image nécessite des chemins relatifs depuis public/)
 const heroImage = '/assets/hero-chaussures.jpg'
 const lookbookImage = '/assets/lookbook-1.jpg'
 
 export default function AccueilPage() {
+  const { isPWA, isLoading } = useIsPWA()
   const [categories, setCategories] = useState<Array<{
     titre: string
     tagline: string
@@ -237,11 +236,27 @@ export default function AccueilPage() {
     // Click sound removed
   }
 
+  // Show loading state while detecting device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWAHomeContent />
+  }
+
+  // Render desktop version
   return (
     <div className="overflow-x-hidden">
       <SoundPlayer enabled={true} />
-      <NavigationDesktop />
-      <EnteteMobile />
 
       {/* Hero Section avec overlay - plein écran sur mobile, pas de marges latérales */}
       <section className="hero-section-mobile relative h-[90vh] md:h-[90vh] flex items-center justify-center overflow-hidden">
@@ -675,8 +690,6 @@ export default function AccueilPage() {
         </div>
       </section>
 
-      <Footer />
-      <MenuBasNavigation />
     </div>
   )
 }

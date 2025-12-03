@@ -11,7 +11,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { CheckoutLoading } from '@/components/CheckoutLoading'
 
-export default function PWACheckoutPage() {
+export default function PWACheckoutContent() {
   const router = useRouter()
   const { items, total, clearCart, isLoaded } = useCart()
   const [loading, setLoading] = useState(false)

@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Providers } from '@/components/Providers'
 import PWARedirect from '@/components/PWARedirect'
+import NavigationWrapper from '@/components/NavigationWrapper'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -83,9 +84,9 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
         <Providers>
           <PWARedirect />
-          <div className="w-full max-w-full overflow-x-hidden">
+          <NavigationWrapper>
             {children}
-          </div>
+          </NavigationWrapper>
           <Toaster />
           <Sonner />
           <SpeedInsights />

@@ -36,7 +36,7 @@ export default async function PWAContactPage() {
   return (
     <div className="w-full min-h-screen pb-20">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href="/pwa/menu" className="p-1 hover:bg-muted rounded-lg transition-colors">
+        <Link href="/menu" className="p-1 hover:bg-muted rounded-lg transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="text-2xl font-serif text-foreground">Contact</h1>

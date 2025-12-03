@@ -1,9 +1,10 @@
-import EnteteMobile from '@/components/EnteteMobile'
-import NavigationDesktop from '@/components/NavigationDesktop'
-import MenuBasNavigation from '@/components/MenuBasNavigation'
-import Footer from '@/components/Footer'
+'use client'
+
+import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import { createClient } from '@supabase/supabase-js'
 import FAQContent from './FAQContent'
+import PWAFAQContent from './PWAFAQContent'
+import { useEffect, useState } from 'react'
 
 async function getSettings() {
   try {
@@ -34,20 +35,43 @@ async function getSettings() {
   }
 }
 
-export default async function FAQPage() {
-  const settings = await getSettings()
+export default function FAQPage() {
+  const { isPWA, isLoading } = useIsPWA()
+  const [settings, setSettings] = useState({
+    email_entreprise: 'Maisondeslimani@gmail.com',
+    telephone: '',
+    whatsapp: '',
+    facebook: '',
+    instagram: '',
+  })
 
+  useEffect(() => {
+    getSettings().then(setSettings)
+  }, [])
+
+  // Show loading state while detecting device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render PWA version
+  if (isPWA) {
+    return <PWAFAQContent />
+  }
+
+  // Render desktop version
   return (
     <div className="pb-24 md:pb-0 pt-0 md:pt-20">
-      <NavigationDesktop />
-      <EnteteMobile />
-
       <div className="container px-6 py-12 max-w-4xl mx-auto">
         <FAQContent settings={settings} />
       </div>
-
-      <Footer />
-      <MenuBasNavigation />
     </div>
   )
 }

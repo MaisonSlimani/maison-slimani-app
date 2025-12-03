@@ -11,7 +11,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { toast } from 'sonner'
 
-export default function PWAPanierPage() {
+export default function PWAPanierContent() {
   const router = useRouter()
   const { items, removeItem, updateQuantity, total, isLoaded } = useCart()
   const { openDrawer } = useCartDrawer()

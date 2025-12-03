@@ -6,7 +6,7 @@ import { HelpCircle, Mail, MessageCircle, Facebook, Instagram, ArrowLeft } from 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
-export default function PWAFAQPage() {
+export default function PWAFAQContent() {
   const [settings, setSettings] = useState({
     email_entreprise: 'Maisondeslimani@gmail.com',
     telephone: '',
@@ -175,3 +175,4 @@ export default function PWAFAQPage() {
     </div>
   )
 }
+
