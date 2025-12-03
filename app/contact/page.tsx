@@ -1,32 +1,27 @@
 'use client'
 
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
-import { createClient } from '@supabase/supabase-js'
 import ContactContent from './ContactContent'
 import PWAContactContent from './PWAContactContent'
 import { useEffect, useState } from 'react'
 
 async function getSettings() {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
+    const response = await fetch('/api/settings')
+    if (!response.ok) {
       return { email_entreprise: '', telephone: '', adresse: '' }
     }
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const { data } = await supabase
-      .from('settings')
-      .select('email_entreprise, telephone, adresse')
-      .limit(1)
-      .single()
-    
-    return {
-      email_entreprise: data?.email_entreprise || '',
-      telephone: data?.telephone || '',
-      adresse: data?.adresse || '',
+    const result = await response.json()
+    if (result.success && result.data) {
+      return {
+        email_entreprise: result.data.email_entreprise || '',
+        telephone: result.data.telephone || '',
+        adresse: result.data.adresse || '',
+      }
     }
+    
+    return { email_entreprise: '', telephone: '', adresse: '' }
   } catch (error) {
     console.error('Erreur lors de la récupération des paramètres:', error)
     return { email_entreprise: '', telephone: '', adresse: '' }

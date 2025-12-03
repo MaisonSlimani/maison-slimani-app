@@ -7,6 +7,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Providers } from '@/components/Providers'
 import PWARedirect from '@/components/PWARedirect'
 import NavigationWrapper from '@/components/NavigationWrapper'
+import MetaPixel from '@/components/MetaPixel'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -83,6 +84,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
         <Providers>
+          <MetaPixel />
           <PWARedirect />
           <NavigationWrapper>
             {children}

@@ -17,6 +17,7 @@ import {
   CheckCircle,
   XCircle,
   TrendingUp,
+  Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -319,6 +320,7 @@ export default function AdminLayout({
   const menuItems = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
     { href: '/admin/upsells', label: 'Upsells', icon: TrendingUp },
+    { href: '/admin/socials', label: 'Socials', icon: Share2 },
   ]
 
   const statutsCommandes = [

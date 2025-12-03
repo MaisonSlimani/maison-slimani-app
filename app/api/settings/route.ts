@@ -14,7 +14,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('settings')
-      .select('email_entreprise, telephone, adresse, description')
+      .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code')
       .limit(1)
       .single()
 

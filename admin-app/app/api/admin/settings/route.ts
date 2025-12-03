@@ -9,11 +9,36 @@ export async function GET() {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    const { data, error } = await supabase
+    // First try with all columns (including new social fields)
+    let { data, error } = await supabase
       .from('settings')
-      .select('email_entreprise, telephone, adresse, description')
+      .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code')
       .limit(1)
       .single()
+
+    // If error is about missing columns, try without the new columns
+    if (error && (error.message?.includes('column') || error.code === '42703')) {
+      console.warn('New social columns not found, falling back to basic columns')
+      const fallbackResult = await supabase
+        .from('settings')
+        .select('email_entreprise, telephone, adresse, description')
+        .limit(1)
+        .single()
+      
+      if (fallbackResult.error && fallbackResult.error.code !== 'PGRST116') {
+        throw fallbackResult.error
+      }
+      
+      // Return with null values for new fields
+      return NextResponse.json({ 
+        data: fallbackResult.data ? {
+          ...fallbackResult.data,
+          facebook: null,
+          instagram: null,
+          meta_pixel_code: null,
+        } : null 
+      })
+    }
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
       throw error
@@ -37,7 +62,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email_entreprise, telephone, adresse, description } = body
+    const { email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code } = body
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -47,38 +72,69 @@ export async function PUT(request: NextRequest) {
       .limit(1)
       .single()
 
+    // Build update object dynamically to handle missing columns
+    const updateData: any = {
+      email_entreprise: email_entreprise || null,
+      telephone: telephone || null,
+      adresse: adresse || null,
+      description: description || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Only include new fields if they're provided (they might not exist in DB yet)
+    if (facebook !== undefined) updateData.facebook = facebook || null
+    if (instagram !== undefined) updateData.instagram = instagram || null
+    if (meta_pixel_code !== undefined) updateData.meta_pixel_code = meta_pixel_code || null
+
     let result
     if (existingSettings) {
       const { data, error } = await supabase
         .from('settings')
-        .update({
-          email_entreprise: email_entreprise || null,
-          telephone: telephone || null,
-          adresse: adresse || null,
-          description: description || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', existingSettings.id)
         .select()
         .single()
 
-      if (error) throw error
-      result = data
+      // If error is about missing columns, try without the new columns
+      if (error && (error.message?.includes('column') || error.code === '42703')) {
+        console.warn('New social columns not found, updating without them')
+        const { facebook: _, instagram: __, meta_pixel_code: ___, ...basicUpdateData } = updateData
+        const fallbackResult = await supabase
+          .from('settings')
+          .update(basicUpdateData)
+          .eq('id', existingSettings.id)
+          .select()
+          .single()
+        
+        if (fallbackResult.error) throw fallbackResult.error
+        result = fallbackResult.data
+      } else {
+        if (error) throw error
+        result = data
+      }
     } else {
       const { data, error } = await supabase
         .from('settings')
-        .insert({
-          email_entreprise: email_entreprise || null,
-          telephone: telephone || null,
-          adresse: adresse || null,
-          description: description || null,
-          updated_at: new Date().toISOString(),
-        })
+        .insert(updateData)
         .select()
         .single()
 
-      if (error) throw error
-      result = data
+      // If error is about missing columns, try without the new columns
+      if (error && (error.message?.includes('column') || error.code === '42703')) {
+        console.warn('New social columns not found, inserting without them')
+        const { facebook: _, instagram: __, meta_pixel_code: ___, ...basicUpdateData } = updateData
+        const fallbackResult = await supabase
+          .from('settings')
+          .insert(basicUpdateData)
+          .select()
+          .single()
+        
+        if (fallbackResult.error) throw fallbackResult.error
+        result = fallbackResult.data
+      } else {
+        if (error) throw error
+        result = data
+      }
     }
 
     return NextResponse.json({ data: result })
