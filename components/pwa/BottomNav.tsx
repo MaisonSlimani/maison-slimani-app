@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, ShoppingBag, ShoppingCart, Mail } from 'lucide-react'
+import { Home, ShoppingBag, ShoppingCart, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/lib/hooks/useCart'
 import { motion } from 'framer-motion'
@@ -16,7 +16,7 @@ export default function BottomNav() {
     { href: '/pwa', icon: Home, label: 'Accueil' },
     { href: '/pwa/boutique', icon: ShoppingBag, label: 'Boutique' },
     { href: '/pwa/panier', icon: ShoppingCart, label: 'Panier', badge: totalItems },
-    { href: '/pwa/contact', icon: Mail, label: 'Contact' },
+    { href: '/pwa/menu', icon: Menu, label: 'Menu' },
   ]
 
   // Helper to check if a route is active
@@ -26,6 +26,14 @@ export default function BottomNav() {
     // Home page - exact match only
     if (href === '/pwa') {
       return currentPath === '/pwa' || currentPath === '/pwa/'
+    }
+    
+    // Menu page - also active for contact, faq, and politiques
+    if (href === '/pwa/menu') {
+      return currentPath === '/pwa/menu' || 
+             currentPath === '/pwa/contact' || 
+             currentPath === '/pwa/faq' || 
+             currentPath === '/pwa/politiques'
     }
     
     // Other routes - check if pathname starts with href

@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <footer className="bg-charbon text-ecru py-12 md:pb-12 pb-16 w-full">
       <div className="container max-w-6xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
+        <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-2xl font-serif mb-4">
               Maison <span className="text-dore">Slimani</span>
@@ -28,6 +28,18 @@ const Footer = () => {
               </Link>
               <Link href="/contact" className="text-ecru/80 hover:text-dore transition-colors text-sm">
                 Contact
+              </Link>
+            </nav>
+          </div>
+
+          <div>
+            <h4 className="font-medium mb-4 text-dore">Informations</h4>
+            <nav className="flex flex-col gap-2">
+              <Link href="/faq" className="text-ecru/80 hover:text-dore transition-colors text-sm">
+                FAQ
+              </Link>
+              <Link href="/politiques" className="text-ecru/80 hover:text-dore transition-colors text-sm">
+                Politique de Retour
               </Link>
             </nav>
           </div>
