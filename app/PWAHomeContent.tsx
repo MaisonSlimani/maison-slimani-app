@@ -164,7 +164,7 @@ export default function PWAHomeContent() {
             <h2 className="text-3xl font-serif text-foreground mb-8 text-center">Collections</h2>
             {categories.length > 0 ? (
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                {categories.slice(0, 4).map((categorie, index) => (
+                {categories.map((categorie, index) => (
                   <motion.div
                     key={categorie.lien}
                     initial={{ opacity: 0, y: 20 }}
