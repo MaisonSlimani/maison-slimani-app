@@ -1,0 +1,68 @@
+{
+  "name": "Maison Slimani - Chaussures Homme Luxe Maroc",
+  "short_name": "Maison Slimani",
+  "description": "Découvrez Maison Slimani, marque marocaine de chaussures homme haut de gamme. Livraison gratuite sur tout le Maroc.",
+  "start_url": "/pwa",
+  "display": "standalone",
+  "background_color": "#F5F1E8",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/android-launchericon-48-48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/android-launchericon-72-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/android-launchericon-96-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/android-launchericon-144-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/android-launchericon-192-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/android-launchericon-512-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "fashion", "lifestyle"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Boutique",
+      "short_name": "Boutique",
+      "description": "Voir tous les produits",
+      "url": "/pwa/boutique",
+      "icons": [{ "src": "/icons/android-launchericon-192-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Panier",
+      "short_name": "Panier",
+      "description": "Voir mon panier",
+      "url": "/pwa/panier",
+      "icons": [{ "src": "/icons/android-launchericon-192-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

@@ -1,0 +1,32 @@
+{
+  "appId": "com.maisonslimani.customer",
+  "appName": "Maison Slimani",
+  "server": {
+    "url": "https://maison-slimani-experience.vercel.app/pwa",
+    "cleartext": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    },
+    "Share": {
+      "enabled": true
+    },
+    "Camera": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": ""
+    }
+  },
+  "ios": {
+    "scheme": "maisonslimani"
+  }
+}

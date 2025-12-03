@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hero section pleine largeur sur mobile sans bordures grises */
+@media (max-width: 768px) {
+  .hero-section-mobile {
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    max-width: 100vw !important;
+    position: relative;
+  }
+  
+  .hero-image-container {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
+  
+  .hero-image-container img {
+    min-width: 100% !important;
+    min-height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    transform: none !important;
+  }
+}
+
+/* Définition du système de design. Toutes les couleurs, gradients, fonts, etc doivent être définis ici. 
+Toutes les couleurs DOIVENT être en HSL.
+*/
+
+@layer base {
+  :root {
+    /* Palette Maison Slimani */
+    --charbon: 225 19% 7%;
+    --ecru: 40 56% 97%;
+    --cuir: 22 44% 29%;
+    --dore: 39 46% 57%;
+    --cuir-clair: 22 30% 45%;
+    
+    /* Tokens sémantiques */
+    --background: var(--ecru);
+    --foreground: var(--charbon);
+    
+    --card: var(--ecru);
+    --card-foreground: var(--charbon);
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--charbon);
+    
+    --primary: var(--cuir);
+    --primary-foreground: var(--ecru);
+    
+    --secondary: 40 20% 92%;
+    --secondary-foreground: var(--charbon);
+    
+    --muted: 40 15% 90%;
+    --muted-foreground: 225 10% 40%;
+    
+    --accent: var(--dore);
+    --accent-foreground: var(--charbon);
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 40 20% 88%;
+    --input: 40 20% 90%;
+    --ring: var(--cuir);
+    
+    --radius: 0.5rem;
+    
+    /* Typographie */
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-elegant: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: var(--charbon);
+    --foreground: var(--ecru);
+    
+    --card: 225 15% 12%;
+    --card-foreground: var(--ecru);
+    
+    --popover: 225 15% 10%;
+    --popover-foreground: var(--ecru);
+    
+    --primary: var(--dore);
+    --primary-foreground: var(--charbon);
+    
+    --secondary: 225 12% 18%;
+    --secondary-foreground: var(--ecru);
+    
+    --muted: 225 10% 20%;
+    --muted-foreground: 40 25% 70%;
+    
+    --accent: var(--dore);
+    --accent-foreground: var(--charbon);
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: var(--ecru);
+    
+    --border: 225 12% 25%;
+    --input: 225 12% 22%;
+    --ring: var(--dore);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+  
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+  
+  /* S'assurer qu'il n'y a pas de padding sur mobile qui crée des bordures grises */
+  @media (max-width: 768px) {
+    body {
+      overflow-x: hidden;
+    }
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-elegant {
+    transition: var(--transition-elegant);
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Gold Shimmer Animation for Luxury Effects */
+@keyframes gold-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(39, 46%, 45%) 0%,
+    hsl(39, 46%, 65%) 25%,
+    hsl(39, 46%, 75%) 50%,
+    hsl(39, 46%, 65%) 75%,
+    hsl(39, 46%, 45%) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 3s linear infinite;
+}
+

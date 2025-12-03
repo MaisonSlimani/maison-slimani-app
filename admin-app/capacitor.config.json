@@ -1,0 +1,27 @@
+{
+  "appId": "com.maisonslimani.admin",
+  "appName": "Maison Slimani Admin",
+  "webDir": ".next",
+  "server": {
+    "url": "https://admin.maisonslimani.ma",
+    "cleartext": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "Camera": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": ""
+    }
+  },
+  "ios": {
+    "scheme": "maisonslimaniadmin"
+  }
+}
+

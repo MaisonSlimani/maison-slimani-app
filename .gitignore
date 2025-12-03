@@ -1,0 +1,248 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# ============================================
+# Dependencies
+# ============================================
+# Root dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Admin app dependencies
+/admin-app/node_modules
+/admin-app/.pnp
+/admin-app/.pnp.js
+/admin-app/.yarn/install-state.gz
+
+# Package manager lock files (keep package.json, ignore lock files if using different package managers)
+# Uncomment if you want to ignore lock files
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+# bun.lockb
+
+# ============================================
+# Testing
+# ============================================
+/coverage
+*.lcov
+.nyc_output
+
+# ============================================
+# Next.js Build Outputs
+# ============================================
+# Root Next.js
+/.next/
+/out/
+/.swc/
+
+# Admin app Next.js
+/admin-app/.next/
+/admin-app/out/
+/admin-app/.swc/
+
+# ============================================
+# Production Builds
+# ============================================
+/build
+/dist
+*.tsbuildinfo
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Admin app env files
+/admin-app/.env
+/admin-app/.env*.local
+/admin-app/.env.development.local
+/admin-app/.env.test.local
+/admin-app/.env.production.local
+
+# ============================================
+# TypeScript
+# ============================================
+*.tsbuildinfo
+next-env.d.ts
+/admin-app/next-env.d.ts
+
+# ============================================
+# IDE & Editor Files
+# ============================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+
+# ============================================
+# OS Files
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Vercel
+# ============================================
+.vercel
+.vercel/*
+
+# ============================================
+# Supabase
+# ============================================
+.supabase
+supabase/.temp
+supabase/.branches
+supabase/.temp/*
+
+# ============================================
+# Capacitor (Native App Builds)
+# ============================================
+# Root Capacitor
+/android/
+/ios/
+/capacitor.config.json.local
+
+# Admin app Capacitor
+/admin-app/android/
+/admin-app/ios/
+/admin-app/capacitor.config.json.local
+
+# ============================================
+# PWA Build Artifacts
+# ============================================
+# Service Worker (generated)
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
+/public/fallback-*.js
+
+# Admin app service worker
+/admin-app/public/sw.js.map
+/admin-app/public/workbox-*.js
+/admin-app/public/workbox-*.js.map
+/admin-app/public/fallback-*.js
+
+# PWA build cache
+/.next/cache/
+/admin-app/.next/cache/
+
+# ============================================
+# Logs
+# ============================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ============================================
+# Misc
+# ============================================
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# ============================================
+# Migration Scripts (temporary files)
+# ============================================
+/scripts/migration/*.json
+/scripts/migration/*.csv
+/scripts/migration/temp/
+/scripts/migration/downloads/
+/scripts/migration/uploads/
+
+# ============================================
+# Keep These (DO NOT IGNORE)
+# ============================================
+# Assets must be committed for deployment
+# /public/assets/*.jpg
+# /public/assets/*.png
+# /public/assets/*.jpeg
+# /public/sounds/*.mp3
+
+# Capacitor configs (keep the actual configs)
+# !capacitor.config.json
+# !admin-app/capacitor.config.json
+
+# Manifest files (keep them)
+# !public/manifest.json
+# !admin-app/public/manifest.json

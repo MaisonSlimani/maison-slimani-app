@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Palette Maison Slimani */
+    --charbon: 225 19% 7%;
+    --ecru: 40 56% 97%;
+    --cuir: 22 44% 29%;
+    --dore: 39 46% 57%;
+    --cuir-clair: 22 30% 45%;
+    
+    /* Tokens sémantiques */
+    --background: var(--ecru);
+    --foreground: var(--charbon);
+    
+    --card: var(--ecru);
+    --card-foreground: var(--charbon);
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--charbon);
+    
+    --primary: var(--cuir);
+    --primary-foreground: var(--ecru);
+    
+    --secondary: 40 20% 92%;
+    --secondary-foreground: var(--charbon);
+    
+    --muted: 40 15% 90%;
+    --muted-foreground: 225 10% 40%;
+    
+    --accent: var(--dore);
+    --accent-foreground: var(--charbon);
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 40 20% 88%;
+    --input: 40 20% 90%;
+    --ring: var(--cuir);
+    
+    --radius: 0.5rem;
+    
+    /* Typographie */
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-elegant: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    
+    /* Safe area insets for PWA */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .dark {
+    --background: var(--charbon);
+    --foreground: var(--ecru);
+    
+    --card: 225 15% 12%;
+    --card-foreground: var(--ecru);
+    
+    --popover: 225 15% 10%;
+    --popover-foreground: var(--ecru);
+    
+    --primary: var(--dore);
+    --primary-foreground: var(--charbon);
+    
+    --secondary: 225 12% 18%;
+    --secondary-foreground: var(--ecru);
+    
+    --muted: 225 10% 20%;
+    --muted-foreground: 40 25% 70%;
+    
+    --accent: var(--dore);
+    --accent-foreground: var(--charbon);
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: var(--ecru);
+    
+    --border: 225 12% 25%;
+    --input: 225 12% 22%;
+    --ring: var(--dore);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    padding: 0;
+    margin: 0;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+  
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-elegant {
+    transition: var(--transition-elegant);
+  }
+  
+  .safe-area-top {
+    padding-top: var(--safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: calc(var(--safe-area-inset-bottom) + 4rem);
+  }
+}
+

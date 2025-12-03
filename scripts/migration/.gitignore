@@ -1,0 +1,11 @@
+# Ignore tất cả các file export để bảo mật
+exports/
+*.sql
+!05_complete_migration.sql
+!04_migrate_realtime.sql
+
+# Ignore các file tạm
+storage_temp/
+*.tmp
+*.log
+
