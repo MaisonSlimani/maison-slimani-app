@@ -10,7 +10,7 @@ export async function GET() {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // First try with all columns (including new social fields)
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from('settings')
       .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code')
       .limit(1)
