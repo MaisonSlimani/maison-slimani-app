@@ -10,13 +10,15 @@ import { cn } from '@/lib/utils'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
+import { useWishlistDrawer } from '@/lib/contexts/WishlistDrawerContext'
 
 const NavigationDesktop = () => {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const { items, isLoaded } = useCart()
   const { items: wishlistItems, isLoaded: wishlistLoaded } = useWishlist()
-  const { openDrawer } = useCartDrawer()
+  const { openDrawer: openCartDrawer } = useCartDrawer()
+  const { openDrawer: openWishlistDrawer } = useWishlistDrawer()
   const [cartCount, setCartCount] = useState(0)
   const [wishlistCount, setWishlistCount] = useState(0)
 
@@ -197,34 +199,32 @@ const NavigationDesktop = () => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    asChild
+                    onClick={openWishlistDrawer}
                     className={cn(
                       "transition-colors relative",
                       isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
                     )}
                   >
-                    <Link href="/favoris">
-                      <Heart className={cn(
-                        "w-5 h-5",
-                        wishlistCount > 0 && "fill-current"
-                      )} />
-                      {wishlistCount > 0 && (
-                        <span className={cn(
-                          "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
-                          isHomePage && !scrolled
-                            ? "bg-[#d4a574] text-[#f8f5f0]"
-                            : "bg-dore text-charbon"
-                        )}>
-                          {wishlistCount > 99 ? '99+' : wishlistCount}
-                        </span>
-                      )}
-                      <span className="sr-only">Favoris</span>
-                    </Link>
+                    <Heart className={cn(
+                      "w-5 h-5",
+                      wishlistCount > 0 && "fill-current"
+                    )} />
+                    {wishlistCount > 0 && (
+                      <span className={cn(
+                        "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                        isHomePage && !scrolled
+                          ? "bg-[#d4a574] text-[#f8f5f0]"
+                          : "bg-dore text-charbon"
+                      )}>
+                        {wishlistCount > 99 ? '99+' : wishlistCount}
+                      </span>
+                    )}
+                    <span className="sr-only">Favoris</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={openDrawer}
+                    onClick={openCartDrawer}
                     className={cn(
                       "transition-colors relative",
                       isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"

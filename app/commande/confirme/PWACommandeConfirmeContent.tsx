@@ -131,7 +131,7 @@ export default function PWACommandeConfirmeContent() {
       </section>
 
       {/* Action Buttons Section */}
-      <section className="py-8 px-6 bg-gradient-to-b from-background to-ecru/30">
+      <section className="pt-4 pb-8 px-6 bg-gradient-to-b from-background to-ecru/30">
         <div className="container max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

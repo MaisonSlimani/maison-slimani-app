@@ -9,15 +9,11 @@ import ProductCard from '@/components/pwa/ProductCard'
 import CarteCategorie from '@/components/CarteCategorie'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ArrowUp, Search, X, SlidersHorizontal } from 'lucide-react'
+import { ArrowUp, Search, X, ShoppingCart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SearchOverlay from '@/components/search/SearchOverlay'
+import { useCart } from '@/lib/hooks/useCart'
+import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 
 export default function PWABoutiqueContent() {
   const searchParams = useSearchParams()
@@ -29,6 +25,9 @@ export default function PWABoutiqueContent() {
   const [searchQuery, setSearchQuery] = useState(search)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false)
+  const { items: cartItems, isLoaded: cartLoaded } = useCart()
+  const { openDrawer: openCartDrawer } = useCartDrawer()
+  const totalItems = cartLoaded ? cartItems.length : 0
   const [categories, setCategories] = useState<Array<{
     nom: string
     slug: string
@@ -176,45 +175,21 @@ export default function PWABoutiqueContent() {
             />
           </div>
           
-          {/* Filter Button with Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-10 h-10 bg-muted hover:bg-muted/80 rounded-lg flex-shrink-0"
-                aria-label="Filtrer"
-              >
-                <SlidersHorizontal className="w-5 h-5 text-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                onClick={() => setTriPrix('pertinence')}
-                className={triPrix === 'pertinence' ? 'bg-accent' : ''}
-              >
-                Pertinence
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setTriPrix('prix-asc')}
-                className={triPrix === 'prix-asc' ? 'bg-accent' : ''}
-              >
-                Prix ↑
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setTriPrix('prix-desc')}
-                className={triPrix === 'prix-desc' ? 'bg-accent' : ''}
-              >
-                Prix ↓
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setTriPrix('nouveaute')}
-                className={triPrix === 'nouveaute' ? 'bg-accent' : ''}
-              >
-                Nouveautés
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Cart Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openCartDrawer}
+            className="relative w-10 h-10 bg-muted hover:bg-muted/80 rounded-lg flex-shrink-0"
+            aria-label="Panier"
+          >
+            <ShoppingCart className="w-5 h-5 text-foreground" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-dore rounded-full shadow-lg">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
+          </Button>
         </div>
         
         {/* Categories Row - Only show when viewing products (not on categories view) */}

@@ -166,12 +166,12 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   
                   return (
                     <div key={errorKey} className={cn(
-                      "flex gap-4 pb-4 border-b last:border-0",
-                      hasStockError && "bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border-red-200 dark:border-red-800"
+                      "flex gap-4 p-4 border border-border rounded-lg hover:border-dore/50 transition-colors relative",
+                      hasStockError && "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
                     )}>
                       <Link
                         href={productUrl}
-                        className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity bg-muted"
+                        className="relative w-20 h-20 rounded overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity bg-muted"
                         onClick={() => onOpenChange(false)}
                       >
                         <Image
@@ -183,34 +183,36 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                         />
                       </Link>
                       
-                      <div className="flex-1 min-w-0">
-                        {hasStockError && (
-                          <div className="mb-2 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
-                            <AlertTriangle className="w-4 h-4" />
-                            <span>{stockErrors[errorKey]}</span>
-                          </div>
-                        )}
-                        <Link
-                          href={productUrl}
-                          onClick={() => onOpenChange(false)}
-                          className="block"
-                        >
-                          <h4 className="font-medium mb-1 hover:text-dore transition-colors line-clamp-2">
-                            {item.nom}
-                          </h4>
-                        </Link>
-                        {(item.couleur || item.taille) && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {item.couleur && <span>Couleur: {item.couleur}</span>}
-                            {item.couleur && item.taille && <span> • </span>}
-                            {item.taille && <span>Taille: {item.taille}</span>}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          {hasStockError && (
+                            <div className="mb-2 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+                              <AlertTriangle className="w-4 h-4" />
+                              <span>{stockErrors[errorKey]}</span>
+                            </div>
+                          )}
+                          <Link
+                            href={productUrl}
+                            onClick={() => onOpenChange(false)}
+                            className="block"
+                          >
+                            <h4 className="font-medium mb-1 hover:text-dore transition-colors line-clamp-2">
+                              {item.nom}
+                            </h4>
+                          </Link>
+                          {(item.couleur || item.taille) && (
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {item.couleur && <span>Couleur: {item.couleur}</span>}
+                              {item.couleur && item.taille && <span> • </span>}
+                              {item.taille && <span>Taille: {item.taille}</span>}
+                            </p>
+                          )}
+                          <p className="text-base font-serif text-dore font-semibold mb-3">
+                            {item.prix.toLocaleString('fr-MA')} DH
                           </p>
-                        )}
-                        <p className="text-lg font-serif text-dore mb-3">
-                          {item.prix.toLocaleString('fr-MA')} DH
-                        </p>
+                        </div>
                         
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 border border-border rounded-lg">
                             <Button
                               variant="ghost"
@@ -242,9 +244,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                           </div>
                           
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:border-red-500"
                             onClick={() => {
                               removeItem(item.id, item.couleur, item.taille)
                               setTimeout(() => {

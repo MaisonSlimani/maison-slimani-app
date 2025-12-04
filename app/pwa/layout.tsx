@@ -19,7 +19,6 @@ export default function PWALayout({
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
         .then((registration) => {
-          console.log('✅ Service Worker registered:', registration.scope)
         })
         .catch((error) => {
           // In development, this might fail if the file isn't accessible

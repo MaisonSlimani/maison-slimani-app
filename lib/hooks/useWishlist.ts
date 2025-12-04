@@ -10,6 +10,9 @@ export interface WishlistItem {
   image?: string
   taille?: string
   stock?: number
+  categorie?: string
+  slug?: string
+  categorySlug?: string
 }
 
 const STORAGE_KEY = 'wishlist'
@@ -46,14 +49,15 @@ export function useWishlist() {
     }
   }, [items, isLoaded])
 
-  // Listen for wishlist updates from other tabs/components
+  // Listen for wishlist updates from other tabs/components and same-tab updates
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue)
+    const refreshFromStorage = () => {
+      try {
+        const savedWishlist = localStorage.getItem(STORAGE_KEY)
+        if (savedWishlist) {
+          const parsed = JSON.parse(savedWishlist)
           if (Array.isArray(parsed)) {
             isUpdating.current = true
             setItems(parsed)
@@ -61,14 +65,29 @@ export function useWishlist() {
               isUpdating.current = false
             }, 100)
           }
-        } catch (error) {
-          console.error('Error syncing wishlist:', error)
         }
+      } catch (error) {
+        console.error('Error syncing wishlist:', error)
       }
     }
 
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        refreshFromStorage()
+      }
+    }
+
+    // Listen for storage events (cross-tab updates)
     window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    
+    // Listen for wishlistUpdated events (same-tab updates)
+    // This ensures components get the latest data when items are added
+    window.addEventListener('wishlistUpdated', refreshFromStorage)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('wishlistUpdated', refreshFromStorage)
+    }
   }, [])
 
   const addItem = useCallback((item: WishlistItem) => {

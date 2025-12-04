@@ -266,13 +266,24 @@ export default function PWAProduitContent() {
       removeFromWishlist(produit.id)
       toast.success('Retiré des favoris')
     } else {
+      // Calculate stock for wishlist item
+      // For products with colors, use total stock from all colors
+      // For products without colors, use main stock field
+      let stockForWishlist = produit.stock
+      if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
+        stockForWishlist = produit.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
+      }
+      
       addToWishlist({
         id: produit.id,
         nom: produit.nom,
         prix: produit.prix,
         image_url: produit.image_url,
         image: produit.image_url,
-        stock: produit.stock,
+        stock: stockForWishlist,
+        categorie: produit.categorie,
+        slug: produit.slug || slug,
+        categorySlug: categorie,
       })
       // Track AddToWishlist event for Meta Pixel
       trackAddToWishlist({
@@ -282,6 +293,12 @@ export default function PWAProduitContent() {
         value: produit.prix,
         currency: 'MAD',
       })
+      // Open wishlist drawer after state has time to update
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('openWishlistDrawer'))
+        }, 150)
+      }
       toast.success('Ajouté aux favoris')
     }
   }
