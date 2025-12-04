@@ -119,6 +119,7 @@ export default function PWAHomeContent() {
             className="object-cover"
             priority
             sizes="100vw"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
         </div>

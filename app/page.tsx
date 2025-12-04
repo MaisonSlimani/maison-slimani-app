@@ -291,6 +291,7 @@ export default function AccueilPage() {
             }}
             priority
             sizes="100vw"
+            fetchPriority="high"
           />
         </motion.div>
         {/* Overlay dégradé sombre pour améliorer la lisibilité - très léger */}

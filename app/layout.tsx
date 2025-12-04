@@ -73,6 +73,13 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preload hero image for faster LCP on mobile */}
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/hero-chaussures.jpg"
+          fetchPriority="high"
+        />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/android-launchericon-192-192.png" />
