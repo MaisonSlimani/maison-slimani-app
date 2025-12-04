@@ -15,6 +15,7 @@ import { motion } from 'framer-motion'
 import GalerieProduit from '@/components/GalerieProduit'
 import SimilarProducts from '@/components/SimilarProducts'
 import { slugify } from '@/lib/utils/product-urls'
+import { trackViewContent, trackAddToWishlist } from '@/lib/meta-pixel'
 
 interface Couleur {
   nom: string
@@ -91,6 +92,24 @@ export default function PWAProduitContent() {
       chargerProduit()
     }
   }, [categorie, slug, router])
+
+  // Track ViewContent when product loads
+  useEffect(() => {
+    if (produit) {
+      trackViewContent({
+        content_name: produit.nom,
+        content_ids: [produit.id],
+        content_type: 'product',
+        value: produit.prix,
+        currency: 'MAD',
+        contents: [{
+          id: produit.id,
+          quantity: 1,
+          item_price: produit.prix,
+        }],
+      })
+    }
+  }, [produit])
 
   const handleAddToCart = async () => {
     if (!produit) return
@@ -254,6 +273,14 @@ export default function PWAProduitContent() {
         image_url: produit.image_url,
         image: produit.image_url,
         stock: produit.stock,
+      })
+      // Track AddToWishlist event for Meta Pixel
+      trackAddToWishlist({
+        content_name: produit.nom,
+        content_ids: [produit.id],
+        content_type: 'product',
+        value: produit.prix,
+        currency: 'MAD',
       })
       toast.success('Ajouté aux favoris')
     }

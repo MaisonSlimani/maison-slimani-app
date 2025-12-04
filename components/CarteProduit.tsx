@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import OptimizedImage from '@/components/OptimizedImage'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -11,6 +11,7 @@ import { ShoppingBag, Heart, Check, ShoppingCart } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
+import { trackAddToWishlist } from '@/lib/meta-pixel'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
@@ -290,6 +291,14 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
           stock: produit.stock,
           taille: produit.taille,
         })
+        // Track AddToWishlist event for Meta Pixel
+        trackAddToWishlist({
+          content_name: produit.nom,
+          content_ids: [produit.id],
+          content_type: 'product',
+          value: produit.prix,
+          currency: 'MAD',
+        })
         toast.success('Produit ajouté aux favoris', { duration: 1500 })
       }
     } catch (error) {
@@ -309,13 +318,13 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
         <motion.div
           className="aspect-square overflow-hidden bg-muted relative group"
         >
-          <Image
+          <OptimizedImage
             src={imageUrl}
             alt={produit.nom}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            objectFit="cover"
           />
           {/* Badge favori en haut à droite */}
           {inWishlist && (

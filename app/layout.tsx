@@ -81,10 +81,10 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Maison Slimani" />
+        <MetaPixel />
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
         <Providers>
-          <MetaPixel />
           <PWARedirect />
           <NavigationWrapper>
             {children}

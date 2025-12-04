@@ -13,6 +13,7 @@ import { ArrowUp, Search, ShoppingCart } from 'lucide-react'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { useCart } from '@/lib/hooks/useCart'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
+import { trackViewCategory } from '@/lib/meta-pixel'
 
 export default function PWACategorieContent() {
   const params = useParams()
@@ -32,11 +33,10 @@ export default function PWACategorieContent() {
     const chargerCategorie = async () => {
       try {
         if (!categorieSlug || categorieSlug === 'tous') {
-          setCategorieInfo({
-            nom: 'Tous nos produits',
-            image: '/assets/hero-chaussures.jpg',
-          })
+          const defaultInfo = { nom: 'Tous nos produits', image: '/assets/hero-chaussures.jpg' }
+          setCategorieInfo(defaultInfo)
           setCategorieNom(null)
+          trackViewCategory(defaultInfo.nom)
           return
         }
 
@@ -53,18 +53,19 @@ export default function PWACategorieContent() {
         
         const data = payload?.data?.[0]
         if (data) {
-          setCategorieInfo({
+          const categoryInfo = {
             nom: data.nom,
             image: data.image_url || '/assets/hero-chaussures.jpg',
-          })
+          }
+          setCategorieInfo(categoryInfo)
           setCategorieNom(data.nom) // Store category name for products query
+          trackViewCategory(categoryInfo.nom)
         } else {
           // Category not found, set default
-          setCategorieInfo({
-            nom: 'Collection',
-            image: '/assets/hero-chaussures.jpg',
-          })
+          const defaultInfo = { nom: 'Collection', image: '/assets/hero-chaussures.jpg' }
+          setCategorieInfo(defaultInfo)
           setCategorieNom(null)
+          trackViewCategory(defaultInfo.nom)
         }
       } catch (error) {
         console.error('Erreur lors du chargement de la catégorie:', error)

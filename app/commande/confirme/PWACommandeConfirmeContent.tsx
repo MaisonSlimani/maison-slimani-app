@@ -5,10 +5,40 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
+import { trackPurchase } from '@/lib/meta-pixel'
 
 export default function PWACommandeConfirmeContent() {
   useEffect(() => {
     window.scrollTo(0, 0)
+    
+    // Track Purchase event for Meta Pixel
+    try {
+      const orderDataStr = localStorage.getItem('lastOrder')
+      if (orderDataStr) {
+        const orderData = JSON.parse(orderDataStr)
+        if (orderData.id && orderData.produits) {
+          const total = orderData.total || 0
+          const numItems = orderData.produits.reduce((sum: number, p: any) => sum + (p.quantite || 0), 0)
+          
+          trackPurchase({
+            value: total,
+            currency: 'MAD',
+            contents: orderData.produits.map((p: any) => ({
+              id: p.id,
+              quantity: p.quantite || 1,
+              item_price: p.prix || 0,
+            })),
+            order_id: orderData.id,
+            num_items: numItems,
+          })
+          
+          // Clear after tracking
+          localStorage.removeItem('lastOrder')
+        }
+      }
+    } catch (error) {
+      console.error('Error tracking purchase:', error)
+    }
   }, [])
 
   return (

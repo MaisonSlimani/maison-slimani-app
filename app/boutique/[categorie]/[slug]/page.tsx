@@ -17,6 +17,7 @@ import SimilarProducts from '@/components/SimilarProducts'
 import { createClient } from '@/lib/supabase/client'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWAProduitContent from './PWAProduitContent'
+import { trackViewContent } from '@/lib/meta-pixel'
 
 interface ImageItem {
   url: string
@@ -232,6 +233,21 @@ export default function ProduitSlugPage() {
 
   useEffect(() => {
     if (!produit) return
+    
+    // Track ViewContent for Meta Pixel
+    trackViewContent({
+      content_name: produit.nom,
+      content_ids: [produit.id],
+      content_type: 'product',
+      value: produit.prix,
+      currency: 'MAD',
+      contents: [{
+        id: produit.id,
+        quantity: 1,
+        item_price: produit.prix,
+      }],
+    })
+    
     document.title = `${produit.nom} | Maison Slimani`
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {

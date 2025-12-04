@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { slugify, getProductUrlSync } from '@/lib/utils/product-urls'
+import { trackSearch } from '@/lib/meta-pixel'
 
 interface SearchModalProps {
   isOpen: boolean
@@ -81,8 +82,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (debouncedQuery.trim()) {
-      router.push(`/pwa/boutique?search=${encodeURIComponent(debouncedQuery)}`)
+    const query = debouncedQuery.trim()
+    if (query) {
+      // Track Search event for Meta Pixel
+      trackSearch(query)
+      router.push(`/pwa/boutique?search=${encodeURIComponent(query)}`)
       onClose()
     }
   }

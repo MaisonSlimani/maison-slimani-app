@@ -12,8 +12,10 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
-    // Permettre les images locales non optimisées si nécessaire
-    unoptimized: false,
+    // Désactiver l'optimisation Vercel pour les images Supabase
+    // Les images sont pré-optimisées à l'upload avec sharp (WebP, compression)
+    // Cela réduit les coûts Vercel Image Optimization
+    unoptimized: process.env.DISABLE_VERCEL_IMAGE_OPT === 'true' ? true : false,
   },
   compress: true,
   poweredByHeader: false,

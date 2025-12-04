@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { CheckoutLoading } from '@/components/CheckoutLoading'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACheckoutContent from './PWACheckoutContent'
+import { trackInitiateCheckout } from '@/lib/meta-pixel'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -48,6 +49,25 @@ export default function CheckoutPage() {
       document.head.appendChild(meta)
     }
   }, [])
+
+  // Track InitiateCheckout when checkout page loads with items
+  useEffect(() => {
+    if (isLoaded && items.length > 0) {
+      const total = items.reduce((sum, item) => sum + (item.prix * item.quantite), 0)
+      const numItems = items.reduce((sum, item) => sum + item.quantite, 0)
+      
+      trackInitiateCheckout({
+        value: total,
+        currency: 'MAD',
+        contents: items.map(item => ({
+          id: item.id,
+          quantity: item.quantite,
+          item_price: item.prix,
+        })),
+        num_items: numItems,
+      })
+    }
+  }, [isLoaded, items])
 
   // Realtime stock validation - continuously monitor stock changes
   useEffect(() => {
@@ -245,6 +265,19 @@ export default function CheckoutPage() {
       }
 
       const data = result
+
+      // Store order data for Meta Pixel Purchase tracking
+      if (data?.data) {
+        localStorage.setItem('lastOrder', JSON.stringify({
+          id: data.data.id,
+          total: data.data.total,
+          produits: data.data.produits || items.map(item => ({
+            id: item.id,
+            quantite: item.quantite,
+            prix: item.prix,
+          })),
+        }))
+      }
 
       // Store first product ID for upsells before clearing cart
       if (items.length > 0) {
