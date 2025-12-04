@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "react-day-picker/dist/style.css";
+
 /* Hero section pleine largeur sur mobile sans bordures grises */
 @media (max-width: 768px) {
   .hero-section-mobile {
