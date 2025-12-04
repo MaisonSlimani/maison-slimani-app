@@ -145,11 +145,13 @@ export async function GET(request: NextRequest) {
         count = data.length // Use filtered count
         usedFullTextSearch = true
 
-        // Log search query for analytics
-        if (search.trim()) {
+        // Log search query for analytics (only meaningful queries)
+        const trimmedSearch = search.trim()
+        // Only log queries that are at least 4 characters and contain alphanumeric characters
+        if (trimmedSearch.length >= 4 && /[a-zA-Z0-9]/.test(trimmedSearch)) {
           try {
             await supabase.from('search_queries').insert({
-              query: search.trim(),
+              query: trimmedSearch,
               results_count: data.length,
             })
           } catch (analyticsError) {

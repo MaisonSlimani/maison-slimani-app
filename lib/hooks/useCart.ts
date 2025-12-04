@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { trackAddToCart } from '@/lib/meta-pixel'
 
 export interface CartItem {
   id: string
@@ -187,6 +188,20 @@ export function useCart() {
         )
       }
       return [...prev, item]
+    })
+    
+    // Track AddToCart event for Meta Pixel
+    trackAddToCart({
+      content_name: item.nom,
+      content_ids: [item.id],
+      content_type: 'product',
+      value: item.prix * item.quantite,
+      currency: 'MAD',
+      contents: [{
+        id: item.id,
+        quantity: item.quantite,
+        item_price: item.prix,
+      }],
     })
     
     // Son d'ajout au panier

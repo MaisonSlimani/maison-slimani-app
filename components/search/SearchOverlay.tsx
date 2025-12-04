@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { slugify } from '@/lib/utils/product-urls'
 import { useRecentSearches } from './useRecentSearches'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
+import { trackSearch } from '@/lib/meta-pixel'
 
 interface SearchOverlayProps {
   isOpen: boolean
@@ -164,6 +165,8 @@ export default function SearchOverlay({
   const handleSearch = useCallback(() => {
     const trimmedQuery = debouncedQuery.trim()
     if (trimmedQuery) {
+      // Track Search event for Meta Pixel
+      trackSearch(trimmedQuery)
       addSearch(trimmedQuery)
       const params = new URLSearchParams()
       params.set('search', trimmedQuery)

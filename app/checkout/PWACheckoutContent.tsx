@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { CheckoutLoading } from '@/components/CheckoutLoading'
+import { trackInitiateCheckout } from '@/lib/meta-pixel'
 
 export default function PWACheckoutContent() {
   const router = useRouter()
@@ -31,6 +32,25 @@ export default function PWACheckoutContent() {
       router.push('/panier')
     }
   }, [isLoaded, items.length, router, orderComplete])
+
+  // Track InitiateCheckout when checkout page loads with items
+  useEffect(() => {
+    if (isLoaded && items.length > 0) {
+      const total = items.reduce((sum, item) => sum + (item.prix * item.quantite), 0)
+      const numItems = items.reduce((sum, item) => sum + item.quantite, 0)
+      
+      trackInitiateCheckout({
+        value: total,
+        currency: 'MAD',
+        contents: items.map(item => ({
+          id: item.id,
+          quantity: item.quantite,
+          item_price: item.prix,
+        })),
+        num_items: numItems,
+      })
+    }
+  }, [isLoaded, items])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,6 +86,19 @@ export default function PWACheckoutContent() {
       })
 
       const result = await response.json()
+
+      // Store order data for Meta Pixel Purchase tracking
+      if (result?.data) {
+        localStorage.setItem('lastOrder', JSON.stringify({
+          id: result.data.id,
+          total: result.data.total,
+          produits: result.data.produits || items.map(item => ({
+            id: item.id,
+            quantite: item.quantite,
+            prix: item.prix,
+          })),
+        }))
+      }
 
       if (!response.ok || !result.success) {
         // Formater le message d'erreur pour l'utilisateur

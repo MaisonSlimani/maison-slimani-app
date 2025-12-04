@@ -16,6 +16,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACategorieContent from './PWACategorieContent'
+import { trackViewCategory } from '@/lib/meta-pixel'
 
 export default function CategoriePage() {
   const { isPWA, isLoading } = useIsPWA()
@@ -67,29 +68,29 @@ export default function CategoriePage() {
         const data = payload?.data?.[0]
 
         if (!data) {
-          setCategorieInfo({
+          const defaultInfo = {
             nom: 'Collection',
             image: '/assets/hero-chaussures.jpg',
             description: 'Découvrez notre collection exclusive.',
-          })
+          }
+          setCategorieInfo(defaultInfo)
+          trackViewCategory(defaultInfo.nom)
           setLoadingCategory(false)
           return
         }
 
+        const categoryInfo = {
+          nom: data.nom,
+          image: (!data.image_url || data.image_url.trim() === '') 
+            ? '/assets/hero-chaussures.jpg' 
+            : data.image_url,
+          description: data.description || '',
+        }
         if (!data.image_url || data.image_url.trim() === '') {
           console.warn(`Catégorie "${data.nom}" n'a pas d'image_url définie`)
-          setCategorieInfo({
-            nom: data.nom,
-            image: '/assets/hero-chaussures.jpg',
-            description: data.description || '',
-          })
-        } else {
-          setCategorieInfo({
-            nom: data.nom,
-            image: data.image_url,
-            description: data.description || '',
-          })
         }
+        setCategorieInfo(categoryInfo)
+        trackViewCategory(categoryInfo.nom)
       } catch (e) {
         if ((e as Error).name === 'AbortError') {
           return

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyAdminSession } from '@/lib/auth/session'
+import sharp from 'sharp'
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,20 +65,65 @@ export async function POST(request: NextRequest) {
     // Upload tous les fichiers
     const uploadResults = []
     for (const file of filesToUpload) {
-      // Générer un nom de fichier unique
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `produits/${fileName}`
-
       // Convertir le fichier en buffer
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
+      // Optimiser l'image avec sharp avant l'upload
+      // Convertir en WebP pour meilleure compression, qualité 85
+      let optimizedBuffer: Buffer
+      let optimizedContentType: string
+      let fileExt: string
+
+      try {
+        const image = sharp(buffer)
+        const metadata = await image.metadata()
+
+        // Déterminer les dimensions optimales (max 2000px pour la largeur/hauteur)
+        const maxDimension = 2000
+        let width = metadata.width
+        let height = metadata.height
+
+        if (width && height) {
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width)
+              width = maxDimension
+            } else {
+              width = Math.round((width * maxDimension) / height)
+              height = maxDimension
+            }
+          }
+        }
+
+        // Optimiser l'image: WebP format, qualité 85, redimensionner si nécessaire
+        optimizedBuffer = await image
+          .resize(width, height, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .webp({ quality: 85, effort: 6 })
+          .toBuffer()
+
+        optimizedContentType = 'image/webp'
+        fileExt = 'webp'
+      } catch (optimizationError) {
+        console.warn('Erreur lors de l\'optimisation, utilisation de l\'image originale:', optimizationError)
+        // Si l'optimisation échoue, utiliser l'image originale
+        optimizedBuffer = buffer
+        optimizedContentType = file.type
+        fileExt = file.name.split('.').pop() || 'jpg'
+      }
+
+      // Générer un nom de fichier unique
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const filePath = `produits/${fileName}`
+
       // Upload vers Supabase Storage
       const { data, error } = await supabase.storage
         .from('produits-images')
-        .upload(filePath, buffer, {
-          contentType: file.type,
+        .upload(filePath, optimizedBuffer, {
+          contentType: optimizedContentType,
           upsert: false,
         })
 

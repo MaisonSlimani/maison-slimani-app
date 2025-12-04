@@ -66,25 +66,38 @@ export async function GET(request: NextRequest) {
           }))
         }
       } catch {
-        // RPC not available, use direct query
+        // RPC not available, use direct query with same filters
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
         const { data: fallbackTrending } = await supabase
           .from('search_queries')
           .select('query')
           .gt('results_count', 0)
-          .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+          .gte('created_at', sevenDaysAgo)
           .order('created_at', { ascending: false })
-          .limit(50)
+          .limit(100) // Get more to filter properly
 
         if (fallbackTrending) {
-          // Count occurrences
+          // Count occurrences and apply filters
           const counts: Record<string, number> = {}
           fallbackTrending.forEach((item: any) => {
-            const q = item.query.toLowerCase()
-            counts[q] = (counts[q] || 0) + 1
+            const q = item.query?.trim() || ''
+            // Apply same filters as SQL function:
+            // - Minimum 4 characters
+            // - Must contain at least one alphanumeric character
+            if (q.length >= 4 && /[a-zA-Z0-9]/.test(q)) {
+              const normalized = q.toLowerCase()
+              counts[normalized] = (counts[normalized] || 0) + 1
+            }
           })
 
+          // Filter by minimum search count (3) and sort
           suggestions.trending = Object.entries(counts)
-            .sort((a, b) => b[1] - a[1])
+            .filter(([_, count]) => count >= 3) // Must be searched at least 3 times
+            .sort((a, b) => {
+              // Sort by count descending, then by query ascending
+              if (b[1] !== a[1]) return b[1] - a[1]
+              return a[0].localeCompare(b[0])
+            })
             .slice(0, limit)
             .map(([query, count]) => ({ query, count }))
         }

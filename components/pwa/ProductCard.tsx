@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import OptimizedImage from '@/components/OptimizedImage'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -10,6 +10,7 @@ import { ShoppingBag, Heart, Check, Sparkles } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
+import { trackAddToWishlist } from '@/lib/meta-pixel'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { hapticFeedback } from '@/lib/haptics'
@@ -220,6 +221,14 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
           image: imageUrl,
           stock: produit.stock,
         })
+        // Track AddToWishlist event for Meta Pixel
+        trackAddToWishlist({
+          content_name: produit.nom,
+          content_ids: [produit.id],
+          content_type: 'product',
+          value: produit.prix,
+          currency: 'MAD',
+        })
         hapticFeedback('success')
         toast.success('Ajouté aux favoris', { duration: 1000 })
       }
@@ -236,15 +245,14 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
     <Card className="group overflow-hidden border border-border/50 shadow-sm hover:shadow-lg transition-all duration-300 relative flex flex-col h-full bg-card">
       <Link href={href} className="block flex-1 flex flex-col">
         <div className="aspect-square overflow-hidden bg-muted relative">
-          <Image
+          <OptimizedImage
             src={imageUrl}
             alt={produit.nom}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            loading={priority ? 'eager' : 'lazy'}
             priority={priority}
             sizes="(max-width: 768px) 50vw, 33vw"
-            fetchPriority={priority ? 'high' : 'auto'}
+            objectFit="cover"
           />
           
           {/* Badges */}

@@ -356,7 +356,7 @@ export default function PWABoutiqueContent() {
                     size="lg" 
                     className="bg-dore text-charbon hover:bg-dore/90 font-medium px-8 py-6 transition-all duration-300 hover:scale-105"
                   >
-                    <Link href="/boutique?categorie=tous">Découvrir toute la collection</Link>
+                    <Link href="/boutique/tous">Découvrir toute la collection</Link>
                   </Button>
                 </motion.div>
               </motion.div>
