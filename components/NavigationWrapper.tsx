@@ -1,6 +1,7 @@
 'use client'
 
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
+import { usePathname } from 'next/navigation'
 import NavigationDesktop from '@/components/NavigationDesktop'
 import EnteteMobile from '@/components/EnteteMobile'
 import Footer from '@/components/Footer'
@@ -13,6 +14,8 @@ interface NavigationWrapperProps {
 
 export default function NavigationWrapper({ children }: NavigationWrapperProps) {
   const { isPWA, isLoading } = useIsPWA()
+  const pathname = usePathname()
+  const isContactPage = pathname === '/contact'
 
   // Show minimal loading state
   if (isLoading) {
@@ -33,13 +36,13 @@ export default function NavigationWrapper({ children }: NavigationWrapperProps) 
     )
   }
 
-  // Desktop mode - show desktop nav and footer
+  // Desktop mode - show desktop nav and footer (except on contact page to avoid duplicate)
   return (
     <>
       <NavigationDesktop />
       <EnteteMobile />
       {children}
-      <Footer />
+      {!isContactPage && <Footer />}
       <MenuBasNavigation />
     </>
   )

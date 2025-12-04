@@ -116,8 +116,15 @@ export default function PWACategorieContent() {
       if (filters.inStock !== undefined) {
         params.set('inStock', filters.inStock.toString())
       }
-      if (filters.couleur) {
-        params.set('couleur', filters.couleur)
+      if (filters.couleur && filters.couleur.length > 0) {
+        filters.couleur.forEach((c) => {
+          params.append('couleur', c)
+        })
+      }
+      if (filters.categorie && filters.categorie.length > 0) {
+        filters.categorie.forEach((cat) => {
+          params.append('categorie', cat)
+        })
       }
 
       const response = await fetch(`/api/produits?${params.toString()}`, {

@@ -138,7 +138,7 @@ export default function SimilarProducts({
             asChild
             variant="outline"
             size="lg"
-            className="border-dore text-dore hover:bg-dore hover:text-charbon px-4 md:px-8 py-6 text-base md:text-lg max-w-full mx-auto inline-block"
+            className="border-dore text-dore hover:bg-dore hover:text-charbon px-4 md:px-8 py-6 text-base md:text-lg max-w-full mx-auto inline-flex justify-center items-center"
           >
             <Link
               href={`/boutique/${productCategory
@@ -147,7 +147,7 @@ export default function SimilarProducts({
                 .replace('é', 'e')
                 .replace('è', 'e')
                 .replace('ê', 'e')}`}
-              className="whitespace-normal text-center break-words"
+              className="whitespace-normal text-center break-words flex items-center justify-center"
             >
               Voir toute la catégorie {productCategory}
             </Link>

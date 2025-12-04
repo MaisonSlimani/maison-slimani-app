@@ -73,10 +73,18 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
     new Date().getTime() - new Date(produit.created_at).getTime() < 30 * 24 * 60 * 60 * 1000
 
   const isOutOfStock = () => {
-    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+    // For products with colors, check if any color has stock
+    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
       return !produit.couleurs.some(c => (c.stock || 0) > 0)
     }
-    return produit.stock !== undefined && produit.stock <= 0
+    // For products without colors, check main stock field
+    // Only consider out of stock if stock is explicitly 0 or less
+    // If stock is undefined, assume it's available (for backward compatibility)
+    if (produit.stock !== undefined) {
+      return produit.stock <= 0
+    }
+    // If stock is undefined and no colors, assume available
+    return false
   }
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -213,13 +221,24 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
         removeFromWishlist(produit.id)
         toast.success('Retiré des favoris', { duration: 1000 })
       } else {
+        // Calculate stock for wishlist item
+        // For products with colors, use total stock from all colors
+        // For products without colors, use main stock field
+        let stockForWishlist = produit.stock
+        if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
+          stockForWishlist = produit.couleurs.reduce((sum, c) => sum + (c.stock || 0), 0)
+        }
+        
         addToWishlist({
           id: produit.id,
           nom: produit.nom,
           prix: produit.prix,
           image_url: imageUrl,
           image: imageUrl,
-          stock: produit.stock,
+          stock: stockForWishlist,
+          categorie: produit.categorie,
+          slug: productSlug,
+          categorySlug: categorySlug || undefined,
         })
         // Track AddToWishlist event for Meta Pixel
         trackAddToWishlist({
@@ -229,6 +248,12 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
           value: produit.prix,
           currency: 'MAD',
         })
+        // Open wishlist drawer after state has time to update
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('openWishlistDrawer'))
+          }, 150)
+        }
         hapticFeedback('success')
         toast.success('Ajouté aux favoris', { duration: 1000 })
       }

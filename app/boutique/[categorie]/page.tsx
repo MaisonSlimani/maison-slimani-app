@@ -9,7 +9,7 @@ import CarteProduit from '@/components/CarteProduit'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowUp, ArrowLeft, Search, ShoppingCart } from 'lucide-react'
+import { ArrowUp, ArrowLeft, Search, ShoppingCart, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { useCart } from '@/lib/hooks/useCart'
@@ -279,8 +279,15 @@ export default function CategoriePage() {
       if (filters.inStock !== undefined) {
         searchParams.set('inStock', filters.inStock.toString())
       }
-      if (filters.couleur) {
-        searchParams.set('couleur', filters.couleur)
+      if (filters.couleur && filters.couleur.length > 0) {
+        filters.couleur.forEach((c) => {
+          searchParams.append('couleur', c)
+        })
+      }
+      if (filters.categorie && filters.categorie.length > 0) {
+        filters.categorie.forEach((cat) => {
+          searchParams.append('categorie', cat)
+        })
       }
 
       searchParams.set('limit', '60')
@@ -464,7 +471,7 @@ export default function CategoriePage() {
           </div>
           
           {/* Filter and Sort Buttons */}
-          <div className="flex items-center justify-start gap-3">
+          <div className="flex items-center justify-start gap-3 flex-wrap">
             <Select value={triPrix} onValueChange={setTriPrix}>
               <SelectTrigger className="h-11 w-[180px]">
                 <SelectValue placeholder="Trier" />
@@ -479,9 +486,96 @@ export default function CategoriePage() {
             <ProductFilter
               onFilterChange={setFilters}
               currentFilters={filters}
-              categoryName={categorieNom || undefined}
+              categoryName={categorieSlug === 'tous' ? undefined : categorieNom || undefined}
             />
           </div>
+          
+          {/* Active Filters Chips */}
+          {((filters.categorie && filters.categorie.length > 0) || 
+            (filters.couleur && filters.couleur.length > 0) || 
+            (filters.taille && filters.taille.length > 0) || 
+            filters.minPrice || filters.maxPrice || filters.inStock !== undefined) && (
+            <div className="flex flex-wrap gap-2 items-center pt-2">
+              {filters.categorie && filters.categorie.length > 0 && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                  <span>Catégorie: {filters.categorie.join(', ')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...filters, categorie: undefined })}
+                    className="ml-1 hover:text-destructive transition-colors"
+                    aria-label="Retirer le filtre catégorie"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {filters.couleur && filters.couleur.length > 0 && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                  <span>Couleur: {filters.couleur.join(', ')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...filters, couleur: undefined })}
+                    className="ml-1 hover:text-destructive transition-colors"
+                    aria-label="Retirer le filtre couleur"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {filters.taille && filters.taille.length > 0 && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                  <span>Taille: {filters.taille.join(', ')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...filters, taille: undefined })}
+                    className="ml-1 hover:text-destructive transition-colors"
+                    aria-label="Retirer le filtre taille"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {filters.minPrice && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                  <span>Prix min: {filters.minPrice} DH</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...filters, minPrice: undefined })}
+                    className="ml-1 hover:text-destructive transition-colors"
+                    aria-label="Retirer le filtre prix min"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {filters.maxPrice && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                  <span>Prix max: {filters.maxPrice} DH</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...filters, maxPrice: undefined })}
+                    className="ml-1 hover:text-destructive transition-colors"
+                    aria-label="Retirer le filtre prix max"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {filters.inStock !== undefined && (
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                  <span>{filters.inStock ? 'En stock' : 'Rupture'}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ ...filters, inStock: undefined })}
+                    className="ml-1 hover:text-destructive transition-colors"
+                    aria-label="Retirer le filtre stock"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Produits avec animations en cascade */}

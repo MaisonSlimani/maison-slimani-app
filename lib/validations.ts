@@ -2,11 +2,16 @@ import { z } from 'zod'
 
 export const produitQuerySchema = z.object({
   categorie: z
-    .string()
-    .trim()
-    .min(1)
-    .max(100)
-    .optional(),
+    .union([
+      z.string().trim().min(1).max(100),
+      z.array(z.string().trim().min(1).max(100))
+    ])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined
+      if (Array.isArray(val)) return val
+      return [val]
+    }),
   vedette: z
     .string()
     .transform((value) => value === 'true')
@@ -65,11 +70,16 @@ export const produitQuerySchema = z.object({
     .transform((value) => value === 'true')
     .optional(),
   couleur: z
-    .string()
-    .trim()
-    .min(1)
-    .max(100)
-    .optional(),
+    .union([
+      z.string().trim().min(1).max(100),
+      z.array(z.string().trim().min(1).max(100))
+    ])
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined
+      if (Array.isArray(val)) return val
+      return [val]
+    }),
 })
 
 export const commandeProduitSchema = z.object({

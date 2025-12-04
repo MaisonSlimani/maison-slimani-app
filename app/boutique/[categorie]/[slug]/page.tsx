@@ -180,7 +180,6 @@ export default function ProduitSlugPage() {
         },
         (payload) => {
           const updated = payload.new as Produit
-          console.log('Stock updated in realtime:', updated)
           
           // Update product state with new stock data
           setProduit((prev) => {
@@ -210,7 +209,6 @@ export default function ProduitSlugPage() {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime stock subscription active for product:', produit.id)
         }
       })
 
@@ -586,7 +584,7 @@ export default function ProduitSlugPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen pb-24 md:pb-0 pt-0 md:pt-20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dore mx-auto mb-4"></div>
           <p className="text-muted-foreground">Chargement...</p>

@@ -58,9 +58,15 @@ export async function GET(request: NextRequest) {
     // Use full-text search RPC if search query and useFullText is true
     if (search && useFullText === true) {
       try {
+        // For full-text search, use first category if multiple are provided
+        // (RPC function only accepts single category)
+        const categoryFilter = Array.isArray(categorie) && categorie.length > 0 
+          ? categorie[0] 
+          : (typeof categorie === 'string' ? categorie : null)
+        
         const { data: rpcData, error: rpcError } = await supabase.rpc('search_products', {
           search_query: search,
-          category_filter: categorie || null,
+          category_filter: categoryFilter,
           limit_count: resolvedLimit,
           offset_count: resolvedOffset,
         })
@@ -117,7 +123,13 @@ export async function GET(request: NextRequest) {
           // Default: show only in-stock products (hide out-of-stock)
           data = data.filter((p: any) => (p.total_stock || 0) > 0)
         }
+        // Apply category filter if multiple categories were provided
+        if (Array.isArray(categorie) && categorie.length > 0) {
+          data = data.filter((p: any) => categorie.includes(p.categorie))
+        }
+        
         if (couleur) {
+          const couleurArray = Array.isArray(couleur) ? couleur : [couleur]
           data = data.filter((product: any) => {
             if (!product.has_colors || !product.couleurs) return false
             try {
@@ -126,7 +138,9 @@ export async function GET(request: NextRequest) {
                 : product.couleurs
               if (Array.isArray(couleurs)) {
                 return couleurs.some((c: any) => 
-                  c.nom?.toLowerCase() === couleur.toLowerCase()
+                  couleurArray.some((selectedColor: string) =>
+                    c.nom?.toLowerCase() === selectedColor.toLowerCase()
+                  )
                 )
               }
               return false
@@ -172,7 +186,11 @@ export async function GET(request: NextRequest) {
         .select(PRODUIT_FIELDS, { count: 'exact' })
 
       if (categorie) {
-        query = query.eq('categorie', categorie)
+        if (Array.isArray(categorie) && categorie.length > 0) {
+          query = query.in('categorie', categorie)
+        } else if (typeof categorie === 'string') {
+          query = query.eq('categorie', categorie)
+        }
       }
 
       if (vedette !== undefined) {
@@ -270,6 +288,7 @@ export async function GET(request: NextRequest) {
 
         // Apply color filter post-query (colors are in JSONB)
         if (couleur && data) {
+          const couleurArray = Array.isArray(couleur) ? couleur : [couleur]
           data = data.filter((product: any) => {
             if (!product.has_colors || !product.couleurs) return false
             try {
@@ -278,7 +297,9 @@ export async function GET(request: NextRequest) {
                 : product.couleurs
               if (Array.isArray(couleurs)) {
                 return couleurs.some((c: any) => 
-                  c.nom?.toLowerCase() === couleur.toLowerCase()
+                  couleurArray.some((selectedColor: string) =>
+                    c.nom?.toLowerCase() === selectedColor.toLowerCase()
+                  )
                 )
               }
               return false

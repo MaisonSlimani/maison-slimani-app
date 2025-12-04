@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
       return a.localeCompare(b)
     })
 
-    // Extract unique couleurs
-    const couleursSet = new Set<string>()
+    // Extract unique couleurs with their codes (case-insensitive)
+    const couleursMap = new Map<string, { nom: string; code: string }>() // Map lowercase name to {nom, code}
     produits.forEach((p: any) => {
       if (p.has_colors && p.couleurs) {
         try {
@@ -89,7 +89,20 @@ export async function GET(request: NextRequest) {
           if (Array.isArray(couleurs)) {
             couleurs.forEach((c: any) => {
               if (c.nom) {
-                couleursSet.add(c.nom)
+                const lowerName = c.nom.toLowerCase()
+                // If we haven't seen this color (case-insensitive), add it
+                // If we have, prefer the version with capital first letter
+                if (!couleursMap.has(lowerName)) {
+                  // Capitalize first letter
+                  const capitalizedName = c.nom.charAt(0).toUpperCase() + c.nom.slice(1).toLowerCase()
+                  couleursMap.set(lowerName, { nom: capitalizedName, code: c.code || '#000000' })
+                } else {
+                  // If current version has capital first letter, prefer it
+                  const existing = couleursMap.get(lowerName)!
+                  if (c.nom.charAt(0) === c.nom.charAt(0).toUpperCase() && existing.nom.charAt(0) !== existing.nom.charAt(0).toUpperCase()) {
+                    couleursMap.set(lowerName, { nom: c.nom, code: c.code || existing.code || '#000000' })
+                  }
+                }
               }
             })
           }
@@ -98,7 +111,9 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-    const couleurs = Array.from(couleursSet).sort()
+    // Convert to array of objects with name and code
+    const couleurs = Array.from(couleursMap.values())
+      .sort((a, b) => a.nom.localeCompare(b.nom))
 
     // Extract unique categories (only if not filtering by category)
     const categoriesSet = new Set<string>()

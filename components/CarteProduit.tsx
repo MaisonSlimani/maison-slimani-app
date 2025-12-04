@@ -115,7 +115,6 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
         },
         (payload) => {
           const updated = payload.new as Produit
-          console.log('Stock updated in realtime (CarteProduit):', updated)
           
           // Update local product state if needed
           // Note: We can't directly update the produit prop, but the parent component
@@ -137,12 +136,18 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
 
   // Helper function to check if product is out of stock
   const isOutOfStock = () => {
-    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs)) {
+    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
       // For products with colors, check if ANY color has stock > 0
       return !produit.couleurs.some(c => (c.stock || 0) > 0)
     } else {
       // For products without colors, check the global stock
-      return produit.stock !== undefined && produit.stock <= 0
+      // Only consider out of stock if stock is explicitly 0 or less
+      // If stock is undefined, assume it's available (for backward compatibility)
+      if (produit.stock !== undefined) {
+        return produit.stock <= 0
+      }
+      // If stock is undefined and no colors, assume available
+      return false
     }
   }
 
@@ -282,14 +287,25 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
         removeFromWishlist(produit.id)
         toast.success('Produit retiré des favoris', { duration: 1500 })
       } else {
+        // Calculate stock for wishlist item
+        // For products with colors, use total stock from all colors
+        // For products without colors, use main stock field
+        let stockForWishlist = produit.stock
+        if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
+          stockForWishlist = produit.couleurs.reduce((sum, c) => sum + (c.stock || 0), 0)
+        }
+        
         addToWishlist({
           id: produit.id,
           nom: produit.nom,
           prix: produit.prix,
           image_url: imageUrl,
           image: imageUrl,
-          stock: produit.stock,
+          stock: stockForWishlist,
           taille: produit.taille,
+          categorie: produit.categorie,
+          slug: produit.slug || slugify(produit.nom),
+          categorySlug: produit.categorySlug || (produit.categorie ? slugify(produit.categorie) : undefined),
         })
         // Track AddToWishlist event for Meta Pixel
         trackAddToWishlist({
@@ -299,6 +315,12 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
           value: produit.prix,
           currency: 'MAD',
         })
+        // Open wishlist drawer after state has time to update
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('openWishlistDrawer'))
+          }, 150)
+        }
         toast.success('Produit ajouté aux favoris', { duration: 1500 })
       }
     } catch (error) {

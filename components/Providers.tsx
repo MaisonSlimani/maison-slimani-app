@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { CartDrawerProvider } from '@/lib/contexts/CartDrawerContext'
+import { WishlistDrawerProvider } from '@/lib/contexts/WishlistDrawerContext'
 import CartDrawerWrapper from '@/components/CartDrawerWrapper'
+import WishlistDrawerWrapper from '@/components/WishlistDrawerWrapper'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -24,8 +26,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CartDrawerProvider>
-          {children}
-          <CartDrawerWrapper />
+          <WishlistDrawerProvider>
+            {children}
+            <CartDrawerWrapper />
+            <WishlistDrawerWrapper />
+          </WishlistDrawerProvider>
         </CartDrawerProvider>
       </TooltipProvider>
     </QueryClientProvider>

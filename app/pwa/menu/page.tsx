@@ -1,12 +1,14 @@
 'use client'
 
-import { Mail, HelpCircle, FileText, ArrowLeft, Facebook, Instagram } from 'lucide-react'
+import { Mail, HelpCircle, FileText, ArrowLeft, Facebook, Instagram, Heart } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useWishlist } from '@/lib/hooks/useWishlist'
 
 export default function PWAMenuPage() {
   const [socials, setSocials] = useState<{ facebook?: string; instagram?: string }>({})
+  const { items: wishlistItems, isLoaded: wishlistLoaded } = useWishlist()
 
   useEffect(() => {
     const fetchSocials = async () => {
@@ -29,6 +31,16 @@ export default function PWAMenuPage() {
   }, [])
 
   const menuItems = [
+    {
+      href: '/pwa/favoris',
+      icon: Heart,
+      title: 'Mes Favoris',
+      description: `${wishlistLoaded ? wishlistItems.length : '...'} article${wishlistItems.length > 1 ? 's' : ''} dans vos favoris`,
+      gradient: 'from-pink-500/20 to-red-600/20',
+      borderColor: 'border-pink-500/30',
+      iconColor: 'text-pink-500',
+      badge: wishlistLoaded ? wishlistItems.length : undefined,
+    },
     {
       href: '/contact',
       icon: Mail,
@@ -67,9 +79,10 @@ export default function PWAMenuPage() {
       <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
         {menuItems.map((item, index) => {
           const Icon = item.icon
+          
           return (
             <motion.div
-              key={item.href}
+              key={item.href || item.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -93,8 +106,14 @@ export default function PWAMenuPage() {
                       bg-background/50
                       backdrop-blur-sm
                       ${item.iconColor}
+                      relative
                     `}>
                       <Icon className="w-6 h-6" />
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-medium text-white bg-pink-500 rounded-full">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h2 className="text-xl font-serif mb-1 text-foreground group-hover:text-dore transition-colors">

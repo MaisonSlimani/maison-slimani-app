@@ -10,7 +10,6 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { slugify } from '@/lib/utils/product-urls'
 import { useRecentSearches } from './useRecentSearches'
-import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 import { trackSearch } from '@/lib/meta-pixel'
 
 interface SearchOverlayProps {
@@ -51,7 +50,6 @@ export default function SearchOverlay({
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [filters, setFilters] = useState<FilterState>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -75,7 +73,6 @@ export default function SearchOverlay({
       setSearchQuery('')
       setDebouncedQuery('')
       setSelectedIndex(-1)
-      setFilters({})
     }
   }, [isOpen])
 
@@ -171,27 +168,6 @@ export default function SearchOverlay({
       const params = new URLSearchParams()
       params.set('search', trimmedQuery)
       
-      // Add filters to URL
-      if (filters.minPrice !== undefined) {
-        params.set('minPrice', filters.minPrice.toString())
-      }
-      if (filters.maxPrice !== undefined) {
-        params.set('maxPrice', filters.maxPrice.toString())
-      }
-      if (filters.taille && filters.taille.length > 0) {
-        filters.taille.forEach((t) => {
-          params.append('taille', t)
-        })
-      }
-      if (filters.inStock !== undefined) {
-        params.set('inStock', filters.inStock.toString())
-      }
-      if (filters.couleur) {
-        params.set('couleur', filters.couleur)
-      }
-      if (filters.categorie) {
-        params.set('categorie', filters.categorie)
-      }
       
       // If basePath already includes /boutique, just update query params
       if (basePath.includes('/boutique')) {
@@ -201,7 +177,7 @@ export default function SearchOverlay({
       }
       onClose()
     }
-  }, [debouncedQuery, basePath, router, onClose, addSearch, filters])
+  }, [debouncedQuery, basePath, router, onClose, addSearch])
 
   // Handle item selection
   const handleItemSelect = useCallback(
@@ -358,14 +334,6 @@ export default function SearchOverlay({
                 </button>
               </form>
               
-              {/* Filter Button */}
-              <div className="flex justify-center">
-                <ProductFilter
-                  onFilterChange={setFilters}
-                  currentFilters={filters}
-                  basePath={basePath}
-                />
-              </div>
             </div>
 
             {/* Results Area */}
