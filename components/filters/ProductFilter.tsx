@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SlidersHorizontal, X, Check } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 
@@ -102,6 +102,9 @@ export default function ProductFilter({
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Filtres</DialogTitle>
+          <DialogDescription>
+            Sélectionnez les filtres pour affiner votre recherche
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
           {/* Categories - Only for global search - Show first and prominently */}

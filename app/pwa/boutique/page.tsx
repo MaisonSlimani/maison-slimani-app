@@ -25,6 +25,9 @@ export default function PWABoutiquePage() {
   const [searchQuery, setSearchQuery] = useState(search)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false)
+  const { items: cartItems, isLoaded: cartLoaded } = useCart()
+  const { openDrawer: openCartDrawer } = useCartDrawer()
+  const totalItems = cartLoaded ? cartItems.length : 0
   const [categories, setCategories] = useState<Array<{
     nom: string
     slug: string
