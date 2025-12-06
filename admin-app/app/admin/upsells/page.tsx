@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 interface Produit {
   id: string
@@ -184,10 +185,7 @@ export default function AdminUpsellsPage() {
       <Card className="p-6 border-dore/20 bg-gradient-to-br from-background to-muted/10">
         <div className="space-y-4">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-dore"></div>
-              <p className="text-muted-foreground mt-4">Chargement...</p>
-            </div>
+            <LuxuryLoading message="Chargement des produits..." />
           ) : produits.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />

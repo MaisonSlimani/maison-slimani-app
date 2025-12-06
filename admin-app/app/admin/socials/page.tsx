@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminSocialsPage() {
   const [loading, setLoading] = useState(true)
@@ -86,10 +87,7 @@ export default function AdminSocialsPage() {
           <p className="text-muted-foreground">Gérez vos réseaux sociaux et Meta Pixel</p>
         </div>
         <Card className="p-6 bg-card border-border">
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto"></div>
-            <p className="text-muted-foreground mt-4">Chargement...</p>
-          </div>
+          <LuxuryLoading message="Chargement des réseaux sociaux..." />
         </Card>
       </div>
     )

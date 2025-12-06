@@ -9,6 +9,7 @@ import { ShoppingBag, DollarSign, MapPin, TrendingUp, Package, Clock, CheckCircl
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -249,7 +250,7 @@ export default function AdminDashboardPage() {
   }
 
   if (loading) {
-    return <div>Chargement...</div>
+    return <LuxuryLoading fullScreen message="Chargement des statistiques..." />
   }
 
   const metrics = [

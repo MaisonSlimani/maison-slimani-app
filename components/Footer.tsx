@@ -23,20 +23,44 @@ const Footer = () => {
           if (result.success && result.data) {
             const data = result.data
             setSettings({
-              email_entreprise: data.email_entreprise || '',
-              telephone: data.telephone || '',
-              adresse: data.adresse || '',
-              facebook: data.facebook || '',
-              instagram: data.instagram || '',
+              email_entreprise: (data.email_entreprise && data.email_entreprise.trim()) || '',
+              telephone: (data.telephone && data.telephone.trim()) || '',
+              adresse: (data.adresse && data.adresse.trim()) || '',
+              facebook: (data.facebook && data.facebook.trim()) || '',
+              instagram: (data.instagram && data.instagram.trim()) || '',
             })
           } else {
             console.warn('Settings API returned unsuccessful response:', result)
+            // Set empty settings if API fails
+            setSettings({
+              email_entreprise: '',
+              telephone: '',
+              adresse: '',
+              facebook: '',
+              instagram: '',
+            })
           }
         } else {
           console.error('Settings API error:', response.status, response.statusText)
+          // Set empty settings on error
+          setSettings({
+            email_entreprise: '',
+            telephone: '',
+            adresse: '',
+            facebook: '',
+            instagram: '',
+          })
         }
       } catch (error) {
         console.error('Error fetching settings:', error)
+        // Set empty settings on error
+        setSettings({
+          email_entreprise: '',
+          telephone: '',
+          adresse: '',
+          facebook: '',
+          instagram: '',
+        })
       } finally {
         setLoading(false)
       }
@@ -145,7 +169,9 @@ const Footer = () => {
                     {settings.adresse}
                   </p>
                 )}
-                {!settings.email_entreprise && !settings.telephone && !settings.adresse && (
+                {(!settings.email_entreprise || !settings.email_entreprise.trim()) && 
+                 (!settings.telephone || !settings.telephone.trim()) && 
+                 (!settings.adresse || !settings.adresse.trim()) && (
                   <p className="text-ecru/60 text-sm italic">
                     Informations de contact à venir
                   </p>
@@ -153,7 +179,7 @@ const Footer = () => {
               </>
             )}
             <p className="text-ecru/70 text-sm mb-2 mt-4">
-              Livraison gratuite dans tout le Maroc 🇲🇦
+              Livraison gratuite dans tout le Maroc
             </p>
             <p className="text-ecru/70 text-sm">
               Politique de retour : 7 jours

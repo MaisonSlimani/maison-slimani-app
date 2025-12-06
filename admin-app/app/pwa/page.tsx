@@ -7,6 +7,7 @@ import OrderCard from '@/components/admin-pwa/OrderCard'
 import { ShoppingBag, DollarSign, Package, AlertCircle, TrendingUp, CheckCircle, MapPin, Warehouse, AlertTriangle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminPWAPage() {
   const router = useRouter()
@@ -185,7 +186,7 @@ export default function AdminPWAPage() {
   if (loading) {
     return (
       <div className="w-full">
-        <div className="px-4 py-8 text-center text-muted-foreground">Chargement...</div>
+        <LuxuryLoading message="Chargement des commandes..." />
       </div>
     )
   }

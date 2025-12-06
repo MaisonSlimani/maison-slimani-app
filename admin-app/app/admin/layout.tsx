@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminLayout({
   children,
@@ -331,11 +332,7 @@ export default function AdminLayout({
   ]
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div>Chargement...</div>
-      </div>
-    )
+    return <LuxuryLoading fullScreen message="Chargement de l'application..." />
   }
 
   return (
@@ -521,7 +518,12 @@ export default function AdminLayout({
                           <span>Tous les produits</span>
                         </Link>
                         {loadingCategories ? (
-                          <div className="pl-4 pr-4 py-2 text-sm text-muted-foreground">Chargement...</div>
+                          <div className="pl-4 pr-4 py-2">
+                            <div className="flex items-center justify-center gap-2 py-2">
+                              <div className="w-4 h-4 border-2 border-dore/30 border-t-dore rounded-full animate-spin"></div>
+                              <span className="text-xs text-muted-foreground font-serif">Chargement...</span>
+                            </div>
+                          </div>
                         ) : categories.length > 0 ? (
                           <div className="pl-4 space-y-1">
                             {categories.map((categorie) => {

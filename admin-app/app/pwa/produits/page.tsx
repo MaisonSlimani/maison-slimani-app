@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 const colorSchemes = [
   { color: 'from-blue-50 to-blue-100', borderColor: 'border-blue-200' },

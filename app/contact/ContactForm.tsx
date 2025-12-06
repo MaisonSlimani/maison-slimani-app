@@ -54,9 +54,11 @@ export default function ContactForm({ settings }: ContactFormProps) {
 
   return (
     <>
-      {(settings.email_entreprise || settings.telephone || settings.adresse) && (
+      {((settings.email_entreprise && settings.email_entreprise.trim()) || 
+        (settings.telephone && settings.telephone.trim()) || 
+        (settings.adresse && settings.adresse.trim())) && (
         <div className="grid md:grid-cols-3 gap-6">
-          {settings.email_entreprise && (
+          {settings.email_entreprise && settings.email_entreprise.trim() && (
             <Card className="p-6 text-center">
               <Mail className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-medium mb-2">Email</h3>
@@ -69,7 +71,7 @@ export default function ContactForm({ settings }: ContactFormProps) {
             </Card>
           )}
 
-          {settings.telephone && (
+          {settings.telephone && settings.telephone.trim() && (
             <Card className="p-6 text-center">
               <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-medium mb-2">Téléphone</h3>
@@ -82,7 +84,7 @@ export default function ContactForm({ settings }: ContactFormProps) {
             </Card>
           )}
 
-          {settings.adresse && (
+          {settings.adresse && settings.adresse.trim() && (
             <Card className="p-6 text-center">
               <MapPin className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-medium mb-2">Adresse</h3>

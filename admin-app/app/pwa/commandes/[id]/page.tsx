@@ -12,6 +12,7 @@ import { fr } from 'date-fns/locale'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 const statutConfig: Record<string, { icon: typeof AlertCircle; color: string; label: string }> = {
   'En attente': {
@@ -103,7 +104,7 @@ export default function AdminPWACommandeDetailPage() {
   if (loading) {
     return (
       <div className="w-full">
-        <div className="px-4 py-8 text-center text-muted-foreground">Chargement...</div>
+        <LuxuryLoading message="Chargement de la commande..." />
       </div>
     )
   }

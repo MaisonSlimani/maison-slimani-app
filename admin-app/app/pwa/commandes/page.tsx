@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import OrderCard from '@/components/admin-pwa/OrderCard'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminPWACommandesPage() {
   const router = useRouter()

@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, Image as ImageIcon, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminPWACategoriesPage() {
   const router = useRouter()
@@ -229,7 +230,7 @@ export default function AdminPWACategoriesPage() {
   if (loading) {
     return (
       <div className="w-full">
-        <div className="px-4 py-8 text-center text-muted-foreground">Chargement...</div>
+        <LuxuryLoading message="Chargement des catégories..." />
       </div>
     )
   }

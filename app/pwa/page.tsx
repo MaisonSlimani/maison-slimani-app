@@ -1,19 +1,19 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 /**
  * Redirect /pwa to / (unified URLs)
  * This maintains backward compatibility for old /pwa links
  */
 export default function PWAPage() {
-  const router = useRouter()
-
   useEffect(() => {
-    // Redirect to unified home URL
-    router.replace('/')
-  }, [router])
+    // Use window.location for a hard redirect that works reliably in PWA standalone mode
+    // This ensures the redirect completes immediately
+    if (typeof window !== 'undefined') {
+      window.location.replace('/')
+    }
+  }, [])
 
   // Show loading state during redirect
   return (

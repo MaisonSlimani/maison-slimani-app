@@ -88,6 +88,8 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Maison Slimani" />
+        {/* Facebook Domain Verification */}
+        <meta name="facebook-domain-verification" content="ln1wiizsft23o3ned6y6lyafkjm5or" />
         <MetaPixel />
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>

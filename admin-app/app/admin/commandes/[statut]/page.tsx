@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { LoadingButton } from '@/components/ui/loading-overlay'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 import { Eye, Download, AlertCircle, Package, Truck, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
@@ -424,7 +425,7 @@ export default function AdminCommandesStatutPage() {
   }
 
   if (loading) {
-    return <div>Chargement...</div>
+    return <LuxuryLoading fullScreen message="Chargement des commandes..." />
   }
 
   // Grouper les commandes par statut si "toutes"
