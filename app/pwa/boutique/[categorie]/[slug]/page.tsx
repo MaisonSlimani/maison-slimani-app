@@ -1,16 +1,18 @@
 'use client'
 import { useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 
 export default function PWAProduitRedirectPage() {
-  const router = useRouter()
   const params = useParams()
   const categorie = params.categorie as string
   const slug = params.slug as string
 
   useEffect(() => {
-    router.replace(`/boutique/${categorie}/${slug}`)
-  }, [router, categorie, slug])
+    // Use window.location for a hard redirect that works reliably in PWA standalone mode
+    if (typeof window !== 'undefined' && categorie && slug) {
+      window.location.replace(`/boutique/${categorie}/${slug}`)
+    }
+  }, [categorie, slug])
 
   return (
     <div className="min-h-screen flex items-center justify-center">

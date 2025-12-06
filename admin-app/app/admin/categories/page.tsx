@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Edit, Trash2, Image as ImageIcon, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([])
@@ -191,7 +192,7 @@ export default function AdminCategoriesPage() {
   }
 
   if (loading) {
-    return <div>Chargement...</div>
+    return <LuxuryLoading fullScreen message="Chargement des catégories..." />
   }
 
   return (

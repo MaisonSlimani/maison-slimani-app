@@ -8,15 +8,18 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import RichTextEditor from '@/components/editor/RichTextEditor'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Plus, Edit, Trash2, ArrowLeft, Package, AlertTriangle, X, Upload, Image as ImageIcon, Palette } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowLeft, Package, AlertTriangle, X, Upload, Image as ImageIcon, Palette, Eye } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import ProductPreviewModal from '@/components/ProductPreviewModal'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 export default function AdminCategorieProduitsPage() {
   const params = useParams()
@@ -48,6 +51,7 @@ export default function AdminCategorieProduitsPage() {
   const [imagesGenerales, setImagesGenerales] = useState<Array<{ file: File | null; url: string | null }>>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [produitToDelete, setProduitToDelete] = useState<string | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const chargerCategories = useCallback(async () => {
     try {
@@ -387,7 +391,7 @@ export default function AdminCategorieProduitsPage() {
   }
 
   if (loading) {
-    return <div>Chargement...</div>
+    return <LuxuryLoading fullScreen message="Chargement des produits..." />
   }
 
   // Grouper les produits par catégorie si "tous"
@@ -442,14 +446,27 @@ export default function AdminCategorieProduitsPage() {
               Nouveau produit
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingProduit ? 'Modifier le produit' : 'Nouveau produit'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingProduit ? 'Modifiez les informations du produit' : 'Remplissez les informations pour créer un nouveau produit'}
-              </DialogDescription>
+              <div className="flex items-center justify-between pr-8">
+                <div>
+                  <DialogTitle>
+                    {editingProduit ? 'Modifier le produit' : 'Nouveau produit'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingProduit ? 'Modifiez les informations du produit' : 'Remplissez les informations pour créer un nouveau produit'}
+                  </DialogDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPreviewOpen(true)}
+                  className="flex items-center gap-2 shrink-0"
+                >
+                  <Eye className="w-4 h-4" />
+                  Aperçu
+                </Button>
+              </div>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -463,12 +480,11 @@ export default function AdminCategorieProduitsPage() {
               </div>
               <div>
                 <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  required
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                <RichTextEditor
+                  content={formData.description}
+                  onChange={(html) => setFormData({ ...formData, description: html })}
+                  placeholder="Décrivez le produit..."
+                  className="mt-2"
                 />
               </div>
               {/* Sélection du type de produit */}
@@ -930,6 +946,15 @@ export default function AdminCategorieProduitsPage() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Product Preview Modal */}
+        <ProductPreviewModal
+          formData={formData}
+          couleurs={couleurs}
+          imagesGenerales={imagesGenerales}
+          isOpen={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+        />
       </div>
 
       {categorieSlug === 'tous' ? (

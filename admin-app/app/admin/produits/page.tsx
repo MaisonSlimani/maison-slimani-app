@@ -10,6 +10,7 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { LuxuryLoading } from '@/components/ui/luxury-loading'
 
 const colorSchemes = [
   { color: 'from-blue-50 to-blue-100', borderColor: 'border-blue-200' },
@@ -74,7 +75,7 @@ export default function AdminProduitsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground">Chargement des catégories...</div>
+        <LuxuryLoading message="Chargement des catégories..." />
       ) : categories.length === 0 ? (
         <Card className="p-6 text-center">
           <p className="text-muted-foreground mb-4">Aucune catégorie active</p>

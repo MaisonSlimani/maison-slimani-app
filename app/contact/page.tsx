@@ -9,18 +9,21 @@ async function getSettings() {
   try {
     const response = await fetch('/api/settings')
     if (!response.ok) {
+      console.error('Settings API error:', response.status, response.statusText)
       return { email_entreprise: '', telephone: '', adresse: '' }
     }
     
     const result = await response.json()
     if (result.success && result.data) {
+      const data = result.data
       return {
-        email_entreprise: result.data.email_entreprise || '',
-        telephone: result.data.telephone || '',
-        adresse: result.data.adresse || '',
+        email_entreprise: (data.email_entreprise && data.email_entreprise.trim()) || '',
+        telephone: (data.telephone && data.telephone.trim()) || '',
+        adresse: (data.adresse && data.adresse.trim()) || '',
       }
     }
     
+    console.warn('Settings API returned no data:', result)
     return { email_entreprise: '', telephone: '', adresse: '' }
   } catch (error) {
     console.error('Erreur lors de la récupération des paramètres:', error)

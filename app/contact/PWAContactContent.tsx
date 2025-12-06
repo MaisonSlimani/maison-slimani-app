@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import ContactForm from './ContactForm'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -16,22 +15,22 @@ export default function PWAContactContent() {
   useEffect(() => {
     async function getSettings() {
       try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-        if (!supabaseUrl) return
-
-        const supabase = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
-        const { data } = await supabase
-          .from('settings')
-          .select('email_entreprise, telephone, adresse')
-          .limit(1)
-          .single()
-
-        if (data) {
+        const response = await fetch('/api/settings')
+        if (!response.ok) {
+          console.error('Settings API error:', response.status, response.statusText)
+          return
+        }
+        
+        const result = await response.json()
+        if (result.success && result.data) {
+          const data = result.data
           setSettings({
-            email_entreprise: data.email_entreprise || '',
-            telephone: data.telephone || '',
-            adresse: data.adresse || '',
+            email_entreprise: (data.email_entreprise && data.email_entreprise.trim()) || '',
+            telephone: (data.telephone && data.telephone.trim()) || '',
+            adresse: (data.adresse && data.adresse.trim()) || '',
           })
+        } else {
+          console.warn('Settings API returned no data:', result)
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des paramètres:', error)
