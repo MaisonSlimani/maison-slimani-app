@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { hapticFeedback } from '@/lib/haptics'
 import { slugify } from '@/lib/utils/product-urls'
+import RatingDisplay from '@/components/RatingDisplay'
 
 interface ProductCardProps {
   produit: {
@@ -31,6 +32,8 @@ interface ProductCardProps {
     couleurs?: any[]
     vedette?: boolean
     created_at?: string
+    average_rating?: number | null
+    rating_count?: number
   }
   priority?: boolean
 }
@@ -308,6 +311,16 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
           <h3 className="font-serif font-medium text-sm mb-1 line-clamp-2 leading-tight text-foreground">
             {produit.nom}
           </h3>
+          {produit.rating_count !== undefined && produit.rating_count !== null && produit.rating_count > 0 && produit.average_rating !== null && produit.average_rating !== undefined && produit.average_rating > 0 && (
+            <div className="mb-1">
+              <RatingDisplay
+                rating={produit.average_rating}
+                count={produit.rating_count}
+                size="sm"
+                className="justify-start"
+              />
+            </div>
+          )}
           <p className="text-base font-serif text-dore font-semibold">
             {produit.prix.toLocaleString('fr-MA')} MAD
           </p>

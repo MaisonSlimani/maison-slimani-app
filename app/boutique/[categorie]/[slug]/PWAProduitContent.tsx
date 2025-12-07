@@ -16,6 +16,9 @@ import GalerieProduit from '@/components/GalerieProduit'
 import SimilarProducts from '@/components/SimilarProducts'
 import { slugify } from '@/lib/utils/product-urls'
 import { trackViewContent, trackAddToWishlist } from '@/lib/meta-pixel'
+import ProductRatingSummary from '@/components/ProductRatingSummary'
+import CommentsList from '@/components/CommentsList'
+import CommentForm from '@/components/CommentForm'
 
 interface Couleur {
   nom: string
@@ -39,6 +42,8 @@ interface Produit {
   categorie?: string
   vedette?: boolean
   slug?: string
+  average_rating?: number | null
+  rating_count?: number
 }
 
 export default function PWAProduitContent() {
@@ -811,6 +816,53 @@ export default function PWAProduitContent() {
               </Button>
             </motion.div>
           )}
+        </motion.div>
+
+        {/* Avis et Commentaires Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="px-4 space-y-6 mt-8"
+        >
+          <div className="text-center mb-6 pt-6 border-t border-border">
+            <h2 className="text-2xl font-serif font-bold mb-2">Avis des clients</h2>
+            <p className="text-muted-foreground text-sm">Découvrez ce que nos clients pensent de ce produit</p>
+          </div>
+
+          {/* Rating Summary */}
+          {produit.rating_count !== undefined && produit.rating_count !== null && produit.rating_count > 0 && produit.average_rating !== null && produit.average_rating !== undefined && produit.average_rating > 0 && (
+            <div className="mb-6">
+              <ProductRatingSummary
+                produitId={produit.id}
+                averageRating={produit.average_rating}
+                ratingCount={produit.rating_count}
+              />
+            </div>
+          )}
+
+          {/* Comments List */}
+          <div className="border-t border-border pt-6">
+            <CommentsList 
+              produitId={produit.id}
+              onCommentUpdate={() => {
+                // Refresh product data to update ratings
+                window.location.reload()
+              }}
+            />
+          </div>
+          
+          {/* Comment Form */}
+          <div className="border-t border-border pt-6">
+            <h3 className="text-xl font-serif font-semibold mb-4">Laisser un commentaire</h3>
+            <CommentForm
+              produitId={produit.id}
+              onSuccess={() => {
+                // Refresh comments list
+                window.location.reload()
+              }}
+            />
+          </div>
         </motion.div>
 
         {/* Produits similaires */}

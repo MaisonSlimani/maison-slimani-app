@@ -18,6 +18,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWAProduitContent from './PWAProduitContent'
 import { trackViewContent } from '@/lib/meta-pixel'
+import ProductRatingSummary from '@/components/ProductRatingSummary'
+import CommentsList from '@/components/CommentsList'
+import CommentForm from '@/components/CommentForm'
 
 interface ImageItem {
   url: string
@@ -48,6 +51,8 @@ interface Produit {
   date_ajout: string
   taille?: string | null
   slug?: string
+  average_rating?: number | null
+  rating_count?: number
 }
 
 export default function ProduitSlugPage() {
@@ -628,7 +633,8 @@ export default function ProduitSlugPage() {
         </motion.div>
       </div>
 
-      <div className="container max-w-7xl mx-auto px-6 pb-20">
+      <div className="container max-w-7xl mx-auto px-6 pb-20 space-y-16">
+        {/* Product Details Section */}
         <div className="grid md:grid-cols-[35%_65%] gap-12 lg:gap-16">
           <motion.div
             className="relative"
@@ -940,8 +946,56 @@ export default function ProduitSlugPage() {
                 </div>
               </Card>
             </motion.div>
+
           </motion.div>
         </div>
+
+        {/* Avis et Commentaires Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 1.1 }}
+          className="max-w-4xl mx-auto space-y-8 pt-12 border-t border-border"
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-2">Avis des clients</h2>
+            <p className="text-muted-foreground">Découvrez ce que nos clients pensent de ce produit</p>
+          </div>
+
+          {/* Rating Summary */}
+          {produit.rating_count !== undefined && produit.rating_count !== null && produit.rating_count > 0 && produit.average_rating !== null && produit.average_rating !== undefined && produit.average_rating > 0 && (
+            <div className="mb-8">
+              <ProductRatingSummary
+                produitId={produit.id}
+                averageRating={produit.average_rating}
+                ratingCount={produit.rating_count}
+              />
+            </div>
+          )}
+
+          {/* Comments List */}
+          <div>
+            <CommentsList 
+              produitId={produit.id}
+              onCommentUpdate={() => {
+                // Refresh product data to update ratings
+                window.location.reload()
+              }}
+            />
+          </div>
+          
+          {/* Comment Form */}
+          <div className="border-t border-border pt-8">
+            <h3 className="text-2xl font-serif font-semibold mb-6">Laisser un commentaire</h3>
+            <CommentForm
+              produitId={produit.id}
+              onSuccess={() => {
+                // Refresh comments list
+                window.location.reload()
+              }}
+            />
+          </div>
+        </motion.div>
 
         {/* Produits similaires */}
         {produit && produit.categorie && (

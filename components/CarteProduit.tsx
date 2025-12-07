@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { trackAddToWishlist } from '@/lib/meta-pixel'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import RatingDisplay from '@/components/RatingDisplay'
 
 interface ImageItem {
   url: string
@@ -43,6 +44,8 @@ interface Produit {
   couleurs?: Couleur[]
   categorie?: string // Category name (for hierarchical URLs)
   categorySlug?: string // Category slug (optional, will slugify category name if not provided)
+  average_rating?: number | null
+  rating_count?: number
 }
 
 interface CarteProduitProps {
@@ -369,6 +372,16 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
             </h3>
             {produit.matiere && (
               <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3 line-clamp-1">{produit.matiere}</p>
+            )}
+            {produit.rating_count !== undefined && produit.rating_count !== null && produit.rating_count > 0 && produit.average_rating !== null && produit.average_rating !== undefined && produit.average_rating > 0 && (
+              <div className="mb-2 md:mb-3">
+                <RatingDisplay
+                  rating={produit.average_rating}
+                  count={produit.rating_count}
+                  size="sm"
+                  className="justify-start"
+                />
+              </div>
             )}
           </div>
           <p className="text-base md:text-xl font-serif text-primary mt-auto">

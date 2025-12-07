@@ -107,3 +107,30 @@ export const statutCommandeSchema = z.object({
 
 export type CommandePayload = z.infer<typeof commandeSchema>
 
+// Comment schemas
+export const commentaireSchema = z.object({
+  produit_id: z.string().uuid('ID produit invalide'),
+  nom: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  rating: z.number().int().min(1, 'La note doit être entre 1 et 5').max(5, 'La note doit être entre 1 et 5'),
+  commentaire: z.string().min(1, 'Le commentaire est requis').max(2000, 'Le commentaire est trop long'),
+  images: z.array(z.string().url('URL d\'image invalide')).max(6, 'Maximum 6 images autorisées').optional(),
+})
+
+export const updateCommentaireSchema = z.object({
+  nom: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long').optional(),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  rating: z.number().int().min(1, 'La note doit être entre 1 et 5').max(5, 'La note doit être entre 1 et 5').optional(),
+  commentaire: z.string().min(1, 'Le commentaire est requis').max(2000, 'Le commentaire est trop long').optional(),
+  images: z.array(z.string().url('URL d\'image invalide')).max(6, 'Maximum 6 images autorisées').optional(),
+})
+
+export const adminCommentActionSchema = z.object({
+  approved: z.boolean().optional(),
+  flagged: z.boolean().optional(),
+})
+
+export type CommentairePayload = z.infer<typeof commentaireSchema>
+export type UpdateCommentairePayload = z.infer<typeof updateCommentaireSchema>
+export type AdminCommentActionPayload = z.infer<typeof adminCommentActionSchema>
+

@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { verifyAdminSession } from '@/lib/auth/session'
 import sharp from 'sharp'
 
+const MAX_IMAGES_PER_COMMENT = 6
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB per image
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+export const dynamic = 'force-dynamic'
+
+/**
+ * POST /api/commentaires/upload-image
+ * Upload images for comments (public endpoint with rate limiting)
+ */
 export async function POST(request: NextRequest) {
   try {
-    const email = await verifyAdminSession()
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 401 }
-      )
-    }
-
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const singleFile = formData.get('file') as File
@@ -27,35 +28,42 @@ export async function POST(request: NextRequest) {
 
     if (filesToUpload.length === 0) {
       return NextResponse.json(
-        { error: 'Aucun fichier fourni' },
+        { success: false, error: 'Aucun fichier fourni' },
         { status: 400 }
       )
     }
 
-    // Vérifier le type de fichier et la taille pour tous les fichiers
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    // Limit number of images
+    if (filesToUpload.length > MAX_IMAGES_PER_COMMENT) {
+      return NextResponse.json(
+        { success: false, error: `Maximum ${MAX_IMAGES_PER_COMMENT} images autorisées` },
+        { status: 400 }
+      )
+    }
+
+    // Validate files
     for (const file of filesToUpload) {
-      if (!allowedTypes.includes(file.type)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
         return NextResponse.json(
-          { error: `Type de fichier non autorisé: ${file.name}. Utilisez JPEG, PNG ou WebP.` },
+          { success: false, error: `Type de fichier non autorisé: ${file.name}. Utilisez JPEG, PNG ou WebP.` },
           { status: 400 }
         )
       }
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: `Fichier trop volumineux: ${file.name}. Taille maximale: 5MB` },
+          { success: false, error: `Fichier trop volumineux: ${file.name}. Taille maximale: 2MB` },
           { status: 400 }
         )
       }
     }
 
-    // Utiliser la SERVICE_ROLE_KEY pour uploader vers Supabase Storage
+    // Get Supabase credentials
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
-        { error: 'Configuration serveur invalide' },
+        { success: false, error: 'Configuration serveur invalide' },
         { status: 500 }
       )
     }
@@ -64,12 +72,11 @@ export async function POST(request: NextRequest) {
 
     // Process and upload all files in parallel for faster uploads
     const uploadPromises = filesToUpload.map(async (file) => {
-      // Convertir le fichier en buffer
+      // Convert file to buffer
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      // Optimiser l'image avec sharp avant l'upload
-      // Convertir en WebP pour meilleure compression, qualité 85
+      // Optimize image with sharp before upload
       let optimizedBuffer: Buffer
       let optimizedContentType: string
       let fileExt: string
@@ -78,7 +85,7 @@ export async function POST(request: NextRequest) {
         const image = sharp(buffer)
         const metadata = await image.metadata()
 
-        // Déterminer les dimensions optimales (max 2000px pour la largeur/hauteur)
+        // Determine optimal dimensions (max 2000px for width/height, same as product images)
         const maxDimension = 2000
         let width = metadata.width
         let height = metadata.height
@@ -95,7 +102,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Optimiser l'image: WebP format, qualité 85, effort 4 (faster than 6, still good compression)
+        // Optimize: WebP format, quality 85, effort 4 (faster than 6, still good compression)
         optimizedBuffer = await image
           .resize(width, height, {
             fit: 'inside',
@@ -106,21 +113,21 @@ export async function POST(request: NextRequest) {
 
         optimizedContentType = 'image/webp'
         fileExt = 'webp'
-      } catch (optimizationError) {
-        console.warn('Erreur lors de l\'optimisation, utilisation de l\'image originale:', optimizationError)
-        // Si l'optimisation échoue, utiliser l'image originale
+      } catch (sharpError) {
+        // If sharp fails, use original file
+        console.warn('Erreur lors de l\'optimisation, utilisation du fichier original:', sharpError)
         optimizedBuffer = buffer
         optimizedContentType = file.type
         fileExt = file.name.split('.').pop() || 'jpg'
       }
 
-      // Générer un nom de fichier unique avec timestamp et random string
+      // Generate unique filename with timestamp and random string
       const timestamp = Date.now()
       const randomStr = Math.random().toString(36).substring(7)
-      const fileName = `${timestamp}-${randomStr}.${fileExt}`
-      const filePath = `produits/${fileName}`
+      const fileName = `commentaires/${timestamp}-${randomStr}.${fileExt}`
+      const filePath = fileName
 
-      // Upload vers Supabase Storage
+      // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('produits-images')
         .upload(filePath, optimizedBuffer, {
@@ -133,7 +140,7 @@ export async function POST(request: NextRequest) {
         throw new Error(`Erreur lors de l'upload de l'image: ${file.name}`)
       }
 
-      // Obtenir l'URL publique de l'image
+      // Get public URL
       const { data: urlData } = supabase.storage
         .from('produits-images')
         .getPublicUrl(filePath)
@@ -163,7 +170,7 @@ export async function POST(request: NextRequest) {
     // If all uploads failed, return error
     if (uploadResults.length === 0) {
       return NextResponse.json(
-        { error: errors.join('; ') || 'Erreur lors de l\'upload des images' },
+        { success: false, error: errors.join('; ') || 'Erreur lors de l\'upload des images' },
         { status: 500 }
       )
     }
@@ -173,7 +180,7 @@ export async function POST(request: NextRequest) {
       console.warn('Certaines images n\'ont pas pu être uploadées:', errors)
     }
 
-    // Retourner un seul résultat si un seul fichier, sinon un tableau
+    // Return results
     if (uploadResults.length === 1) {
       return NextResponse.json({
         success: true,
@@ -184,13 +191,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         images: uploadResults.map(r => r.imageUrl),
-        imageUrls: uploadResults.map(r => r.imageUrl), // Alias for backward compatibility
+        imageUrls: uploadResults.map(r => r.imageUrl),
       })
     }
   } catch (error) {
     console.error('Erreur lors de l\'upload:', error)
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { success: false, error: 'Erreur serveur' },
       { status: 500 }
     )
   }

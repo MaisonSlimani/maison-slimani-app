@@ -8,7 +8,7 @@ const FEATURED_LIMIT = 6
 const FEATURED_CACHE_SECONDS = 1800  // 30 minutes (increased from 300s for better caching)
 const CATEGORY_CACHE_SECONDS = 900   // 15 minutes (increased from 120s for better caching)
 const PRODUIT_FIELDS =
-  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, slug'
+  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, slug, average_rating, rating_count'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300  // 5 minutes (increased from 60s for better caching)
