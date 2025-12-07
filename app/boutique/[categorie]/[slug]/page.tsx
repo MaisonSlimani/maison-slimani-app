@@ -56,6 +56,7 @@ interface Produit {
   vedette: boolean
   date_ajout: string
   taille?: string | null
+  tailles?: Taille[]
   slug?: string
   average_rating?: number | null
   rating_count?: number

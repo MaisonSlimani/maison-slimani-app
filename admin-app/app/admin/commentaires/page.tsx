@@ -38,6 +38,12 @@ interface Comment {
   }
 }
 
+interface Produit {
+  id: string
+  nom: string
+  categorie: string
+}
+
 export default function AdminCommentairesPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -91,7 +97,7 @@ export default function AdminCommentairesPage() {
     gcTime: 10 * 60 * 1000, // 10 minutes
   })
 
-  const comments = commentsData?.comments || []
+  const comments: Comment[] = commentsData?.comments || []
   const totalCount = commentsData?.count || 0
 
   // Use React Query for products
@@ -109,7 +115,7 @@ export default function AdminCommentairesPage() {
     gcTime: 30 * 60 * 1000, // 30 minutes
   })
 
-  const produits = produitsData || []
+  const produits: Produit[] = produitsData || []
 
   // Real-time updates
   useEffect(() => {
@@ -198,7 +204,7 @@ export default function AdminCommentairesPage() {
     if (selectedIds.size === comments.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(comments.map((c) => c.id)))
+      setSelectedIds(new Set(comments.map((c: Comment) => c.id)))
     }
   }
 

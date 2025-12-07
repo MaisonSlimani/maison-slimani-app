@@ -60,14 +60,14 @@ export async function POST(request: NextRequest) {
     const produitsAvecStock: Array<typeof payload.produits[number]> = []
     const produitsCache = new Map<
       string,
-      { has_colors: boolean; couleurs: any[] | null; prix: number; stock: number; image_url: string | null }
+      { has_colors: boolean; couleurs: any[] | null; tailles: any[] | null; prix: number; stock: number; image_url: string | null; useSizeSpecificDecrement: boolean }
     >()
     let total = 0
 
     for (const produitCommande of payload.produits) {
       const { data: produit, error } = await supabase
         .from('produits')
-        .select('id, nom, prix, stock, has_colors, couleurs, tailles, image_url')
+        .select('id, nom, prix, stock, has_colors, couleurs, tailles, taille, image_url')
         .eq('id', produitCommande.id)
         .single()
 
@@ -141,9 +141,9 @@ export async function POST(request: NextRequest) {
               )
             }
             stockDisponible = tailleData.stock || 0
-          } else if (produit.taille) {
+          } else if ((produit as any).taille) {
             // Backward compatibility
-            const tailleList = produit.taille.split(',').map((t: string) => t.trim())
+            const tailleList = (produit as any).taille.split(',').map((t: string) => t.trim())
             if (!tailleList.includes(produitCommande.taille)) {
               return errorResponse(
                 `Taille "${produitCommande.taille}" non disponible pour ${produit.nom}`,
@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
 
       try {
         // Use size-specific decrement if taille is provided and product supports it
-        if (useSizeSpecific && produitCommande.taille) {
+        if (produitDetails.useSizeSpecificDecrement && produitCommande.taille) {
           if (produitDetails.has_colors && produitCommande.couleur) {
             // Use size-specific function for products with colors
             const { data, error } = await supabase.rpc('decrementer_stock_couleur_taille_atomic', {

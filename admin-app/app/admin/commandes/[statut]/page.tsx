@@ -16,6 +16,17 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
+interface Commande {
+  id: string
+  statut: string
+  nom_client: string
+  telephone?: string
+  ville?: string
+  total: number
+  date_commande: string
+  produits?: any[]
+}
+
 const statutsMap: Record<string, { nom: string; icon: typeof AlertCircle; color: string }> = {
   'en-attente': {
     nom: 'En attente',
@@ -91,7 +102,7 @@ export default function AdminCommandesStatutPage() {
     gcTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  const commandes = commandesData || []
+  const commandes: Commande[] = commandesData || []
 
   const playNotificationSound = useCallback(() => {
     if (!audioRef.current) return

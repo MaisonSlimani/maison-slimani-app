@@ -4,7 +4,7 @@ import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 import { RECOMMENDATIONS_CONFIG } from '@/lib/config/recommendations'
 
 const PRODUCT_FIELDS =
-  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, average_rating, rating_count'
+  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, tailles, date_ajout, average_rating, rating_count'
 
 // Next.js requires revalidate to be a literal value, not a computed one
 export const revalidate = 300 // 5 minutes (matches RECOMMENDATIONS_CONFIG.cacheTTL)

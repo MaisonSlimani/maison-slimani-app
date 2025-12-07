@@ -41,7 +41,8 @@ export default function AdminCategorieProduitsPage() {
     categorie: categorieSlug === 'tous' ? '' : categorieNom,
     vedette: false,
     image_url: '',
-        has_colors: false,
+    taille: '',
+    has_colors: false,
   })
   const [uploading, setUploading] = useState(false)
   
@@ -557,6 +558,7 @@ export default function AdminCategorieProduitsPage() {
                   categorie: categorieSlug === 'tous' ? '' : categorieNom,
                   vedette: false,
                   image_url: '',
+                  taille: '',
                   has_colors: false,
                 })
                 setCouleurs([])
@@ -1332,6 +1334,7 @@ export default function AdminCategorieProduitsPage() {
                                 categorie: produit.categorie || '',
                                 vedette: produit.vedette === true,
                                 image_url: produit.image_url || '',
+                                taille: produit.taille || '',
                                 has_colors: produit.has_colors === true,
                               })
                               
@@ -1500,6 +1503,7 @@ export default function AdminCategorieProduitsPage() {
                           categorie: produit.categorie || categorieNom,
                           vedette: produit.vedette === true,
                           image_url: produit.image_url || '',
+                          taille: produit.taille || '',
                           has_colors: produit.has_colors === true,
                         })
                         

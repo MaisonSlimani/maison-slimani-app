@@ -113,7 +113,7 @@ export function useCart() {
         
         const { data: produit, error } = await supabase
           .from('produits')
-          .select('id, stock, total_stock, has_colors, couleurs, tailles')
+          .select('id, stock, total_stock, has_colors, couleurs, tailles, taille')
           .eq('id', item.id)
           .single()
 

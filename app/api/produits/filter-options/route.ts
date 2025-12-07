@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const categorie = searchParams.get('categorie')
 
     // Build base query
-    let query = supabase.from('produits').select('prix, stock, taille, couleurs, has_colors, categorie')
+    let query = supabase.from('produits').select('prix, stock, taille, tailles, couleurs, has_colors, categorie')
 
     // Filter by category if provided
     if (categorie) {
