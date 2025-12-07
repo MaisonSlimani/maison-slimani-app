@@ -200,13 +200,55 @@ export default function AdminCategorieProduitsPage() {
     e.preventDefault()
     setUploading(true)
     try {
-      // Upload images générales (sans couleur)
+      // Collect all files that need to be uploaded (for parallel processing)
+      const filesToUpload: Array<{ file: File; type: 'general' | 'color'; index?: number; colorIndex?: number }> = []
+      
+      // Collect general images
+      for (let i = 0; i < imagesGenerales.length; i++) {
+        const img = imagesGenerales[i]
+        if (img.file) {
+          filesToUpload.push({ file: img.file, type: 'general', index: i })
+        }
+      }
+
+      // Collect color images
+      if (formData.has_colors) {
+        for (let colorIdx = 0; colorIdx < couleurs.length; colorIdx++) {
+          const couleur = couleurs[colorIdx]
+          if (couleur.nom) {
+            for (let imgIdx = 0; imgIdx < couleur.images.length; imgIdx++) {
+              filesToUpload.push({ 
+                file: couleur.images[imgIdx], 
+                type: 'color', 
+                colorIndex: colorIdx,
+                index: imgIdx 
+              })
+            }
+          }
+        }
+      }
+
+      // Upload all files in parallel
+      const uploadPromises = filesToUpload.map(({ file }) => uploadImage(file))
+      const uploadedUrls = await Promise.all(uploadPromises)
+
+      // Map uploaded URLs back to their locations
+      let urlIndex = 0
+      const urlMap = new Map<string, string>()
+      filesToUpload.forEach((item) => {
+        urlMap.set(`${item.type}-${item.colorIndex ?? 'none'}-${item.index}`, uploadedUrls[urlIndex])
+        urlIndex++
+      })
+
+      // Build general images URLs
       const imagesGeneralesUrls: Array<{ url: string; couleur: null; ordre: number }> = []
       for (let i = 0; i < imagesGenerales.length; i++) {
         const img = imagesGenerales[i]
         if (img.file) {
-          const url = await uploadImage(img.file)
-          imagesGeneralesUrls.push({ url, couleur: null, ordre: i + 1 })
+          const url = urlMap.get(`general-none-${i}`)
+          if (url) {
+            imagesGeneralesUrls.push({ url, couleur: null, ordre: i + 1 })
+          }
         } else if (img.url) {
           // URL existante (lors de l'édition)
           imagesGeneralesUrls.push({ url: img.url, couleur: null, ordre: i + 1 })
@@ -235,17 +277,20 @@ export default function AdminCategorieProduitsPage() {
           }
         }
 
-        // Upload images par couleur
+        // Build color images data with uploaded URLs
         couleursData = [] as Array<{ nom: string; code?: string; images: string[]; stock: number; taille?: string }>
-        for (const couleur of couleurs) {
+        for (let colorIdx = 0; colorIdx < couleurs.length; colorIdx++) {
+          const couleur = couleurs[colorIdx]
           if (!couleur.nom) continue
 
           const couleurImages: string[] = []
           
-          // Upload nouvelles images
-          for (const file of couleur.images) {
-            const url = await uploadImage(file)
-            couleurImages.push(url)
+          // Add uploaded URLs in order
+          for (let imgIdx = 0; imgIdx < couleur.images.length; imgIdx++) {
+            const url = urlMap.get(`color-${colorIdx}-${imgIdx}`)
+            if (url) {
+              couleurImages.push(url)
+            }
           }
           
           // Ajouter URLs existantes (lors de l'édition)

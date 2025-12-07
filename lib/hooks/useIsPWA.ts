@@ -23,25 +23,25 @@ export function useIsPWA() {
       return
     }
 
+    // Optimize: Check synchronously first (instant detection)
     const ua = navigator.userAgent
 
-    // 1. Detect installed PWA (Standalone)
+    // 1. Detect installed PWA (Standalone) - synchronous check
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true
 
-    // 2. Detect WebView App (Capacitor / Android WebView)
+    // 2. Detect WebView App (Capacitor / Android WebView) - synchronous check
     const isWebView =
       ua.includes('wv') ||
       ua.includes('Capacitor') ||
       typeof (window as any).Capacitor !== 'undefined'
 
-    // 3. Detect normal mobile browser (UA only, NOT screen width)
-    // This can be disabled if you want desktop UI on mobile browsers
+    // 3. Detect normal mobile browser (UA only, NOT screen width) - synchronous check
     const isMobileBrowser =
       /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
 
-    // Set PWA mode if any condition is true
+    // Set PWA mode if any condition is true (all checks are synchronous, so instant)
     setIsPWA(isStandalone || isWebView || isMobileBrowser)
     setIsLoading(false)
   }, [])

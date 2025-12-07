@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 
 const PRODUCT_FIELDS =
-  'id, nom, description, prix, stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, slug'
+  'id, nom, description, prix, stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, slug, average_rating, rating_count'
 
 const slugify = (value: string) =>
   value

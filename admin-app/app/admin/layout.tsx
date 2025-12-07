@@ -18,6 +18,7 @@ import {
   XCircle,
   TrendingUp,
   Share2,
+  MessageSquare,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -35,6 +36,7 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true)
   const [produitsExpanded, setProduitsExpanded] = useState(false)
   const [commandesExpanded, setCommandesExpanded] = useState(false)
+  const [flaggedCommentsCount, setFlaggedCommentsCount] = useState(0)
   const [commandesEnAttente, setCommandesEnAttente] = useState(0)
   const [commandesExpediees, setCommandesExpediees] = useState(0)
   const [commandesLivrees, setCommandesLivrees] = useState(0)
@@ -309,6 +311,27 @@ export default function AdminLayout({
     }
   }, [pathname])
 
+  // Fetch flagged comments count
+  useEffect(() => {
+    const fetchFlaggedCount = async () => {
+      try {
+        const response = await fetch('/api/admin/commentaires?filter=flagged&limit=1')
+        const data = await response.json()
+        if (response.ok) {
+          setFlaggedCommentsCount(data.count || 0)
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du nombre de commentaires signalés:', error)
+      }
+    }
+    if (!loading) {
+      fetchFlaggedCount()
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchFlaggedCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [loading])
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
@@ -461,6 +484,27 @@ export default function AdminLayout({
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Menu Commentaires */}
+            <Link
+              href="/admin/commentaires"
+              className={cn(
+                'flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors',
+                pathname?.startsWith('/admin/commentaires') || pathname === '/admin/commentaires'
+                  ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
+                  : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-5 h-5" />
+                <span>Commentaires</span>
+              </div>
+              {flaggedCommentsCount > 0 && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  {flaggedCommentsCount}
+                </span>
+              )}
+            </Link>
 
             {/* Menu Produits avec sous-catégories */}
             <div className="space-y-1">
