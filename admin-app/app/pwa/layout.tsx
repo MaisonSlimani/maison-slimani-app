@@ -9,14 +9,6 @@ export default function PWALayout({
 }: {
   children: React.ReactNode
 }) {
-  // Register for push notifications when layout loads
-  useEffect(() => {
-    import('@/lib/push-notifications').then(({ registerPushNotifications }) => {
-      registerPushNotifications().catch((error) => {
-        console.error('Error registering push notifications:', error)
-      })
-    })
-  }, [])
 
   return (
     <>

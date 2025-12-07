@@ -9,6 +9,16 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
   Bold,
   Italic,
   Underline as UnderlineIcon,
@@ -23,7 +33,7 @@ import {
   Redo,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface RichTextEditorProps {
   content?: string
@@ -40,6 +50,9 @@ export default function RichTextEditor({
   className = '',
   editable = true,
 }: RichTextEditorProps) {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+
   const editor = useEditor({
     immediatelyRender: false, // Prevent SSR hydration mismatches
     extensions: [
@@ -102,20 +115,25 @@ export default function RichTextEditor({
   const setLink = useCallback(() => {
     if (!editor) return
 
-    const previousUrl = editor.getAttributes('link').href
-    const url = window.prompt('URL', previousUrl)
-
-    if (url === null) {
-      return
-    }
-
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
-    }
-
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    const previousUrl = editor.getAttributes('link').href || ''
+    setLinkUrl(previousUrl)
+    setLinkDialogOpen(true)
   }, [editor])
+
+  const handleLinkSubmit = useCallback(() => {
+    if (!editor) return
+
+    if (!linkUrl.trim()) {
+      // Remove link if URL is empty
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    } else {
+      // Add or update link
+      editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.trim() }).run()
+    }
+    
+    setLinkDialogOpen(false)
+    setLinkUrl('')
+  }, [editor, linkUrl])
 
   if (!editor) {
     return (
@@ -283,6 +301,46 @@ export default function RichTextEditor({
 
       {/* Editor Content */}
       <EditorContent editor={editor} className="min-h-[300px]" />
+
+      {/* Link Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un lien</DialogTitle>
+            <DialogDescription>
+              Entrez l'URL du lien. Laissez vide pour supprimer le lien existant.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="link-url">URL</Label>
+              <Input
+                id="link-url"
+                type="url"
+                placeholder="https://example.com"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleLinkSubmit()
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleLinkSubmit}>
+              {linkUrl.trim() ? 'Ajouter' : 'Supprimer le lien'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <style jsx global>{`
         .ProseMirror ol {
           list-style-type: decimal;

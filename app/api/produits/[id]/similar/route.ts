@@ -105,11 +105,8 @@ export async function GET(
         // Use total_stock which correctly handles products with colors
         const isInStock = (product.total_stock || 0) > 0
 
-        // Filter out-of-stock products if configured
-        if (!RECOMMENDATIONS_CONFIG.includeOutOfStock && !isInStock) {
-          return null
-        }
-
+        // Include all products (in-stock and out-of-stock)
+        // Out-of-stock products will be shown with overlay on frontend
         if (isInStock) {
           score += 1
         }

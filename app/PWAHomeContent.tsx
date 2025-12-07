@@ -371,7 +371,7 @@ export default function PWAHomeContent() {
 
       {/* Contactez-nous Section */}
       {whatsappNumber && (
-        <section className="py-16 md:py-24 px-4 bg-gradient-to-b from-ecru via-ecru/95 to-charbon relative overflow-hidden">
+        <section className="py-16 md:py-24 pb-24 px-4 bg-gradient-to-b from-ecru via-ecru/95 to-charbon relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('/assets/pattern-gold.svg')] opacity-5" />
           <div className="relative max-w-4xl mx-auto text-center z-10">
             <motion.div

@@ -101,7 +101,7 @@ export default function ProductPreviewModal({
           </TabsList>
 
           {/* Desktop Preview */}
-          <TabsContent value="desktop" className="mt-0 overflow-y-auto max-h-[calc(95vh-180px)]">
+          <TabsContent value="desktop" className="mt-0 overflow-y-auto max-h-[calc(95vh-180px)] admin-scroll">
             <div className="p-6 bg-muted/30">
               <div className="max-w-7xl mx-auto bg-background rounded-lg shadow-lg overflow-hidden">
                 {/* Desktop Header (simulated) */}
@@ -273,7 +273,7 @@ export default function ProductPreviewModal({
           </TabsContent>
 
           {/* Mobile Preview */}
-          <TabsContent value="mobile" className="mt-0 overflow-y-auto max-h-[calc(95vh-180px)]">
+          <TabsContent value="mobile" className="mt-0 overflow-y-auto max-h-[calc(95vh-180px)] admin-scroll">
             <div className="p-6 bg-muted/30">
               <div className="max-w-sm mx-auto bg-background rounded-lg shadow-lg overflow-hidden">
                 {/* Mobile Header (simulated) */}

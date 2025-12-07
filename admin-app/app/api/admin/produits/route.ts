@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('produits')
-      .select('id, nom, description, prix, stock, categorie, image_url, taille, vedette, has_colors, images, couleurs, date_ajout')
+      .select('id, nom, description, prix, stock, categorie, image_url, taille, tailles, vedette, has_colors, images, couleurs, date_ajout')
       .order('date_ajout', { ascending: false })
 
     if (error) {
@@ -69,10 +69,10 @@ export async function POST(request: NextRequest) {
       vedette,
       image_url,
       taille,
+      tailles,
       has_colors,
       images,
       couleurs,
-      upsell_products,
     } = body
 
     // Validation
@@ -159,10 +159,10 @@ export async function PUT(request: NextRequest) {
       vedette,
       image_url,
       taille,
+      tailles,
       has_colors,
       images,
       couleurs,
-      upsell_products,
     } = body
 
     if (!id) {
@@ -180,6 +180,16 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Process couleurs to ensure tailles structure
+    let processedCouleurs = couleurs || []
+    if (Array.isArray(processedCouleurs)) {
+      processedCouleurs = processedCouleurs.map((c: any) => {
+        // Remove taille if tailles exists
+        const { taille: _, ...couleurWithoutTaille } = c
+        return couleurWithoutTaille
+      })
+    }
+
     const produitData: any = {
       nom,
       description,
@@ -188,11 +198,10 @@ export async function PUT(request: NextRequest) {
       categorie: categorie || null,
       vedette: vedette || false,
       image_url: image_url || null,
-      taille: taille || null,
+      tailles: !has_colors && tailles && Array.isArray(tailles) && tailles.length > 0 ? tailles : null,
       has_colors: has_colors || false,
       images: images || [],
-      couleurs: couleurs || [],
-      upsell_products: upsell_products || [],
+      couleurs: processedCouleurs,
     }
 
     const { data, error } = await supabase

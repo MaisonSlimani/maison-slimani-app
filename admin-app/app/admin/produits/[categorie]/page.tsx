@@ -41,13 +41,14 @@ export default function AdminCategorieProduitsPage() {
     categorie: categorieSlug === 'tous' ? '' : categorieNom,
     vedette: false,
     image_url: '',
-    taille: '',
         has_colors: false,
   })
   const [uploading, setUploading] = useState(false)
   
   // États pour les images multiples et couleurs
-  const [couleurs, setCouleurs] = useState<Array<{ nom: string; code: string; stock: number; taille: string; images: File[]; imageUrls: string[] }>>([])
+  const [couleurs, setCouleurs] = useState<Array<{ nom: string; code: string; stock: number; tailles: Array<{ nom: string; stock: number }>; images: File[]; imageUrls: string[] }>>([])
+  // États pour les tailles des produits sans couleurs
+  const [tailles, setTailles] = useState<Array<{ nom: string; stock: number }>>([])
   const [imagesGenerales, setImagesGenerales] = useState<Array<{ file: File | null; url: string | null }>>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [produitToDelete, setProduitToDelete] = useState<string | null>(null)
@@ -120,15 +121,60 @@ export default function AdminCategorieProduitsPage() {
 
   // Gestion des couleurs
   const addCouleur = () => {
-    setCouleurs([...couleurs, { nom: '', code: '#000000', stock: 0, taille: '', images: [], imageUrls: [] }])
+    setCouleurs([...couleurs, { nom: '', code: '#000000', stock: 0, tailles: [], images: [], imageUrls: [] }])
   }
 
   const removeCouleur = (index: number) => {
     setCouleurs(couleurs.filter((_, i) => i !== index))
   }
 
-  const updateCouleur = (index: number, field: 'nom' | 'code' | 'stock' | 'taille', value: string | number) => {
+  const updateCouleur = (index: number, field: 'nom' | 'code' | 'stock', value: string | number) => {
     setCouleurs(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  // Gestion des tailles pour les couleurs
+  const addTailleToCouleur = (couleurIndex: number) => {
+    setCouleurs(prev => {
+      const updated = [...prev]
+      if (!updated[couleurIndex].tailles) {
+        updated[couleurIndex].tailles = []
+      }
+      updated[couleurIndex].tailles = [...updated[couleurIndex].tailles, { nom: '', stock: 0 }]
+      return updated
+    })
+  }
+
+  const removeTailleFromCouleur = (couleurIndex: number, tailleIndex: number) => {
+    setCouleurs(prev => {
+      const updated = [...prev]
+      updated[couleurIndex].tailles = updated[couleurIndex].tailles.filter((_, i) => i !== tailleIndex)
+      return updated
+    })
+  }
+
+  const updateTailleInCouleur = (couleurIndex: number, tailleIndex: number, field: 'nom' | 'stock', value: string | number) => {
+    setCouleurs(prev => {
+      const updated = [...prev]
+      updated[couleurIndex].tailles[tailleIndex] = { ...updated[couleurIndex].tailles[tailleIndex], [field]: value }
+      return updated
+    })
+  }
+
+  // Gestion des tailles pour les produits sans couleurs
+  const addTaille = () => {
+    setTailles([...tailles, { nom: '', stock: 0 }])
+  }
+
+  const removeTaille = (index: number) => {
+    setTailles(tailles.filter((_, i) => i !== index))
+  }
+
+  const updateTaille = (index: number, field: 'nom' | 'stock', value: string | number) => {
+    setTailles(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], [field]: value }
       return updated
@@ -257,7 +303,8 @@ export default function AdminCategorieProduitsPage() {
 
       // Traitement selon le type de produit
       let images: Array<{ url: string; ordre: number }> | undefined = undefined
-      let couleursData: Array<{ nom: string; code?: string; images: string[]; stock: number; taille?: string }> | undefined = undefined
+      let couleursData: Array<{ nom: string; code?: string; images: string[]; stock: number; tailles?: Array<{ nom: string; stock: number }> }> | undefined = undefined
+      let taillesData: Array<{ nom: string; stock: number }> | undefined = undefined
       let imageUrl = formData.image_url
 
       if (formData.has_colors) {
@@ -278,7 +325,7 @@ export default function AdminCategorieProduitsPage() {
         }
 
         // Build color images data with uploaded URLs
-        couleursData = [] as Array<{ nom: string; code?: string; images: string[]; stock: number; taille?: string }>
+        couleursData = [] as Array<{ nom: string; code?: string; images: string[]; stock: number; tailles?: Array<{ nom: string; stock: number }> }>
         for (let colorIdx = 0; colorIdx < couleurs.length; colorIdx++) {
           const couleur = couleurs[colorIdx]
           if (!couleur.nom) continue
@@ -302,12 +349,22 @@ export default function AdminCategorieProduitsPage() {
             return
           }
 
+          // Filter out empty tailles (where nom is empty)
+          const validTailles = couleur.tailles?.filter(t => t.nom.trim() !== '') || []
+          
+          // Calculate color stock from sizes if sizes are defined
+          let couleurStock = couleur.stock || 0
+          if (validTailles.length > 0) {
+            // Calculate stock as sum of all size stocks for this color
+            couleurStock = validTailles.reduce((sum, taille) => sum + (taille.stock || 0), 0)
+          }
+
           couleursData.push({
             nom: couleur.nom,
             code: couleur.code,
             images: couleurImages,
-            stock: couleur.stock || 0,
-            taille: couleur.taille || undefined,
+            stock: couleurStock, // Stock calculated from sizes if sizes are defined
+            tailles: validTailles.length > 0 ? validTailles : undefined,
           })
         }
 
@@ -325,17 +382,37 @@ export default function AdminCategorieProduitsPage() {
 
         images = imagesGeneralesUrls.map(img => ({ url: img.url, ordre: img.ordre }))
         imageUrl = images[0]?.url || formData.image_url
+        
+        // Filter out empty tailles (where nom is empty)
+        const validTailles = tailles.filter(t => t.nom.trim() !== '')
+        taillesData = validTailles.length > 0 ? validTailles : undefined
+      }
+
+      // Calculate overall stock
+      let calculatedStock = 0
+      if (formData.has_colors && couleursData) {
+        // For products with colors, calculate total stock from all colors
+        calculatedStock = couleursData.reduce((sum, couleur) => sum + (couleur.stock || 0), 0)
+      } else if (!formData.has_colors) {
+        // For products without colors, use formData.stock or calculate from sizes
+        if (taillesData && taillesData.length > 0) {
+          // Calculate stock as sum of all size stocks
+          calculatedStock = taillesData.reduce((sum, taille) => sum + (taille.stock || 0), 0)
+        } else {
+          calculatedStock = parseInt(formData.stock) || 0
+        }
       }
 
       const produitData = {
         ...formData,
         prix: parseFloat(formData.prix),
-        stock: formData.has_colors ? 0 : parseInt(formData.stock), // Stock global = 0 si produit avec couleurs
+        stock: calculatedStock, // Stock calculated from sizes if sizes are defined
         vedette: formData.vedette,
         has_colors: formData.has_colors,
         image_url: imageUrl,
         images: images,
         couleurs: couleursData,
+        tailles: taillesData,
         categorie: categorieSlug === 'tous' ? formData.categorie : categorieNom,
       }
 
@@ -480,18 +557,18 @@ export default function AdminCategorieProduitsPage() {
                   categorie: categorieSlug === 'tous' ? '' : categorieNom,
                   vedette: false,
                   image_url: '',
-                  taille: '',
                   has_colors: false,
                 })
                 setCouleurs([])
                 setImagesGenerales([])
+                setTailles([])
               }}
             >
               <Plus className="w-4 h-4 mr-2" />
               Nouveau produit
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto admin-scroll">
             <DialogHeader>
               <div className="flex items-center justify-between pr-8">
                 <div>
@@ -626,45 +703,65 @@ export default function AdminCategorieProduitsPage() {
                 </div>
                 {!formData.has_colors && (
                 <div>
-                  <Label htmlFor="stock">Stock disponible *</Label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    min="0"
-                    required
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Le stock sera automatiquement décrémenté lors des commandes
-                  </p>
-                  {parseInt(formData.stock) <= 5 && parseInt(formData.stock) > 0 && (
-                    <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      Stock faible - Considérez réapprovisionner
-                    </p>
+                  <Label htmlFor="stock">
+                    Stock disponible {tailles.length > 0 ? '(calculé automatiquement)' : '*'}
+                  </Label>
+                  {tailles.length > 0 ? (
+                    // Show calculated stock (read-only) when sizes are added
+                    <div className="space-y-2">
+                      <Input
+                        id="stock"
+                        type="number"
+                        min="0"
+                        value={tailles.reduce((sum, taille) => sum + (taille.stock || 0), 0)}
+                        readOnly
+                        className="bg-muted cursor-not-allowed"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Le stock total est calculé automatiquement à partir de la somme des stocks de chaque taille.
+                      </p>
+                    </div>
+                  ) : (
+                    // Allow manual input when no sizes are defined
+                    <>
+                      <Input
+                        id="stock"
+                        type="number"
+                        min="0"
+                        required
+                        value={formData.stock}
+                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Le stock sera automatiquement décrémenté lors des commandes
+                      </p>
+                    </>
                   )}
-                  {parseInt(formData.stock) === 0 && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      Rupture de stock - Le produit ne sera pas disponible à la vente
-                    </p>
-                  )}
+                  {(() => {
+                    const currentStock = tailles.length > 0
+                      ? tailles.reduce((sum, taille) => sum + (taille.stock || 0), 0)
+                      : parseInt(formData.stock) || 0
+                    
+                    if (currentStock <= 5 && currentStock > 0) {
+                      return (
+                        <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          Stock faible - Considérez réapprovisionner
+                        </p>
+                      )
+                    }
+                    if (currentStock === 0) {
+                      return (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          Rupture de stock - Le produit ne sera pas disponible à la vente
+                        </p>
+                      )
+                    }
+                    return null
+                  })()}
                 </div>
                 )}
-              </div>
-              <div>
-                <Label htmlFor="taille">Tailles disponibles (séparées par des virgules, ex: 40, 41, 42, 43)</Label>
-                <Input
-                  id="taille"
-                  type="text"
-                  placeholder="40, 41, 42, 43"
-                  value={formData.taille}
-                  onChange={(e) => setFormData({ ...formData, taille: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Laissez vide si le produit n'a pas de tailles. Format: tailles séparées par des virgules.
-                </p>
               </div>
               {categorieSlug === 'tous' && (
                 <div>
@@ -686,6 +783,78 @@ export default function AdminCategorieProduitsPage() {
                   </Select>
                 </div>
               )}
+              {/* Gestion des tailles pour produits SANS couleurs */}
+              {!formData.has_colors && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Tailles disponibles
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Ajoutez les tailles disponibles pour ce produit avec leur stock respectif. Le stock total sera calculé automatiquement.
+                      </p>
+                      {tailles.length > 0 && tailles.some(t => t.nom.trim() !== '') && (
+                        <p className="text-xs text-blue-600 mt-1 font-medium">
+                          Stock total: {tailles.reduce((sum, taille) => sum + (taille.stock || 0), 0)}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addTaille}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter une taille
+                    </Button>
+                  </div>
+                  {(!tailles || tailles.length === 0) && (
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Aucune taille définie. Cliquez sur "Ajouter une taille" pour commencer.
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {tailles.map((taille, index) => (
+                      <div key={index} className="flex gap-2 items-start p-3 border rounded-lg">
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Taille</Label>
+                            <Input
+                              type="text"
+                              placeholder="Ex: 40"
+                              value={taille.nom}
+                              onChange={(e) => updateTaille(index, 'nom', e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Stock</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              value={taille.stock}
+                              onChange={(e) => updateTaille(index, 'stock', parseInt(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeTaille(index)}
+                          className="mt-6"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Images générales (uniquement pour produits SANS couleurs) */}
               {!formData.has_colors && (
                 <div className="border-t pt-4">
@@ -839,34 +1008,102 @@ export default function AdminCategorieProduitsPage() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label>Stock pour cette couleur *</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={couleur.stock || 0}
-                            onChange={(e) => updateCouleur(couleurIndex, 'stock', parseInt(e.target.value) || 0)}
-                            required
-                            className="w-full"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Stock disponible pour cette couleur
-                          </p>
+                          <Label>
+                            Stock pour cette couleur {couleur.tailles && couleur.tailles.length > 0 ? '(calculé automatiquement)' : '*'}
+                          </Label>
+                          {couleur.tailles && couleur.tailles.length > 0 ? (
+                            // Show calculated stock (read-only) when sizes are added
+                            <div className="space-y-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={couleur.tailles.reduce((sum, taille) => sum + (taille.stock || 0), 0)}
+                                readOnly
+                                className="w-full bg-muted cursor-not-allowed"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Le stock est calculé automatiquement à partir de la somme des stocks de chaque taille.
+                              </p>
+                            </div>
+                          ) : (
+                            // Allow manual input when no sizes are defined
+                            <>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={couleur.stock || 0}
+                                onChange={(e) => updateCouleur(couleurIndex, 'stock', parseInt(e.target.value) || 0)}
+                                required
+                                className="w-full"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Stock disponible pour cette couleur
+                              </p>
+                            </>
+                          )}
                         </div>
                       </div>
 
                       {/* Sizes section */}
-                      <div className="space-y-2">
-                        <Label>Tailles disponibles pour cette couleur</Label>
-                        <Input
-                          type="text"
-                          value={couleur.taille || ''}
-                          onChange={(e) => updateCouleur(couleurIndex, 'taille', e.target.value)}
-                          placeholder="Ex: 40, 41, 42, 43 (séparées par des virgules)"
-                          className="w-full"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Laissez vide si cette couleur n'a pas de tailles spécifiques. Format: tailles séparées par des virgules.
-                        </p>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label>Tailles disponibles pour cette couleur</Label>
+                            {couleur.tailles && couleur.tailles.length > 0 && couleur.tailles.some(t => t.nom.trim() !== '') && (
+                              <p className="text-xs text-blue-600 mt-1 font-medium">
+                                Stock total: {couleur.tailles.reduce((sum, taille) => sum + (taille.stock || 0), 0)}
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addTailleToCouleur(couleurIndex)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ajouter une taille
+                          </Button>
+                        </div>
+                        {(!couleur.tailles || couleur.tailles.length === 0) && (
+                          <p className="text-xs text-muted-foreground">
+                            Aucune taille définie. Cliquez sur "Ajouter une taille" pour commencer.
+                          </p>
+                        )}
+                        {couleur.tailles?.map((taille, tailleIndex) => (
+                          <div key={tailleIndex} className="flex gap-2 items-start p-3 border rounded-lg">
+                            <div className="flex-1 grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs">Taille</Label>
+                                <Input
+                                  type="text"
+                                  placeholder="Ex: 40"
+                                  value={taille.nom}
+                                  onChange={(e) => updateTailleInCouleur(couleurIndex, tailleIndex, 'nom', e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Stock</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  placeholder="0"
+                                  value={taille.stock}
+                                  onChange={(e) => updateTailleInCouleur(couleurIndex, tailleIndex, 'stock', parseInt(e.target.value) || 0)}
+                                />
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeTailleFromCouleur(couleurIndex, tailleIndex)}
+                              className="mt-6"
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
 
                       {/* Images section */}
@@ -1095,7 +1332,6 @@ export default function AdminCategorieProduitsPage() {
                                 categorie: produit.categorie || '',
                                 vedette: produit.vedette === true,
                                 image_url: produit.image_url || '',
-                                taille: produit.taille || '',
                                 has_colors: produit.has_colors === true,
                               })
                               
@@ -1106,12 +1342,13 @@ export default function AdminCategorieProduitsPage() {
                                   nom: c.nom || '',
                                   code: c.code || '#000000',
                                   stock: c.stock !== null && c.stock !== undefined ? c.stock : 0,
-                                  taille: c.taille || '',
+                                  tailles: Array.isArray(c.tailles) ? c.tailles : (c.taille ? c.taille.split(',').map((t: string) => ({ nom: t.trim(), stock: Math.floor((c.stock || 0) / c.taille.split(',').length) })) : []),
                                   images: [],
                                   imageUrls: Array.isArray(c.images) ? c.images : [],
                                 }))
                                 setCouleurs(couleursData)
                                 setImagesGenerales([])
+                                setTailles([])
                               } else if (produit.images && Array.isArray(produit.images) && produit.images.length > 0) {
                                 // Produit SANS couleurs - images générales
                                 const generales = produit.images.map((img: any) => ({
@@ -1120,6 +1357,16 @@ export default function AdminCategorieProduitsPage() {
                                 }))
                                 setImagesGenerales(generales)
                                 setCouleurs([])
+                                // Load tailles from produit.tailles or convert from produit.taille
+                                if (Array.isArray(produit.tailles)) {
+                                  setTailles(produit.tailles)
+                                } else if (produit.taille) {
+                                  const tailleList = produit.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                                  const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+                                  setTailles(tailleList.map((t: string) => ({ nom: t, stock: stockPerSize })))
+                                } else {
+                                  setTailles([])
+                                }
                               } else {
                                 // Fallback: utiliser image_url si disponible
                                 if (produit.image_url) {
@@ -1128,6 +1375,16 @@ export default function AdminCategorieProduitsPage() {
                                   setImagesGenerales([])
                                 }
                                 setCouleurs([])
+                                // Load tailles
+                                if (Array.isArray(produit.tailles)) {
+                                  setTailles(produit.tailles)
+                                } else if (produit.taille) {
+                                  const tailleList = produit.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                                  const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+                                  setTailles(tailleList.map((t: string) => ({ nom: t, stock: stockPerSize })))
+                                } else {
+                                  setTailles([])
+                                }
                               }
                               setDialogOpen(true)
                             }}
@@ -1243,7 +1500,6 @@ export default function AdminCategorieProduitsPage() {
                           categorie: produit.categorie || categorieNom,
                           vedette: produit.vedette === true,
                           image_url: produit.image_url || '',
-                          taille: produit.taille || '',
                           has_colors: produit.has_colors === true,
                         })
                         
@@ -1254,12 +1510,13 @@ export default function AdminCategorieProduitsPage() {
                             nom: c.nom || '',
                             code: c.code || '#000000',
                             stock: c.stock !== null && c.stock !== undefined ? c.stock : 0,
-                            taille: c.taille || '',
+                            tailles: Array.isArray(c.tailles) ? c.tailles : (c.taille ? c.taille.split(',').map((t: string) => ({ nom: t.trim(), stock: Math.floor((c.stock || 0) / c.taille.split(',').length) })) : []),
                             images: [],
                             imageUrls: Array.isArray(c.images) ? c.images : [],
                           }))
                           setCouleurs(couleursData)
                           setImagesGenerales([])
+                          setTailles([])
                         } else if (produit.images && Array.isArray(produit.images) && produit.images.length > 0) {
                           // Produit SANS couleurs - images générales
                           const generales = produit.images.map((img: any) => ({
@@ -1268,6 +1525,16 @@ export default function AdminCategorieProduitsPage() {
                           }))
                           setImagesGenerales(generales)
                           setCouleurs([])
+                          // Load tailles from produit.tailles or convert from produit.taille
+                          if (Array.isArray(produit.tailles)) {
+                            setTailles(produit.tailles)
+                          } else if (produit.taille) {
+                            const tailleList = produit.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                            const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+                            setTailles(tailleList.map((t: string) => ({ nom: t, stock: stockPerSize })))
+                          } else {
+                            setTailles([])
+                          }
                         } else {
                           // Fallback: utiliser image_url si disponible
                           if (produit.image_url) {
@@ -1276,6 +1543,16 @@ export default function AdminCategorieProduitsPage() {
                             setImagesGenerales([])
                           }
                           setCouleurs([])
+                          // Load tailles
+                          if (Array.isArray(produit.tailles)) {
+                            setTailles(produit.tailles)
+                          } else if (produit.taille) {
+                            const tailleList = produit.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                            const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+                            setTailles(tailleList.map((t: string) => ({ nom: t, stock: stockPerSize })))
+                          } else {
+                            setTailles([])
+                          }
                         }
                         setDialogOpen(true)
                       }}

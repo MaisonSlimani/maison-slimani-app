@@ -22,11 +22,17 @@ interface ImageItem {
   ordre?: number
 }
 
+interface Taille {
+  nom: string
+  stock: number
+}
+
 interface Couleur {
   nom: string
   code?: string
   stock?: number
-  taille?: string
+  taille?: string // backward compatibility
+  tailles?: Taille[]
 }
 
 interface Produit {
@@ -39,7 +45,8 @@ interface Produit {
   image_url?: string
   images?: ImageItem[] | string[]
   stock?: number
-  taille?: string
+  taille?: string // backward compatibility
+  tailles?: Taille[]
   has_colors?: boolean
   couleurs?: Couleur[]
   categorie?: string // Category name (for hierarchical URLs)
@@ -76,10 +83,16 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   
   // Generate hierarchical URL: /boutique/[categorie]/[slug]
   const productSlug = produit.slug || slugify(produit.nom)
-  const categorySlug = produit.categorySlug || (produit.categorie ? slugify(produit.categorie) : null)
-  const href = categorySlug 
+  let categorySlug: string | null = null
+  if (produit.categorySlug) {
+    categorySlug = produit.categorySlug
+  } else if (produit.categorie && produit.categorie.trim()) {
+    const slugified = slugify(produit.categorie.trim())
+    categorySlug = slugified && slugified.length > 0 ? slugified : null
+  }
+  const href = categorySlug && categorySlug.length > 0
     ? `/boutique/${categorySlug}/${productSlug}`
-    : `/produits/${productSlug}` // Fallback to old URL if no category
+    : `/boutique/${productSlug}` // Fallback to boutique root if no category
   const { addItem: addToCart, items } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
   const [isAddingToCart, setIsAddingToCart] = useState(false)
@@ -132,10 +145,33 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     }
   }, [produit?.id])
 
-  // Parse les tailles disponibles
-  const taillesDisponibles = produit.taille && produit.taille.trim() 
-    ? produit.taille.split(',').map(t => t.trim()).filter(t => t)
-    : []
+  // Parse les tailles disponibles (check new tailles array first, then fallback to old taille string)
+  const taillesDisponibles: string[] = (() => {
+    // Check new tailles array structure (array of objects with nom and stock)
+    if (produit.tailles && Array.isArray(produit.tailles) && produit.tailles.length > 0) {
+      // Filter out empty names and return array of size names
+      const result: string[] = []
+      for (const t of produit.tailles) {
+        if (typeof t === 'string') {
+          const trimmed = (t as string).trim()
+          if (trimmed) result.push(trimmed)
+        } else if (t && typeof t === 'object' && 'nom' in t) {
+          const nomValue = (t as Taille).nom
+          if (nomValue) {
+            const nom = String(nomValue).trim()
+            if (nom) result.push(nom)
+          }
+        }
+      }
+      return result
+    }
+    // Fallback to old taille string
+    if (produit.taille && typeof produit.taille === 'string' && produit.taille.trim()) {
+      const tailleParts = produit.taille.split(',')
+      return tailleParts.map((t: string) => t.trim()).filter((t: string) => t !== '')
+    }
+    return []
+  })()
 
   // Helper function to check if product is out of stock
   const isOutOfStock = () => {
@@ -214,32 +250,57 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
       return
     }
 
-    // Get available sizes based on selected color
-    let availableSizes: string[] = []
+    // Get tailles and check stock per size
+    let taillesData: Taille[] = []
     if (produit.has_colors && selectedCouleur && produit.couleurs) {
       const couleurSelected = produit.couleurs.find(c => c.nom === selectedCouleur)
-      if (couleurSelected?.taille) {
-        availableSizes = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+      if (couleurSelected?.tailles && Array.isArray(couleurSelected.tailles)) {
+        taillesData = couleurSelected.tailles
+      } else if (couleurSelected?.taille) {
+        const tailleList = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+        const stockPerSize = tailleList.length > 0 ? Math.floor((couleurSelected.stock || 0) / tailleList.length) : 0
+        taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
+      } else if (produit.tailles && Array.isArray(produit.tailles)) {
+        taillesData = produit.tailles
       } else if (produit.taille) {
-        availableSizes = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+        const tailleList = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+        const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+        taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
       }
+    } else if (produit.tailles && Array.isArray(produit.tailles)) {
+      taillesData = produit.tailles
     } else if (produit.taille) {
-      availableSizes = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+      const tailleList = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+      const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+      taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
     }
 
-    if (availableSizes.length > 0 && !selectedTaille) {
+    if (taillesData.length > 0 && !selectedTaille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
 
-    // Check stock
+    // Check stock per size
     let stockDisponible = produit.stock || 0
-    if (produit.has_colors && selectedCouleur && produit.couleurs) {
+    if (taillesData.length > 0 && selectedTaille) {
+      const selectedTailleData = taillesData.find(t => t.nom === selectedTaille)
+      if (!selectedTailleData) {
+        toast.error('Taille invalide')
+        return
+      }
+      if (selectedTailleData.stock < quantite) {
+        toast.error(`Stock insuffisant pour la taille ${selectedTaille}. Stock disponible: ${selectedTailleData.stock}`)
+        return
+      }
+      stockDisponible = selectedTailleData.stock
+    } else if (produit.has_colors && selectedCouleur && produit.couleurs) {
       const couleurSelected = produit.couleurs.find(c => c.nom === selectedCouleur)
       stockDisponible = couleurSelected?.stock || 0
-    }
-
-    if (stockDisponible < quantite) {
+      if (stockDisponible < quantite) {
+        toast.error('Stock insuffisant')
+        return
+      }
+    } else if (stockDisponible < quantite) {
       toast.error('Stock insuffisant')
       return
     }
@@ -357,10 +418,10 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
               <Heart className="w-3 h-3 md:w-4 md:h-4 text-charbon fill-current" />
             </div>
           )}
-          {/* Badge rupture de stock */}
+          {/* Badge rupture de stock en haut à gauche */}
           {isOutOfStock() && (
-            <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-2 py-1 md:px-3 md:py-1.5">
-              <span className="text-white text-[10px] md:text-xs font-semibold uppercase tracking-wide">Rupture</span>
+            <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-2 py-1 md:px-3 md:py-1.5 border border-red-700/50">
+              <span className="text-white text-[10px] md:text-xs font-semibold uppercase">Rupture</span>
             </div>
           )}
         </motion.div>
@@ -563,39 +624,59 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
 
             {/* Sélecteur de taille - basé sur la couleur sélectionnée */}
             {(() => {
-              // Get available sizes based on selected color
-              let availableSizes: string[] = []
+              // Get available sizes with stock information
+              let taillesData: Taille[] = []
               if (produit.has_colors && selectedCouleur && produit.couleurs) {
                 const couleurSelected = produit.couleurs.find(c => c.nom === selectedCouleur)
-                if (couleurSelected?.taille) {
-                  availableSizes = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+                if (couleurSelected?.tailles && Array.isArray(couleurSelected.tailles)) {
+                  taillesData = couleurSelected.tailles
+                } else if (couleurSelected?.taille) {
+                  // Backward compatibility
+                  const tailleList = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+                  const stockPerSize = tailleList.length > 0 ? Math.floor((couleurSelected.stock || 0) / tailleList.length) : 0
+                  taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
+                } else if (produit.tailles && Array.isArray(produit.tailles)) {
+                  taillesData = produit.tailles
                 } else if (produit.taille) {
-                  availableSizes = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+                  const tailleList = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+                  const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+                  taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
                 }
+              } else if (produit.tailles && Array.isArray(produit.tailles)) {
+                taillesData = produit.tailles
               } else if (produit.taille) {
-                availableSizes = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+                const tailleList = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+                const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+                taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
               }
 
-              if (availableSizes.length > 0 && (!produit.has_colors || selectedCouleur)) {
+              if (taillesData.length > 0 && (!produit.has_colors || selectedCouleur)) {
                 return (
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Taille</label>
                     <div className="flex flex-wrap gap-2">
-                      {availableSizes.map((taille) => {
-                        const isSelected = selectedTaille === taille
+                      {taillesData.map((t) => {
+                        const isSelected = selectedTaille === t.nom
+                        const isOutOfStock = t.stock <= 0
                         return (
                           <button
-                            key={taille}
+                            key={t.nom}
                             type="button"
-                            onClick={() => setSelectedTaille(taille)}
+                            disabled={isOutOfStock}
+                            onClick={() => !isOutOfStock && setSelectedTaille(t.nom)}
                             className={cn(
-                              'w-12 h-12 rounded-lg border-2 font-medium transition-all hover:scale-105',
-                              isSelected
-                                ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
-                                : 'bg-background text-foreground border-border hover:border-dore'
+                              'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
+                              isOutOfStock 
+                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                                : isSelected
+                                  ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105'
+                                  : 'bg-background text-foreground border-border hover:border-dore hover:scale-105'
                             )}
                           >
-                            {taille}
+                            {t.nom}
+                            {isOutOfStock && (
+                              <span className="absolute -top-1 -right-1 text-[8px] bg-red-600 text-white px-1 rounded">Rupture</span>
+                            )}
                           </button>
                         )
                       })}

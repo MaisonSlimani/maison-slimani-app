@@ -13,10 +13,10 @@ import { Plus, Edit, Trash2, Image as ImageIcon, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { LuxuryLoading } from '@/components/ui/luxury-loading'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategorie, setEditingCategorie] = useState<any>(null)
   const [formData, setFormData] = useState({
@@ -35,23 +35,21 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    chargerCategories()
   }, [])
 
-  const chargerCategories = async () => {
-    try {
+  // Use React Query for categories
+  const { data: categories = [], isLoading: loading } = useQuery({
+    queryKey: ['admin-categories'],
+    queryFn: async () => {
       const response = await fetch('/api/admin/categories')
       if (!response.ok) throw new Error('Erreur lors du chargement')
       
       const result = await response.json()
-      setCategories(result.data || [])
-    } catch (error) {
-      console.error('Erreur lors du chargement des catégories:', error)
-      toast.error('Erreur lors du chargement des catégories')
-    } finally {
-      setLoading(false)
-    }
-  }
+      return result.data || []
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - categories don't change often
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  })
 
   const generateSlug = (nom: string) => {
     return nom
@@ -150,7 +148,7 @@ export default function AdminCategoriesPage() {
       })
       setImageFile(null)
       setImagePreview(null)
-      chargerCategories()
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
     } catch (error: any) {
       console.error('Erreur lors de la sauvegarde:', error)
       toast.error(error.message || 'Erreur lors de la sauvegarde')
@@ -182,7 +180,7 @@ export default function AdminCategoriesPage() {
       }
 
       toast.success('Catégorie supprimée')
-      chargerCategories()
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
       setDeleteDialogOpen(false)
       setCategorieToDelete(null)
     } catch (error: any) {
@@ -223,7 +221,7 @@ export default function AdminCategoriesPage() {
               Nouvelle catégorie
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto admin-scroll">
             <DialogHeader>
               <DialogTitle>
                 {editingCategorie ? 'Modifier la catégorie' : 'Nouvelle catégorie'}

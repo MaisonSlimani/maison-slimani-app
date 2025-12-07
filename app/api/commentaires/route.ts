@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { commentaireSchema } from '@/lib/validations'
 import { applyRateLimit, getClientIdentifier } from '@/lib/middleware/rate-limit'
-import { generateSessionToken, setSessionToken } from '@/lib/utils/comment-session'
+import { generateSessionToken, setSessionToken, getSessionToken } from '@/lib/utils/comment-session'
 import { shouldFlagAsSpam } from '@/lib/utils/spam-detection'
 
 export const dynamic = 'force-dynamic'
@@ -28,9 +28,12 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // Get user's session token to check ownership
+    const userSessionToken = await getSessionToken()
+
     let query = supabase
       .from('commentaires')
-      .select('id, nom, email, rating, commentaire, images, created_at, updated_at')
+      .select('id, nom, email, rating, commentaire, images, created_at, updated_at, session_token')
       .eq('produit_id', produitId)
       .eq('approved', true)
       .range(offset, offset + limit - 1)
@@ -55,9 +58,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Add ownership flag without exposing session_token
+    const commentsWithOwnership = (data || []).map((comment: any) => {
+      const { session_token, ...commentWithoutToken } = comment
+      return {
+        ...commentWithoutToken,
+        canEdit: userSessionToken && session_token === userSessionToken,
+      }
+    })
+
     return NextResponse.json({
       success: true,
-      data: data || [],
+      data: commentsWithOwnership,
       count: count || 0,
     })
   } catch (error) {

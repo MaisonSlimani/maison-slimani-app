@@ -1,10 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import RatingDisplay from './RatingDisplay'
-import { Edit2, Trash2, Loader2, Star } from 'lucide-react'
+import { Edit2, Trash2, Loader2, Star, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import OptimizedImage from './OptimizedImage'
@@ -18,7 +29,7 @@ interface Comment {
   images?: string[]
   created_at: string
   updated_at?: string
-  session_token?: string // Only present if user owns the comment
+  canEdit?: boolean // Whether the current user can edit this comment
 }
 
 interface CommentsListProps {
@@ -35,7 +46,14 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
   const [totalCount, setTotalCount] = useState(0)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ nom: '', rating: 0, commentaire: '' })
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ nom: '', rating: 0, commentaire: '', images: [] as string[] })
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const editFileInputRef = useRef<HTMLInputElement>(null)
+  
+  const MAX_IMAGES = 6
+  const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
   const limit = 10
 
@@ -48,14 +66,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
       const data = await response.json()
 
       if (data.success) {
-        // Check which comments belong to current user
-        const sessionToken = localStorage.getItem('comment_session_token')
-        const commentsWithOwnership = (data.data || []).map((comment: Comment) => ({
-          ...comment,
-          // Note: We can't check ownership from client-side, but we'll try to edit/delete
-          // and let the server validate via session token cookie
-        }))
-        setComments(commentsWithOwnership)
+        setComments(data.data || [])
         setTotalCount(data.count || 0)
       }
     } catch (error) {
@@ -76,7 +87,72 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
       nom: comment.nom,
       rating: comment.rating,
       commentaire: comment.commentaire,
+      images: comment.images || [],
     })
+  }
+
+  const handleEditImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+
+    const filesArray = Array.from(files)
+    
+    // Check total count
+    if (editForm.images.length + filesArray.length > MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images autorisées`)
+      return
+    }
+
+    // Validate files
+    for (const file of filesArray) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} n'est pas une image valide`)
+        return
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} est trop volumineux (max 2MB)`)
+        return
+      }
+    }
+
+    setUploadingImages(true)
+
+    try {
+      const formData = new FormData()
+      filesArray.forEach(file => formData.append('files', file))
+
+      const response = await fetch('/api/commentaires/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors de l\'upload des images')
+      }
+
+      const newImageUrls = data.images || [data.imageUrl].filter(Boolean)
+      setEditForm(prev => ({
+        ...prev,
+        images: [...prev.images, ...newImageUrls]
+      }))
+      toast.success(`${newImageUrls.length} image(s) uploadée(s) avec succès`)
+    } catch (error) {
+      console.error('Erreur upload images:', error)
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'upload des images')
+    } finally {
+      setUploadingImages(false)
+      if (editFileInputRef.current) {
+        editFileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const removeEditImage = (index: number) => {
+    setEditForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }))
   }
 
   const handleSaveEdit = async () => {
@@ -93,7 +169,12 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          nom: editForm.nom,
+          rating: editForm.rating,
+          commentaire: editForm.commentaire,
+          images: editForm.images.length > 0 ? editForm.images : undefined,
+        }),
       })
 
       const data = await response.json()
@@ -104,6 +185,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
 
       toast.success('Commentaire mis à jour')
       setEditingId(null)
+      setEditForm({ nom: '', rating: 0, commentaire: '', images: [] })
       fetchComments()
       onCommentUpdate?.()
     } catch (error) {
@@ -112,14 +194,19 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-      return
-    }
+  const handleDeleteClick = (id: string) => {
+    setCommentToDelete(id)
+    setDeleteDialogOpen(true)
+  }
 
-    setDeletingId(id)
+  const handleDelete = async () => {
+    if (!commentToDelete) return
+
+    setDeletingId(commentToDelete)
+    setDeleteDialogOpen(false)
+    
     try {
-      const response = await fetch(`/api/commentaires/${id}`, {
+      const response = await fetch(`/api/commentaires/${commentToDelete}`, {
         method: 'DELETE',
       })
 
@@ -137,6 +224,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
       toast.error(error instanceof Error ? error.message : 'Erreur lors de la suppression')
     } finally {
       setDeletingId(null)
+      setCommentToDelete(null)
     }
   }
 
@@ -232,18 +320,80 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
                   rows={3}
                   placeholder="Commentaire"
                 />
+                
+                {/* Image Upload Section */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Images ({editForm.images.length}/{MAX_IMAGES})</Label>
+                  {editForm.images.length < MAX_IMAGES && (
+                    <div>
+                      <input
+                        ref={editFileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        onChange={(e) => handleEditImageUpload(e.target.files)}
+                        disabled={uploadingImages}
+                        className="hidden"
+                        id={`edit-image-upload-${comment.id}`}
+                      />
+                      <Label
+                        htmlFor={`edit-image-upload-${comment.id}`}
+                        className={cn(
+                          "flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-border rounded-lg cursor-pointer transition-colors hover:bg-muted/50",
+                          uploadingImages && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">
+                          {uploadingImages ? 'Upload en cours...' : 'Ajouter des images'}
+                        </span>
+                      </Label>
+                    </div>
+                  )}
+                  
+                  {/* Image Previews */}
+                  {editForm.images.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {editForm.images.map((imageUrl, index) => (
+                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
+                          <OptimizedImage
+                            src={imageUrl}
+                            alt={`Preview ${index + 1}`}
+                            fill
+                            objectFit="cover"
+                            sizes="(max-width: 768px) 33vw, 150px"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeEditImage(index)}
+                            disabled={uploadingImages}
+                            className="absolute top-1 right-1 p-1 bg-red-500/90 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     onClick={handleSaveEdit}
                     className="bg-dore hover:bg-dore/90 text-charbon"
+                    disabled={uploadingImages}
                   >
                     Enregistrer
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditingId(null)}
+                    onClick={() => {
+                      setEditingId(null)
+                      setEditForm({ nom: '', rating: 0, commentaire: '', images: [] })
+                    }}
+                    disabled={uploadingImages}
                   >
                     Annuler
                   </Button>
@@ -274,31 +424,33 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
                       )}
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      onClick={() => handleEdit(comment)}
-                      title="Modifier"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(comment.id)}
-                      disabled={deletingId === comment.id}
-                      title="Supprimer"
-                    >
-                      {deletingId === comment.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
+                  {comment.canEdit && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(comment)}
+                        title="Modifier"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteClick(comment.id)}
+                        disabled={deletingId === comment.id}
+                        title="Supprimer"
+                      >
+                        {deletingId === comment.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
                   {comment.commentaire}
@@ -360,6 +512,27 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le commentaire</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer ce commentaire ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

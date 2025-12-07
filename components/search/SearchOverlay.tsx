@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, X, Clock, TrendingUp, ArrowRight, ChevronRight } from 'lucide-react'
+import { Search, X, Clock, TrendingUp, ArrowRight, ChevronRight, Loader2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
@@ -103,7 +103,7 @@ export default function SearchOverlay({
   })
 
   // Fetch live product results when typing
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [], isLoading: isLoadingResults } = useQuery({
     queryKey: ['search-live', debouncedQuery],
     queryFn: async ({ signal }) => {
       if (!debouncedQuery.trim()) return []
@@ -264,22 +264,23 @@ export default function SearchOverlay({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - clickable area behind the search panel */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
           />
 
-          {/* Search Panel */}
+          {/* Search Panel - above backdrop, stops propagation */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border shadow-xl max-h-[85vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            className="fixed top-0 left-0 right-0 bg-background border-b border-border shadow-xl max-h-[85vh] overflow-hidden flex flex-col z-[70]"
           >
             {/* Search Header */}
             <div className="p-4 border-b border-border space-y-3">
@@ -375,7 +376,13 @@ export default function SearchOverlay({
                   )}
 
                   {/* Product Results */}
-                  {hasResults ? (
+                  {isLoadingResults ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <Loader2 className="w-12 h-12 mb-4 animate-spin text-dore" />
+                      <p className="text-base font-medium">Recherche en cours...</p>
+                      <p className="text-sm mt-1">Recherche de produits correspondants</p>
+                    </div>
+                  ) : hasResults ? (
                     <div>
                       <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                         Produits ({searchResults.length})

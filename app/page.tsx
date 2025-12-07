@@ -28,6 +28,32 @@ export default function AccueilPage() {
   }>>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null)
+  const [categorySlugMap, setCategorySlugMap] = useState<Record<string, string>>({})
+
+  // Fetch categories to map names to slugs
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ['categories-slug-map'],
+    staleTime: 10 * 60 * 1000,
+    queryFn: async ({ signal }) => {
+      const response = await fetch('/api/categories?active=true', { signal })
+      if (!response.ok) return []
+      const payload = await response.json()
+      return payload?.data || []
+    },
+  })
+
+  // Create category name -> slug mapping
+  useEffect(() => {
+    if (categoriesData.length > 0) {
+      const map: Record<string, string> = {}
+      categoriesData.forEach((cat: any) => {
+        if (cat.nom && cat.slug) {
+          map[cat.nom] = cat.slug
+        }
+      })
+      setCategorySlugMap(map)
+    }
+  }, [categoriesData])
 
   const {
     data: produitsVedette = [],
@@ -434,9 +460,12 @@ export default function AccueilPage() {
                           has_colors: produit.has_colors,
                           couleurs: produit.couleurs,
                           taille: produit.taille,
+                          tailles: produit.tailles,
                           matiere: produit.matiere,
                           images: produit.images,
                           slug: produit.slug,
+                          categorie: produit.categorie,
+                          categorySlug: produit.categorie ? categorySlugMap[produit.categorie] : undefined,
                         }}
                         showActions={true}
                       />

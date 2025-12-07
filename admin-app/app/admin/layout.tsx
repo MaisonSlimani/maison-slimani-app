@@ -16,7 +16,6 @@ import {
   Truck,
   CheckCircle,
   XCircle,
-  TrendingUp,
   Share2,
   MessageSquare,
 } from 'lucide-react'
@@ -110,16 +109,6 @@ export default function AdminLayout({
     }
   }, [])
 
-  // Register for push notifications when authenticated
-  useEffect(() => {
-    if (!loading) {
-      import('@/lib/push-notifications').then(({ registerPushNotifications }) => {
-        registerPushNotifications().catch((error) => {
-          console.error('Error registering push notifications:', error)
-        })
-      })
-    }
-  }, [loading])
 
   // Charger les compteurs de commandes par statut avec real-time
   useEffect(() => {
@@ -311,26 +300,6 @@ export default function AdminLayout({
     }
   }, [pathname])
 
-  // Fetch flagged comments count
-  useEffect(() => {
-    const fetchFlaggedCount = async () => {
-      try {
-        const response = await fetch('/api/admin/commentaires?filter=flagged&limit=1')
-        const data = await response.json()
-        if (response.ok) {
-          setFlaggedCommentsCount(data.count || 0)
-        }
-      } catch (error) {
-        console.error('Erreur lors du chargement du nombre de commentaires signalés:', error)
-      }
-    }
-    if (!loading) {
-      fetchFlaggedCount()
-      // Refresh every 30 seconds
-      const interval = setInterval(fetchFlaggedCount, 30000)
-      return () => clearInterval(interval)
-    }
-  }, [loading])
 
   const handleLogout = async () => {
     try {
@@ -343,7 +312,6 @@ export default function AdminLayout({
 
   const menuItems = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/admin/upsells', label: 'Upsells', icon: TrendingUp },
     { href: '/admin/socials', label: 'Socials', icon: Share2 },
   ]
 
@@ -370,7 +338,7 @@ export default function AdminLayout({
             <p className="text-sm text-muted-foreground mt-1">Administration</p>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden min-h-0">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden min-h-0 admin-scroll">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -391,6 +359,22 @@ export default function AdminLayout({
                 </Link>
               )
             })}
+
+            {/* Menu Commentaires */}
+            <Link
+              href="/admin/commentaires"
+              className={cn(
+                'flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors',
+                pathname?.startsWith('/admin/commentaires') || pathname === '/admin/commentaires'
+                  ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
+                  : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-5 h-5" />
+                <span>Commentaires</span>
+              </div>
+            </Link>
 
             {/* Menu Commandes avec sous-catégories */}
             <div className="space-y-1">
@@ -484,27 +468,6 @@ export default function AdminLayout({
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Menu Commentaires */}
-            <Link
-              href="/admin/commentaires"
-              className={cn(
-                'flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors',
-                pathname?.startsWith('/admin/commentaires') || pathname === '/admin/commentaires'
-                  ? 'bg-dore/20 text-dore border border-dore/30 font-medium'
-                  : 'text-foreground/80 hover:text-foreground hover:bg-accent/50'
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-5 h-5" />
-                <span>Commentaires</span>
-              </div>
-              {flaggedCommentsCount > 0 && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                  {flaggedCommentsCount}
-                </span>
-              )}
-            </Link>
 
             {/* Menu Produits avec sous-catégories */}
             <div className="space-y-1">
@@ -622,7 +585,7 @@ export default function AdminLayout({
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto bg-background">
+        <main className="flex-1 overflow-auto bg-background admin-scroll">
           <div className="p-8">{children}</div>
         </main>
       </div>

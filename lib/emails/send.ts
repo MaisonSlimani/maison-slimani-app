@@ -40,7 +40,9 @@ export async function sendCommandeEmails(payload: CommandeEmailPayload) {
         subject: 'Confirmation de commande - Maison Slimani',
         html: buildClientConfirmationTemplate(payload, contactEmail),
       }).catch((error) => {
-        console.error('Erreur envoi email client:', error)
+        // Log error but don't throw - emails are non-critical
+        // The error is already logged in envoyerEmail with details
+        console.error('Erreur envoi email client (non-bloquant):', error?.message || error)
       })
     }
   } catch (error) {

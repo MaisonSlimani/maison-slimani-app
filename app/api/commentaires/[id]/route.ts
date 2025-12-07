@@ -90,19 +90,41 @@ export async function PATCH(
       updateData.images = imagesArray
     }
 
-    // Update comment
-    const { data: updatedComment, error: updateError } = await supabase
+    // Use service role client to bypass RLS since we've already validated ownership
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Configuration serveur invalide' },
+        { status: 500 }
+      )
+    }
+
+    const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+    const serviceSupabase = createServiceClient(supabaseUrl, supabaseServiceKey)
+    
+    // Update comment using service role (bypasses RLS, but we've already validated ownership)
+    const { data: updatedComment, error: updateError } = await serviceSupabase
       .from('commentaires')
       .update(updateData)
       .eq('id', id)
+      .eq('session_token', userToken) // Double-check ownership
       .select('id, nom, email, rating, commentaire, images, created_at, updated_at')
       .single()
 
     if (updateError) {
       console.error('Erreur lors de la mise à jour du commentaire:', updateError)
       return NextResponse.json(
-        { success: false, error: 'Erreur lors de la mise à jour du commentaire' },
+        { success: false, error: 'Erreur lors de la mise à jour du commentaire', details: updateError.message },
         { status: 500 }
+      )
+    }
+
+    if (!updatedComment) {
+      return NextResponse.json(
+        { success: false, error: 'Commentaire introuvable ou non autorisé' },
+        { status: 404 }
       )
     }
 
@@ -139,10 +161,10 @@ export async function DELETE(
 
     const supabase = await createClient()
 
-    // Get comment to check ownership
+    // Get comment to check ownership and get images
     const { data: comment, error: fetchError } = await supabase
       .from('commentaires')
-      .select('session_token')
+      .select('session_token, images')
       .eq('id', id)
       .single()
 
@@ -162,16 +184,72 @@ export async function DELETE(
       )
     }
 
-    // Delete comment
-    const { error: deleteError } = await supabase
+    // Delete images from Supabase Storage if they exist
+    if (comment.images && Array.isArray(comment.images) && comment.images.length > 0) {
+      try {
+        // Create service role client for storage deletion
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+        
+        if (supabaseUrl && supabaseServiceKey) {
+          const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+          const serviceSupabase = createServiceClient(supabaseUrl, supabaseServiceKey)
+          
+          // Extract file paths from image URLs
+          const filePaths: string[] = []
+          for (const imageUrl of comment.images) {
+            if (typeof imageUrl === 'string' && imageUrl.includes('supabase.co/storage')) {
+              // Extract path from URL: https://...supabase.co/storage/v1/object/public/produits-images/commentaires/...
+              const urlMatch = imageUrl.match(/produits-images\/(.+)$/)
+              if (urlMatch && urlMatch[1]) {
+                filePaths.push(urlMatch[1])
+              }
+            }
+          }
+          
+          // Delete files from storage
+          if (filePaths.length > 0) {
+            const { error: storageError } = await serviceSupabase.storage
+              .from('produits-images')
+              .remove(filePaths)
+            
+            if (storageError) {
+              console.error('Erreur lors de la suppression des images:', storageError)
+              // Continue with comment deletion even if image deletion fails
+            }
+          }
+        }
+      } catch (storageDeleteError) {
+        console.error('Erreur lors de la suppression des images:', storageDeleteError)
+        // Continue with comment deletion even if image deletion fails
+      }
+    }
+
+    // Use service role client to bypass RLS since we've already validated ownership
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Configuration serveur invalide' },
+        { status: 500 }
+      )
+    }
+
+    const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+    const serviceSupabase = createServiceClient(supabaseUrl, supabaseServiceKey)
+    
+    // Delete comment using service role (bypasses RLS, but we've already validated ownership)
+    const { error: deleteError } = await serviceSupabase
       .from('commentaires')
       .delete()
       .eq('id', id)
+      .eq('session_token', userToken) // Double-check ownership
 
     if (deleteError) {
       console.error('Erreur lors de la suppression du commentaire:', deleteError)
       return NextResponse.json(
-        { success: false, error: 'Erreur lors de la suppression du commentaire' },
+        { success: false, error: 'Erreur lors de la suppression du commentaire', details: deleteError.message },
         { status: 500 }
       )
     }

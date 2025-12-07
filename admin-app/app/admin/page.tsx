@@ -10,6 +10,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { LuxuryLoading } from '@/components/ui/luxury-loading'
+import { useQuery } from '@tanstack/react-query'
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -24,13 +25,62 @@ export default function AdminDashboardPage() {
     produitsStockFaible: 0,
     totalStock: 0,
   })
-  const [loading, setLoading] = useState(true)
   const [dernieresCommandes, setDernieresCommandes] = useState<any[]>([])
   const [produits, setProduits] = useState<any[]>([])
   const [produitsRuptureStock, setProduitsRuptureStock] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const supabase = createClient()
+
+  // Use React Query for caching dashboard data
+  const { data: dashboardData, isLoading: loading, refetch, error: queryError } = useQuery({
+    queryKey: ['admin-dashboard'],
+    queryFn: async () => {
+      const [commandesResponse, produitsResponse] = await Promise.all([
+        fetch('/api/admin/commandes?statut=tous'),
+        fetch('/api/admin/produits'),
+      ])
+      
+      if (!commandesResponse.ok) {
+        const errorData = await commandesResponse.json().catch(() => ({ error: 'Erreur inconnue' }))
+        const errorMessage = errorData.error || errorData.details || 'Erreur lors du chargement des commandes'
+        
+        // Handle auth errors
+        if (commandesResponse.status === 401 || errorMessage.includes('Non autorisé')) {
+          toast.error('Session expirée. Redirection vers la connexion...')
+          setTimeout(() => {
+            window.location.href = '/login'
+          }, 1500)
+        }
+        
+        throw new Error(errorMessage)
+      }
+
+      const commandesResult = await commandesResponse.json().catch(() => ({ data: [] }))
+      const commandes = commandesResult.data || []
+
+      let produitsData: any[] = []
+      if (produitsResponse.ok) {
+        const produitsResult = await produitsResponse.json()
+        produitsData = produitsResult.data || []
+      }
+
+      return { commandes, produits: produitsData }
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes - dashboard data should be relatively fresh
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1,
+  })
+
+  // Handle query errors
+  useEffect(() => {
+    if (queryError) {
+      const errorMessage = queryError instanceof Error ? queryError.message : 'Erreur lors du chargement des statistiques'
+      if (!errorMessage.includes('Session expirée') && !errorMessage.includes('Non autorisé')) {
+        toast.error(errorMessage)
+      }
+    }
+  }, [queryError])
 
   const playDashboardNotification = useCallback((commande?: any) => {
     // Use setTimeout to avoid calling toast during render
@@ -61,7 +111,6 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     chargerCategories()
-    chargerStats()
     
     // Configurer l'abonnement en temps réel
     const channelName = `commandes-changes-dashboard-${Date.now()}`
@@ -86,7 +135,8 @@ export default function AdminDashboardPage() {
             payload.eventType === 'UPDATE' ||
             payload.eventType === 'DELETE'
           ) {
-            chargerStats()
+            // Invalidate and refetch dashboard data
+            refetch()
           }
         }
       )
@@ -123,131 +173,6 @@ export default function AdminDashboardPage() {
     }
   }
 
-  const chargerStats = async (silent = false) => {
-    try {
-      // Charger les commandes via l'API admin
-      const [commandesResponse, produitsResponse] = await Promise.all([
-        fetch('/api/admin/commandes?statut=tous'),
-        fetch('/api/admin/produits'),
-      ])
-      
-      if (!commandesResponse.ok) {
-        const errorData = await commandesResponse.json().catch(() => ({ error: 'Erreur inconnue' }))
-        const errorMessage = errorData.error || errorData.details || 'Erreur lors du chargement des commandes'
-        console.error('Erreur API commandes:', {
-          status: commandesResponse.status,
-          statusText: commandesResponse.statusText,
-          error: errorMessage,
-        })
-        
-        if (!silent) {
-          throw new Error(errorMessage)
-        }
-        // En mode silencieux, continuer avec des données vides
-      }
-
-      const commandesResult = await commandesResponse.json().catch(() => ({ data: [] }))
-      const commandes = commandesResult.data || []
-
-      // Charger les produits
-      let produitsData: any[] = []
-      if (produitsResponse.ok) {
-        const produitsResult = await produitsResponse.json()
-        produitsData = produitsResult.data || []
-      }
-
-      // Calculer les statistiques
-      const totalCommandes = commandes.length || 0
-      // Revenus totaux - seulement pour les commandes livrées
-      const totalRevenus = commandes
-        .filter((c: any) => c.statut === 'Livrée')
-        .reduce((acc: number, c: any) => acc + parseFloat(c.total || 0), 0) || 0
-      const commandesEnAttente = commandes.filter((c: any) => c.statut === 'En attente').length || 0
-      const commandesLivrees = commandes.filter((c: any) => c.statut === 'Livrée').length || 0
-      const villesUniques = new Set(commandes.map((c: any) => c.ville)).size || 0
-      const produitsTotal = produitsData.length || 0
-      
-      // Statistiques de stock (account for products with colors)
-      const produitsRuptureStockList = produitsData.filter((p: any) => {
-        if (p.has_colors && p.couleurs && Array.isArray(p.couleurs)) {
-          // For products with colors, check if total stock across all colors is 0
-          const totalStock = p.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
-          return totalStock === 0
-        }
-        // For products without colors, check the stock field
-        return (p.stock || 0) === 0
-      }) || []
-      const produitsRuptureStock = produitsRuptureStockList.length || 0
-      
-      const produitsStockFaible = produitsData.filter((p: any) => {
-        let totalStock = 0
-        if (p.has_colors && p.couleurs && Array.isArray(p.couleurs)) {
-          totalStock = p.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
-        } else {
-          totalStock = p.stock || 0
-        }
-        return totalStock > 0 && totalStock <= 5
-      }).length || 0
-      
-      const totalStock = produitsData.reduce((acc: number, p: any) => {
-        if (p.has_colors && p.couleurs && Array.isArray(p.couleurs)) {
-          return acc + p.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
-        }
-        return acc + (p.stock || 0)
-      }, 0) || 0
-
-      // Revenus du mois actuel
-      const maintenant = new Date()
-      const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1)
-      const revenusMois = commandes
-        .filter((c: any) => {
-          const dateCommande = new Date(c.date_commande)
-          return dateCommande >= debutMois && c.statut === 'Livrée'
-        })
-        .reduce((acc: number, c: any) => acc + parseFloat(c.total || 0), 0) || 0
-
-      // Dernières commandes (5 plus récentes)
-      const dernieres = commandes
-        .sort((a: any, b: any) => new Date(b.date_commande).getTime() - new Date(a.date_commande).getTime())
-        .slice(0, 5)
-
-      setStats({
-        totalCommandes,
-        totalRevenus,
-        commandesEnAttente,
-        villesUniques,
-        commandesLivrees,
-        revenusMois,
-        produitsTotal,
-        produitsRuptureStock,
-        produitsStockFaible,
-        totalStock,
-      })
-      setDernieresCommandes(dernieres)
-      setProduits(produitsData)
-      setProduitsRuptureStock(produitsRuptureStockList)
-    } catch (error: any) {
-      console.error('Erreur lors du chargement des statistiques:', error)
-      
-      // Si c'est une erreur d'authentification, rediriger vers la page de connexion
-      if (error?.message?.includes('Non autorisé') || error?.message?.includes('401')) {
-        if (!silent) {
-          toast.error('Session expirée. Redirection vers la connexion...')
-          setTimeout(() => {
-            window.location.href = '/login'
-          }, 1500)
-        }
-        return
-      }
-      
-      if (!silent) {
-        const errorMessage = error?.message || error?.error || 'Erreur lors du chargement des statistiques'
-        toast.error(errorMessage)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loading) {
     return <LuxuryLoading fullScreen message="Chargement des statistiques..." />

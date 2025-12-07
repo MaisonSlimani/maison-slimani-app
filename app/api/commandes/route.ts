@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     for (const produitCommande of payload.produits) {
       const { data: produit, error } = await supabase
         .from('produits')
-        .select('id, nom, prix, stock, has_colors, couleurs, image_url')
+        .select('id, nom, prix, stock, has_colors, couleurs, tailles, image_url')
         .eq('id', produitCommande.id)
         .single()
 
@@ -79,38 +79,122 @@ export async function POST(request: NextRequest) {
       }
 
       let stockDisponible = 0
+      let useSizeSpecificDecrement = false
 
-      if (produit.has_colors && produitCommande.couleur) {
-        if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
-          return errorResponse(
-            `Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`,
-            400
+      // If taille is specified, check stock for that specific size
+      if (produitCommande.taille) {
+        useSizeSpecificDecrement = true
+        if (produit.has_colors && produitCommande.couleur) {
+          if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
+            return errorResponse(
+              `Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`,
+              400
+            )
+          }
+
+          const couleurSelectionnee = produit.couleurs.find(
+            (c: any) => c.nom === produitCommande.couleur
           )
+
+          if (!couleurSelectionnee) {
+            return errorResponse(
+              `Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`,
+              400
+            )
+          }
+
+          // Check tailles array in color
+          if (couleurSelectionnee.tailles && Array.isArray(couleurSelectionnee.tailles)) {
+            const tailleData = couleurSelectionnee.tailles.find((t: any) => t.nom === produitCommande.taille)
+            if (!tailleData) {
+              return errorResponse(
+                `Taille "${produitCommande.taille}" non disponible pour ${produit.nom} (${produitCommande.couleur})`,
+                400
+              )
+            }
+            stockDisponible = tailleData.stock || 0
+          } else if (couleurSelectionnee.taille) {
+            // Backward compatibility
+            const tailleList = couleurSelectionnee.taille.split(',').map((t: string) => t.trim())
+            if (!tailleList.includes(produitCommande.taille)) {
+              return errorResponse(
+                `Taille "${produitCommande.taille}" non disponible pour ${produit.nom} (${produitCommande.couleur})`,
+                400
+              )
+            }
+            stockDisponible = couleurSelectionnee.stock || 0
+            useSizeSpecificDecrement = false // Can't use size-specific for old structure
+          } else {
+            return errorResponse(
+              `Taille "${produitCommande.taille}" non disponible pour ${produit.nom} (${produitCommande.couleur})`,
+              400
+            )
+          }
+        } else if (!produit.has_colors) {
+          // Check product-level tailles
+          if (produit.tailles && Array.isArray(produit.tailles)) {
+            const tailleData = produit.tailles.find((t: any) => t.nom === produitCommande.taille)
+            if (!tailleData) {
+              return errorResponse(
+                `Taille "${produitCommande.taille}" non disponible pour ${produit.nom}`,
+                400
+              )
+            }
+            stockDisponible = tailleData.stock || 0
+          } else if (produit.taille) {
+            // Backward compatibility
+            const tailleList = produit.taille.split(',').map((t: string) => t.trim())
+            if (!tailleList.includes(produitCommande.taille)) {
+              return errorResponse(
+                `Taille "${produitCommande.taille}" non disponible pour ${produit.nom}`,
+                400
+              )
+            }
+            stockDisponible = produit.stock || 0
+            useSizeSpecificDecrement = false
+          } else {
+            return errorResponse(
+              `Taille "${produitCommande.taille}" non disponible pour ${produit.nom}`,
+              400
+            )
+          }
+        } else {
+          return errorResponse(`Couleur requise pour ${produit.nom}`, 400)
         }
-
-        const couleurSelectionnee = produit.couleurs.find(
-          (c: any) => c.nom === produitCommande.couleur
-        )
-
-        if (!couleurSelectionnee) {
-          return errorResponse(
-            `Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`,
-            400
-          )
-        }
-
-        stockDisponible = couleurSelectionnee.stock || 0
-      } else if (!produit.has_colors) {
-        stockDisponible = produit.stock || 0
       } else {
-        return errorResponse(`Couleur requise pour ${produit.nom}`, 400)
+        // No taille specified - use old logic
+        if (produit.has_colors && produitCommande.couleur) {
+          if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
+            return errorResponse(
+              `Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`,
+              400
+            )
+          }
+
+          const couleurSelectionnee = produit.couleurs.find(
+            (c: any) => c.nom === produitCommande.couleur
+          )
+
+          if (!couleurSelectionnee) {
+            return errorResponse(
+              `Couleur "${produitCommande.couleur}" non disponible pour ${produit.nom}`,
+              400
+            )
+          }
+
+          stockDisponible = couleurSelectionnee.stock || 0
+        } else if (!produit.has_colors) {
+          stockDisponible = produit.stock || 0
+        } else {
+          return errorResponse(`Couleur requise pour ${produit.nom}`, 400)
+        }
       }
 
       if (stockDisponible < produitCommande.quantite) {
         return errorResponse(
           `Stock insuffisant pour ${produit.nom}${
             produitCommande.couleur ? ` (${produitCommande.couleur})` : ''
-          }. Stock disponible: ${stockDisponible}`,
+          }${produitCommande.taille ? ` - Taille ${produitCommande.taille}` : ''}. Stock disponible: ${stockDisponible}`,
           400
         )
       }
@@ -119,9 +203,11 @@ export async function POST(request: NextRequest) {
       produitsCache.set(produitCommande.id, {
         has_colors: produit.has_colors,
         couleurs: produit.couleurs,
+        tailles: produit.tailles,
         prix: produit.prix,
         stock: produit.stock,
         image_url: produit.image_url || null,
+        useSizeSpecificDecrement,
       })
 
       produitsAvecStock.push({
@@ -192,42 +278,87 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        if (produitDetails.has_colors && produitCommande.couleur) {
-          // Use atomic function for products with colors
-          const { data, error } = await supabase.rpc('decrementer_stock_couleur_atomic', {
-            produit_id: produitCommande.id,
-            couleur_nom: produitCommande.couleur,
-            quantite: produitCommande.quantite,
-          })
+        // Use size-specific decrement if taille is provided and product supports it
+        if (useSizeSpecific && produitCommande.taille) {
+          if (produitDetails.has_colors && produitCommande.couleur) {
+            // Use size-specific function for products with colors
+            const { data, error } = await supabase.rpc('decrementer_stock_couleur_taille_atomic', {
+              produit_id: produitCommande.id,
+              couleur_nom: produitCommande.couleur,
+              taille_nom: produitCommande.taille,
+              quantite: produitCommande.quantite,
+            })
 
-          if (error) {
-            console.error(
-              `Erreur décrémentation stock couleur pour ${produitCommande.id}:`,
-              error
-            )
-            throw error
-          }
+            if (error) {
+              console.error(
+                `Erreur décrémentation stock couleur/taille pour ${produitCommande.id}:`,
+                error
+              )
+              throw error
+            }
 
-          if (!data) {
-            throw new Error(`Stock insuffisant pour ${produitCommande.nom} (${produitCommande.couleur})`)
+            if (!data) {
+              throw new Error(`Stock insuffisant pour ${produitCommande.nom} (${produitCommande.couleur}, Taille ${produitCommande.taille})`)
+            }
+          } else {
+            // Use size-specific function for products without colors
+            const { data, error } = await supabase.rpc('decrementer_stock_taille_atomic', {
+              produit_id: produitCommande.id,
+              taille_nom: produitCommande.taille,
+              quantite: produitCommande.quantite,
+            })
+
+            if (error) {
+              console.error(
+                `Erreur décrémentation stock taille pour ${produitCommande.id}:`,
+                error
+              )
+              throw error
+            }
+
+            if (!data) {
+              throw new Error(`Stock insuffisant pour ${produitCommande.nom} (Taille ${produitCommande.taille})`)
+            }
           }
         } else {
-          // Use atomic function for products without colors
-          const { data, error } = await supabase.rpc('decrementer_stock_atomic', {
-            produit_id: produitCommande.id,
-            quantite: produitCommande.quantite,
-          })
+          // No taille - use old logic
+          if (produitDetails.has_colors && produitCommande.couleur) {
+            // Use atomic function for products with colors
+            const { data, error } = await supabase.rpc('decrementer_stock_couleur_atomic', {
+              produit_id: produitCommande.id,
+              couleur_nom: produitCommande.couleur,
+              quantite: produitCommande.quantite,
+            })
 
-          if (error) {
-            console.error(
-              `Erreur décrémentation stock produit ${produitCommande.id}:`,
-              error
-            )
-            throw error
-          }
+            if (error) {
+              console.error(
+                `Erreur décrémentation stock couleur pour ${produitCommande.id}:`,
+                error
+              )
+              throw error
+            }
 
-          if (!data) {
-            throw new Error(`Stock insuffisant pour ${produitCommande.nom}`)
+            if (!data) {
+              throw new Error(`Stock insuffisant pour ${produitCommande.nom} (${produitCommande.couleur})`)
+            }
+          } else {
+            // Use atomic function for products without colors
+            const { data, error } = await supabase.rpc('decrementer_stock_atomic', {
+              produit_id: produitCommande.id,
+              quantite: produitCommande.quantite,
+            })
+
+            if (error) {
+              console.error(
+                `Erreur décrémentation stock produit ${produitCommande.id}:`,
+                error
+              )
+              throw error
+            }
+
+            if (!data) {
+              throw new Error(`Stock insuffisant pour ${produitCommande.nom}`)
+            }
           }
         }
       } catch (error) {

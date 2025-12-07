@@ -250,7 +250,7 @@ export default function AdminPWACategoriesPage() {
                 Ajouter
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto admin-scroll">
               <DialogHeader>
                 <DialogTitle>{editingCategorie ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</DialogTitle>
                 <DialogDescription>

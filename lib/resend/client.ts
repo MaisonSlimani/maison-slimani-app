@@ -41,6 +41,13 @@ export async function envoyerEmail({
   html: string
 }) {
   try {
+    // Check if API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      const error = new Error('RESEND_API_KEY is not configured. Email sending is disabled.')
+      console.warn('⚠️ Email sending disabled:', error.message)
+      throw error
+    }
+
     const { data, error } = await resend.emails.send({
       from: RESEND_FROM_EMAIL,
       to,
@@ -49,13 +56,31 @@ export async function envoyerEmail({
     })
 
     if (error) {
-      console.error('Erreur lors de l\'envoi de l\'email:', error)
+      console.error('Erreur Resend API:', {
+        name: error.name,
+        message: error.message,
+        status: (error as any).status,
+      })
       throw error
     }
 
     return data
-  } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error)
+  } catch (error: any) {
+    // Provide more helpful error messages
+    if (error?.message?.includes('Unable to fetch data') || error?.message?.includes('could not be resolved')) {
+      console.error('Erreur réseau Resend - Impossible de se connecter à l\'API Resend:', {
+        message: error.message,
+        hint: 'Vérifiez votre connexion internet et que RESEND_API_KEY est correctement configuré',
+      })
+    } else if (error?.message?.includes('RESEND_API_KEY')) {
+      console.error('Configuration Resend manquante:', error.message)
+    } else {
+      console.error('Erreur lors de l\'envoi de l\'email:', {
+        name: error?.name,
+        message: error?.message,
+        status: error?.status,
+      })
+    }
     throw error
   }
 }

@@ -93,32 +93,58 @@ export default function PWAFavorisPage() {
       return
     }
 
-    // Get available sizes based on selected color
-    let availableSizes: string[] = []
+    // Get tailles and check stock per size
+    interface Taille { nom: string; stock: number }
+    let taillesData: Taille[] = []
     if (productData.has_colors && selectedCouleur && productData.couleurs) {
       const couleurSelected = productData.couleurs.find((c: any) => c.nom === selectedCouleur)
-      if (couleurSelected?.taille) {
-        availableSizes = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+      if (couleurSelected?.tailles && Array.isArray(couleurSelected.tailles)) {
+        taillesData = couleurSelected.tailles
+      } else if (couleurSelected?.taille) {
+        const tailleList = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+        const stockPerSize = tailleList.length > 0 ? Math.floor((couleurSelected.stock || 0) / tailleList.length) : 0
+        taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
+      } else if (productData.tailles && Array.isArray(productData.tailles)) {
+        taillesData = productData.tailles
       } else if (productData.taille) {
-        availableSizes = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+        const tailleList = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+        const stockPerSize = tailleList.length > 0 ? Math.floor((productData.stock || 0) / tailleList.length) : 0
+        taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
       }
+    } else if (productData.tailles && Array.isArray(productData.tailles)) {
+      taillesData = productData.tailles
     } else if (productData.taille) {
-      availableSizes = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+      const tailleList = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+      const stockPerSize = tailleList.length > 0 ? Math.floor((productData.stock || 0) / tailleList.length) : 0
+      taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
     }
 
-    if (availableSizes.length > 0 && !selectedTaille) {
+    if (taillesData.length > 0 && !selectedTaille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
 
-    // Check stock
+    // Check stock per size
     let stockDisponible = productData.stock || 0
-    if (productData.has_colors && selectedCouleur && productData.couleurs) {
+    if (taillesData.length > 0 && selectedTaille) {
+      const selectedTailleData = taillesData.find(t => t.nom === selectedTaille)
+      if (!selectedTailleData) {
+        toast.error('Taille invalide')
+        return
+      }
+      if (selectedTailleData.stock < (quantite[selectedItem.id] || 1)) {
+        toast.error(`Stock insuffisant pour la taille ${selectedTaille}. Stock disponible: ${selectedTailleData.stock}`)
+        return
+      }
+      stockDisponible = selectedTailleData.stock
+    } else if (productData.has_colors && selectedCouleur && productData.couleurs) {
       const couleurSelected = productData.couleurs.find((c: any) => c.nom === selectedCouleur)
       stockDisponible = couleurSelected?.stock || 0
-    }
-
-    if (stockDisponible < (quantite[selectedItem.id] || 1)) {
+      if (stockDisponible < (quantite[selectedItem.id] || 1)) {
+        toast.error('Stock insuffisant')
+        return
+      }
+    } else if (stockDisponible < (quantite[selectedItem.id] || 1)) {
       toast.error('Stock insuffisant')
       return
     }
@@ -402,38 +428,58 @@ export default function PWAFavorisPage() {
 
               {/* Sélecteur de taille */}
               {(() => {
-                let availableSizes: string[] = []
+                interface Taille { nom: string; stock: number }
+                let taillesData: Taille[] = []
                 if (productData.has_colors && selectedCouleur && productData.couleurs) {
                   const couleurSelected = productData.couleurs.find((c: any) => c.nom === selectedCouleur)
-                  if (couleurSelected?.taille) {
-                    availableSizes = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+                  if (couleurSelected?.tailles && Array.isArray(couleurSelected.tailles)) {
+                    taillesData = couleurSelected.tailles
+                  } else if (couleurSelected?.taille) {
+                    const tailleList = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+                    const stockPerSize = tailleList.length > 0 ? Math.floor((couleurSelected.stock || 0) / tailleList.length) : 0
+                    taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
+                  } else if (productData.tailles && Array.isArray(productData.tailles)) {
+                    taillesData = productData.tailles
                   } else if (productData.taille) {
-                    availableSizes = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+                    const tailleList = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+                    const stockPerSize = tailleList.length > 0 ? Math.floor((productData.stock || 0) / tailleList.length) : 0
+                    taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
                   }
+                } else if (productData.tailles && Array.isArray(productData.tailles)) {
+                  taillesData = productData.tailles
                 } else if (productData.taille) {
-                  availableSizes = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+                  const tailleList = productData.taille.split(',').map(t => t.trim()).filter(t => t)
+                  const stockPerSize = tailleList.length > 0 ? Math.floor((productData.stock || 0) / tailleList.length) : 0
+                  taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
                 }
 
-                if (availableSizes.length > 0 && (!productData.has_colors || selectedCouleur)) {
+                if (taillesData.length > 0 && (!productData.has_colors || selectedCouleur)) {
                   return (
                     <div className="space-y-3">
                       <label className="text-sm font-medium">Taille</label>
                       <div className="flex flex-wrap gap-2">
-                        {availableSizes.map((taille) => {
-                          const isSelected = selectedTaille === taille
+                        {taillesData.map((t) => {
+                          const isSelected = selectedTaille === t.nom
+                          const isOutOfStock = t.stock <= 0
                           return (
                             <button
-                              key={taille}
+                              key={t.nom}
                               type="button"
-                              onClick={() => setSelectedTaille(taille)}
+                              disabled={isOutOfStock}
+                              onClick={() => !isOutOfStock && setSelectedTaille(t.nom)}
                               className={cn(
-                                'w-12 h-12 rounded-lg border-2 font-medium transition-all hover:scale-105',
-                                isSelected
-                                  ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
-                                  : 'bg-background text-foreground border-border hover:border-dore'
+                                'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
+                                isOutOfStock 
+                                  ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                                  : isSelected
+                                    ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105'
+                                    : 'bg-background text-foreground border-border hover:border-dore hover:scale-105'
                               )}
                             >
-                              {taille}
+                              {t.nom}
+                              {isOutOfStock && (
+                                <span className="absolute -top-1 -right-1 text-[8px] bg-red-600 text-white px-1 rounded">Rupture</span>
+                              )}
                             </button>
                           )
                         })}

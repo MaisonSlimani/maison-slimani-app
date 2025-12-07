@@ -6,6 +6,11 @@ import { z } from 'zod'
 const adminCommentActionSchema = z.object({
   approved: z.boolean().optional(),
   flagged: z.boolean().optional(),
+  nom: z.string().min(1).optional(),
+  email: z.string().email().optional().nullable(),
+  rating: z.number().int().min(1).max(5).optional(),
+  commentaire: z.string().min(1).optional(),
+  images: z.array(z.string().url()).max(6).optional(),
 })
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -63,6 +68,21 @@ export async function PATCH(
     if (validation.data.flagged !== undefined) {
       updateData.flagged = validation.data.flagged
     }
+    if (validation.data.nom !== undefined) {
+      updateData.nom = validation.data.nom.trim()
+    }
+    if (validation.data.email !== undefined) {
+      updateData.email = validation.data.email?.trim() || null
+    }
+    if (validation.data.rating !== undefined) {
+      updateData.rating = validation.data.rating
+    }
+    if (validation.data.commentaire !== undefined) {
+      updateData.commentaire = validation.data.commentaire.trim()
+    }
+    if (validation.data.images !== undefined) {
+      updateData.images = validation.data.images
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
@@ -75,7 +95,7 @@ export async function PATCH(
       .from('commentaires')
       .update(updateData)
       .eq('id', id)
-      .select('id, nom, email, rating, commentaire, flagged, approved, created_at, updated_at')
+      .select('id, nom, email, rating, commentaire, images, flagged, approved, created_at, updated_at')
       .single()
 
     if (updateError) {
