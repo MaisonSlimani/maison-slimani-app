@@ -14,6 +14,18 @@ import { Eye, Download, AlertCircle, Package, Truck, CheckCircle, XCircle, Trash
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+interface Commande {
+  id: string
+  statut: string
+  nom_client: string
+  telephone?: string
+  ville?: string
+  total: number
+  date_commande: string
+  produits?: any[]
+}
 
 const statutsMap: Record<string, { nom: string; icon: typeof AlertCircle; color: string }> = {
   'en-attente': {
@@ -46,12 +58,11 @@ const statutsMap: Record<string, { nom: string; icon: typeof AlertCircle; color:
 export default function AdminCommandesStatutPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const statutSlug = params.statut as string
   const statutInfo = statutsMap[statutSlug] || { nom: 'Toutes les commandes', icon: Package, color: 'bg-muted text-muted-foreground border-border' }
   const StatutIcon = statutInfo.icon
   
-  const [commandes, setCommandes] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedCommande, setSelectedCommande] = useState<any>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [commandeToDelete, setCommandeToDelete] = useState<string | null>(null)
@@ -63,8 +74,6 @@ export default function AdminCommandesStatutPage() {
   const [operationMessage, setOperationMessage] = useState('')
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const supabase = createClient()
-  const isReloadingRef = useRef(false)
-  const commandesRef = useRef<any[]>([])
 
   const sortCommandes = useCallback((list: any[]) => {
     return [...list].sort((a, b) => {
@@ -74,16 +83,26 @@ export default function AdminCommandesStatutPage() {
     })
   }, [])
 
-  const updateCommandesList = useCallback(
-    (updater: (prev: any[]) => any[]) => {
-      setCommandes((prev) => {
-        const next = updater(prev)
-        commandesRef.current = next
-        return next
-      })
+  // Map statut slug to API query parameter
+  const statutQuery = statutSlug === 'toutes' ? 'tous' : statutSlug === 'en-attente' ? 'En attente' : statutSlug === 'expediee' ? 'Expédiée' : statutSlug === 'livree' ? 'Livrée' : statutSlug === 'annulee' ? 'Annulée' : 'tous'
+
+  // Use React Query for commandes
+  const { data: commandesData, isLoading: loading, refetch } = useQuery({
+    queryKey: ['admin-commandes', statutSlug],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/commandes?statut=${encodeURIComponent(statutQuery)}`)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }))
+        throw new Error(errorData.error || errorData.details || 'Erreur lors du chargement des commandes')
+      }
+      const result = await response.json()
+      return sortCommandes(result.data || [])
     },
-    []
-  )
+    staleTime: 1 * 60 * 1000, // 1 minute - orders change frequently
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  })
+
+  const commandes: Commande[] = commandesData || []
 
   const playNotificationSound = useCallback(() => {
     if (!audioRef.current) return
@@ -157,7 +176,6 @@ export default function AdminCommandesStatutPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    chargerCommandes()
 
     const channelName = `commandes-changes-${statutSlug}-${Date.now()}`
     const channel = supabase.channel(channelName)
@@ -176,16 +194,8 @@ export default function AdminCommandesStatutPage() {
           }
 
           playNotificationSound()
-          updateCommandesList((prev) => {
-            const index = prev.findIndex((c) => c.id === nouvelleCommande.id)
-            if (index !== -1) {
-              const next = [...prev]
-              next[index] = nouvelleCommande
-              return sortCommandes(next)
-            }
-
-            return sortCommandes([nouvelleCommande, ...prev])
-          })
+          // Invalidate queries to refetch
+          queryClient.invalidateQueries({ queryKey: ['admin-commandes'] })
         }
       )
       .on(
@@ -204,22 +214,8 @@ export default function AdminCommandesStatutPage() {
             return
           }
 
-          updateCommandesList((prev) => {
-            let next = [...prev]
-            const index = next.findIndex((c) => c.id === commandeModifiee.id)
-
-            if (nouvelleCorrespond) {
-              if (index !== -1) {
-                next[index] = commandeModifiee
-              } else {
-                next = [commandeModifiee, ...next]
-              }
-            } else if (index !== -1) {
-              next.splice(index, 1)
-            }
-
-            return sortCommandes(next)
-          })
+          // Invalidate queries to refetch
+          queryClient.invalidateQueries({ queryKey: ['admin-commandes'] })
         }
       )
       .on(
@@ -234,9 +230,8 @@ export default function AdminCommandesStatutPage() {
             return
           }
 
-          updateCommandesList((prev) =>
-            prev.filter((commande) => commande.id !== commandeSupprimee.id)
-          )
+          // Invalidate queries to refetch
+          queryClient.invalidateQueries({ queryKey: ['admin-commandes'] })
         }
       )
       .subscribe()
@@ -249,53 +244,10 @@ export default function AdminCommandesStatutPage() {
     statutSlug,
     supabase,
     statutInfo.nom,
+    queryClient,
     playNotificationSound,
-    sortCommandes,
-    updateCommandesList,
   ])
 
-  const chargerCommandes = async (silent = false) => {
-    // Prévenir les appels multiples simultanés
-    if (isReloadingRef.current && !silent) {
-      console.log('⚠️ Rechargement déjà en cours, ignoré')
-      return
-    }
-    
-    try {
-      if (!silent) {
-        isReloadingRef.current = true
-        setLoading(true)
-      }
-      // Si "toutes", charger toutes les commandes
-      const statutQuery = statutSlug === 'toutes' ? 'tous' : statutInfo.nom
-      const response = await fetch(`/api/admin/commandes?statut=${encodeURIComponent(statutQuery)}`)
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Erreur lors du chargement des commandes')
-      }
-
-      const result = await response.json()
-      const nouvellesCommandes = result.data || []
-      
-      if (!silent) {
-        console.log(`✅ Commandes chargées: ${nouvellesCommandes.length} commande(s)`)
-      }
-      updateCommandesList(() => sortCommandes(nouvellesCommandes))
-    } catch (error: any) {
-      console.error('❌ Erreur lors du chargement des commandes:', error)
-      if (!silent) {
-        toast.error(error.message || 'Erreur lors du chargement des commandes')
-      }
-    } finally {
-      if (!silent) {
-        setLoading(false)
-        setTimeout(() => {
-          isReloadingRef.current = false
-        }, 500)
-      }
-    }
-  }
 
   const handleStatutChange = async (commandeId: string, nouveauStatut: string) => {
     setOperationLoading(true)
@@ -323,7 +275,7 @@ export default function AdminCommandesStatutPage() {
       }
 
       toast.success('Statut mis à jour')
-      chargerCommandes()
+      queryClient.invalidateQueries({ queryKey: ['admin-commandes'] })
       
       // Trigger sidebar badge refresh
       if (typeof window !== 'undefined') {
@@ -381,7 +333,7 @@ export default function AdminCommandesStatutPage() {
       }
 
       toast.success('Commande supprimée')
-      chargerCommandes()
+      queryClient.invalidateQueries({ queryKey: ['admin-commandes'] })
       
       // Trigger sidebar badge refresh
       if (typeof window !== 'undefined') {
@@ -788,7 +740,7 @@ export default function AdminCommandesStatutPage() {
                     Voir
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto admin-scroll">
                   <DialogHeader>
                     <DialogTitle>Détails de la commande #{commande.id.substring(0, 8)}</DialogTitle>
                   </DialogHeader>

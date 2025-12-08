@@ -506,7 +506,7 @@ export default function AdminCategorieProduitsPage() {
               Nouveau produit
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto admin-scroll">
             <DialogHeader>
               <div className="flex items-center justify-between pr-8">
                 <div>

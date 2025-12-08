@@ -6,16 +6,11 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { registerPushNotifications, unregisterPushNotifications, getPushTokenStatus } from '@/lib/push-notifications'
 
 export default function AdminParametresPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false)
-  const [pushNotificationLoading, setPushNotificationLoading] = useState(false)
-  const [pushTokenStatus, setPushTokenStatus] = useState<{ registered: boolean; token?: string; device_type?: string }>({ registered: false })
   const [formData, setFormData] = useState({
     email_entreprise: '',
     telephone: '',
@@ -46,18 +41,7 @@ export default function AdminParametresPage() {
       }
     }
 
-    const chargerPushStatus = async () => {
-      try {
-        const status = await getPushTokenStatus()
-        setPushTokenStatus(status)
-        setPushNotificationsEnabled(status.registered)
-      } catch (error) {
-        console.error('Erreur lors du chargement du statut push:', error)
-      }
-    }
-
     chargerParametres()
-    chargerPushStatus()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,35 +80,6 @@ export default function AdminParametresPage() {
     }
   }
 
-  const handlePushNotificationToggle = async (checked: boolean) => {
-    setPushNotificationLoading(true)
-    try {
-      if (checked) {
-        // Register
-        await registerPushNotifications()
-        toast.success('Notifications push activées')
-        // Refresh status after a short delay
-        setTimeout(async () => {
-          const status = await getPushTokenStatus()
-          setPushTokenStatus(status)
-          setPushNotificationsEnabled(status.registered)
-        }, 2000)
-      } else {
-        // Unregister
-        await unregisterPushNotifications()
-        toast.success('Notifications push désactivées')
-        setPushNotificationsEnabled(false)
-        setPushTokenStatus({ registered: false })
-      }
-    } catch (error) {
-      console.error('Erreur lors de la modification des notifications push:', error)
-      toast.error(error instanceof Error ? error.message : 'Erreur lors de la modification des notifications push')
-      // Revert checkbox state
-      setPushNotificationsEnabled(!checked)
-    } finally {
-      setPushNotificationLoading(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -187,27 +142,6 @@ export default function AdminParametresPage() {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
-          </div>
-
-          <div className="pt-4 border-t">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="push_notifications"
-                checked={pushNotificationsEnabled}
-                onCheckedChange={handlePushNotificationToggle}
-                disabled={pushNotificationLoading}
-              />
-              <div className="flex-1">
-                <Label htmlFor="push_notifications" className="cursor-pointer">
-                  Notifications push (Nouveaux commandes)
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {pushTokenStatus.registered 
-                    ? `Activé${pushTokenStatus.device_type ? ` (${pushTokenStatus.device_type})` : ' (web)'}`
-                    : 'Désactivé - Activez pour recevoir des notifications sur votre navigateur'}
-                </p>
-              </div>
-            </div>
           </div>
 
           <Button type="submit" disabled={saving}>

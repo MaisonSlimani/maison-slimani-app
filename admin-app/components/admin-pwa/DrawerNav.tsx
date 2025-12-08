@@ -86,7 +86,7 @@ export default function DrawerNav() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto admin-scroll">
                   {menuItems.map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href

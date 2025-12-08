@@ -8,7 +8,7 @@ const FEATURED_LIMIT = 6
 const FEATURED_CACHE_SECONDS = 1800  // 30 minutes (increased from 300s for better caching)
 const CATEGORY_CACHE_SECONDS = 900   // 15 minutes (increased from 120s for better caching)
 const PRODUIT_FIELDS =
-  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, slug, average_rating, rating_count'
+  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, tailles, date_ajout, slug, average_rating, rating_count'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300  // 5 minutes (increased from 60s for better caching)
@@ -113,16 +113,18 @@ export async function GET(request: NextRequest) {
             return false
           })
         }
-        // Filter out-of-stock products (including products with colors)
+        // Filter by stock status (including products with colors)
         // Use total_stock which correctly handles products with colors
-        // By default, hide out-of-stock products unless explicitly requested
-        if (inStock === false) {
+        // By default, show all products (in-stock and out-of-stock)
+        // Only filter when explicitly requested via inStock parameter
+        if (inStock === true) {
+          // Show only in-stock products
+          data = data.filter((p: any) => (p.total_stock || 0) > 0)
+        } else if (inStock === false) {
           // Show only out-of-stock products
           data = data.filter((p: any) => (p.total_stock || 0) === 0)
-        } else {
-          // Default: show only in-stock products (hide out-of-stock)
-          data = data.filter((p: any) => (p.total_stock || 0) > 0)
         }
+        // If inStock is undefined, show all products (no filtering)
         // Apply category filter if multiple categories were provided
         if (Array.isArray(categorie) && categorie.length > 0) {
           data = data.filter((p: any) => categorie.includes(p.categorie))
@@ -213,16 +215,17 @@ export async function GET(request: NextRequest) {
       // Taille filter - will be applied after fetching since taille can be in multiple places
       // (product.taille field or in couleurs array)
 
-      // Stock filter - by default, hide out-of-stock products
+      // Stock filter - by default, show all products (in-stock and out-of-stock)
       // Use total_stock which correctly handles products with colors
-      // Only show out-of-stock if explicitly requested (inStock=false)
-      if (inStock === false) {
+      // Only filter when explicitly requested via inStock parameter
+      if (inStock === true) {
+        // Show only in-stock products
+        query = query.gt('total_stock', 0)
+      } else if (inStock === false) {
         // Show only out-of-stock products
         query = query.eq('total_stock', 0)
-      } else {
-        // Default: show only in-stock products (hide out-of-stock)
-        query = query.gt('total_stock', 0)
       }
+      // If inStock is undefined, show all products (no filtering)
 
       // Note: Color filter will be applied after fetching, as colors are stored in JSONB
       // This is handled in the post-processing step below
@@ -244,11 +247,18 @@ export async function GET(request: NextRequest) {
         error = result.error
         count = result.count
 
-        // Apply taille filter post-query (taille can be in product.taille or couleurs array)
+        // Apply taille filter post-query (check tailles array with stock > 0)
         if (taille && Array.isArray(taille) && taille.length > 0 && data) {
           data = data.filter((p: any) => {
-            // Check if product has any of the selected tailles
-            // 1. Check product.taille field (comma-separated string like "40, 41, 42")
+            // Check if product has any of the selected tailles with stock > 0
+            // 1. Check product.tailles array (new structure)
+            if (p.tailles && Array.isArray(p.tailles)) {
+              const hasTailleWithStock = p.tailles.some((t: any) => 
+                t.nom && taille.includes(t.nom) && t.stock > 0
+              )
+              if (hasTailleWithStock) return true
+            }
+            // 2. Backward compatibility: Check product.taille field (comma-separated string)
             if (p.taille) {
               const productTailles = p.taille.split(',').map((t: string) => t.trim())
               if (taille.some((selectedTaille: string) => productTailles.includes(selectedTaille))) {
@@ -272,19 +282,20 @@ export async function GET(request: NextRequest) {
           count = data.length
         }
 
-        // Filter out out-of-stock products (including products with colors)
-        // Use total_stock which correctly handles products with colors
-        // Note: SQL query already filters by total_stock, but this ensures consistency
-        if (data && inStock !== false) {
+        // Filter by stock status if explicitly requested
+        // By default, show all products (in-stock and out-of-stock)
+        if (data && inStock === true) {
+          // Show only in-stock products when explicitly requested
           data = data.filter((product: any) => (product.total_stock || 0) > 0)
           // Update count after filtering
           count = data.length
         } else if (data && inStock === false) {
-          // Show only out-of-stock products
+          // Show only out-of-stock products when explicitly requested
           data = data.filter((product: any) => (product.total_stock || 0) === 0)
           // Update count after filtering
           count = data.length
         }
+        // If inStock is undefined, show all products (no filtering)
 
         // Apply color filter post-query (colors are in JSONB)
         if (couleur && data) {

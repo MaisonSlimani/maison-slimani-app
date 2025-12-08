@@ -72,16 +72,17 @@ export async function PUT(request: NextRequest) {
       .limit(1)
       .single()
 
-    // Build update object dynamically to handle missing columns
+    // Build update object dynamically - only include fields that are explicitly provided
     const updateData: any = {
-      email_entreprise: email_entreprise || null,
-      telephone: telephone || null,
-      adresse: adresse || null,
-      description: description || null,
       updated_at: new Date().toISOString(),
     }
 
-    // Only include new fields if they're provided (they might not exist in DB yet)
+    // Only include fields if they're explicitly provided in the request body
+    // This prevents clearing fields when saving from different pages
+    if (email_entreprise !== undefined) updateData.email_entreprise = email_entreprise || null
+    if (telephone !== undefined) updateData.telephone = telephone || null
+    if (adresse !== undefined) updateData.adresse = adresse || null
+    if (description !== undefined) updateData.description = description || null
     if (facebook !== undefined) updateData.facebook = facebook || null
     if (instagram !== undefined) updateData.instagram = instagram || null
     if (meta_pixel_code !== undefined) updateData.meta_pixel_code = meta_pixel_code || null

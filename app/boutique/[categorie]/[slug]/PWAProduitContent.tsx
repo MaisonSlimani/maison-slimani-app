@@ -20,11 +20,17 @@ import ProductRatingSummary from '@/components/ProductRatingSummary'
 import CommentsList from '@/components/CommentsList'
 import CommentForm from '@/components/CommentForm'
 
+interface Taille {
+  nom: string
+  stock: number
+}
+
 interface Couleur {
   nom: string
   code?: string
   stock?: number
-  taille?: string
+  taille?: string // backward compatibility
+  tailles?: Taille[]
   images?: string[]
 }
 
@@ -38,7 +44,8 @@ interface Produit {
   images?: any[]
   couleurs?: Couleur[]
   has_colors?: boolean
-  taille?: string
+  taille?: string // backward compatibility
+  tailles?: Taille[]
   categorie?: string
   vedette?: boolean
   slug?: string
@@ -124,34 +131,35 @@ export default function PWAProduitContent() {
       return
     }
 
-    // Get available sizes
-    let taillesDisponibles: string[] = []
-    if (produit.has_colors && couleur && produit.couleurs) {
-      const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
-      if (couleurSelected?.taille) {
-        taillesDisponibles = couleurSelected.taille.split(',').map(t => t.trim())
-      } else if (produit.taille) {
-        taillesDisponibles = produit.taille.split(',').map(t => t.trim())
-      }
-    } else if (produit.taille) {
-      taillesDisponibles = produit.taille.split(',').map(t => t.trim())
-    }
-
-    if (taillesDisponibles.length > 0 && !taille) {
+    // Get tailles and check stock per size
+    const currentTaillesData = getTaillesData()
+    
+    if (currentTaillesData.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
-
-    // Check stock
-    let stockDisponible = produit.stock
-    if (produit.has_colors && couleur && produit.couleurs) {
-      const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
-      stockDisponible = couleurSelected?.stock || 0
-    }
-
-    if (stockDisponible < quantite) {
-      toast.error('Stock insuffisant')
-      return
+    
+    if (currentTaillesData.length > 0 && taille) {
+      const selectedTaille = currentTaillesData.find(t => t.nom === taille)
+      if (!selectedTaille) {
+        toast.error('Taille invalide')
+        return
+      }
+      if (selectedTaille.stock < quantite) {
+        toast.error(`Stock insuffisant pour la taille ${taille}. Stock disponible: ${selectedTaille.stock}`)
+        return
+      }
+    } else {
+      // Check stock for products without sizes
+      let stockDisponible = produit.stock
+      if (produit.has_colors && couleur && produit.couleurs) {
+        const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
+        stockDisponible = couleurSelected?.stock || 0
+      }
+      if (stockDisponible < quantite) {
+        toast.error('Stock insuffisant')
+        return
+      }
     }
 
     try {
@@ -162,7 +170,11 @@ export default function PWAProduitContent() {
         quantite,
         image_url: produit.image_url,
         image: produit.image_url,
-        stock: stockDisponible,
+        stock: currentTaillesData.length > 0 && taille 
+          ? (currentTaillesData.find(t => t.nom === taille)?.stock || 0)
+          : (produit.has_colors && couleur && produit.couleurs 
+            ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
+            : produit.stock),
         couleur: couleur || undefined,
         taille: taille || undefined,
         categorie: produit.categorie,
@@ -193,31 +205,24 @@ export default function PWAProduitContent() {
         toast.error('Couleur invalide')
         return
       }
-      const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
-      const stockCouleur = couleurSelected?.stock || 0
-      if (stockCouleur < quantite) {
-        toast.error(`Stock insuffisant pour la couleur ${couleur}`)
-        return
-      }
+      // Stock check will be done per size
     }
-    let taillesDisponibles: string[] = []
-    if (produit.has_colors && couleur && produit.couleurs) {
-      const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
-      if (couleurSelected?.taille) {
-        taillesDisponibles = couleurSelected.taille.split(',').map(t => t.trim())
-      } else if (produit.taille) {
-        taillesDisponibles = produit.taille.split(',').map(t => t.trim())
-      }
-    } else if (produit.taille) {
-      taillesDisponibles = produit.taille.split(',').map(t => t.trim())
-    }
-    if (taillesDisponibles.length > 0 && !taille) {
+    // Get tailles and check stock per size
+    const currentTaillesData = getTaillesData()
+    
+    if (currentTaillesData.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
-    if (taillesDisponibles.length > 0 && taille) {
-      if (!taillesDisponibles.includes(taille)) {
+    
+    if (currentTaillesData.length > 0 && taille) {
+      const selectedTaille = currentTaillesData.find(t => t.nom === taille)
+      if (!selectedTaille) {
         toast.error('Taille invalide')
+        return
+      }
+      if (selectedTaille.stock < quantite) {
+        toast.error(`Stock insuffisant pour la taille ${taille}. Stock disponible: ${selectedTaille.stock}`)
         return
       }
     }
@@ -241,15 +246,13 @@ export default function PWAProduitContent() {
         quantite,
         image_url: produit.image_url,
         image: produit.image_url,
-        taille: (produit.has_colors && couleur && produit.couleurs) 
-          ? (produit.couleurs.find(c => c.nom === couleur)?.taille || produit.taille || undefined)
-            ? taille 
-            : undefined
-          : (produit.taille ? taille : undefined),
+        taille: taille || undefined,
         couleur: produit.has_colors && couleur ? couleur : undefined,
-        stock: produit.has_colors && couleur && produit.couleurs 
-          ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
-          : produit.stock,
+        stock: currentTaillesData.length > 0 && taille 
+          ? (currentTaillesData.find(t => t.nom === taille)?.stock || 0)
+          : (produit.has_colors && couleur && produit.couleurs 
+            ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
+            : produit.stock),
         categorie: produit.categorie,
         slug: produit.slug || slug,
         categorySlug: categorie,
@@ -363,22 +366,36 @@ export default function PWAProduitContent() {
 
   const stockDisponible = getStock()
 
-  // Get available sizes based on color selection
-  const getTaillesDisponibles = (): string[] => {
+  // Get available sizes with stock information
+  const getTaillesData = (): Taille[] => {
     if (produit.has_colors && couleur && produit.couleurs) {
       const couleurSelected = produit.couleurs.find(c => c.nom === couleur)
-      if (couleurSelected?.taille) {
-        return couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+      if (couleurSelected?.tailles && Array.isArray(couleurSelected.tailles)) {
+        return couleurSelected.tailles
+      } else if (couleurSelected?.taille) {
+        // Backward compatibility
+        const tailleList = couleurSelected.taille.split(',').map(t => t.trim()).filter(t => t)
+        const stockPerSize = tailleList.length > 0 ? Math.floor((couleurSelected.stock || 0) / tailleList.length) : 0
+        return tailleList.map(t => ({ nom: t, stock: stockPerSize }))
+      } else if (produit.tailles && Array.isArray(produit.tailles)) {
+        return produit.tailles
       } else if (produit.taille) {
-        return produit.taille.split(',').map(t => t.trim()).filter(t => t)
+        const tailleList = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+        const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+        return tailleList.map(t => ({ nom: t, stock: stockPerSize }))
       }
+    } else if (produit.tailles && Array.isArray(produit.tailles)) {
+      return produit.tailles
     } else if (produit.taille) {
-      return produit.taille.split(',').map(t => t.trim()).filter(t => t)
+      const tailleList = produit.taille.split(',').map(t => t.trim()).filter(t => t)
+      const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
+      return tailleList.map(t => ({ nom: t, stock: stockPerSize }))
     }
     return []
   }
 
-  const taillesDisponibles = getTaillesDisponibles()
+  const taillesData = getTaillesData()
+  const taillesDisponibles = taillesData.map(t => t.nom)
   const isAvailable = produit.has_colors
     ? (couleur && stockDisponible > 0)
     : produit.stock > 0
@@ -500,34 +517,47 @@ export default function PWAProduitContent() {
           </motion.div>
 
           {/* Stock */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <div className="flex items-center gap-2 text-sm">
-              <Package className="w-4 h-4 text-muted-foreground" />
-              {produit.has_colors ? (
-                couleur ? (
-                  <span className={stockDisponible > 0 ? 'text-green-600' : 'text-red-600'}>
-                    {stockDisponible > 0
-                      ? `${stockDisponible} disponible${stockDisponible > 1 ? 's' : ''} pour ${couleur}`
-                      : 'Rupture de stock pour cette couleur'}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">
-                    Sélectionnez une couleur
-                  </span>
-                )
-              ) : (
-                <span className={produit.stock > 0 ? 'text-green-600' : 'text-red-600'}>
-                  {produit.stock > 0
-                    ? `${produit.stock} disponible${produit.stock > 1 ? 's' : ''}`
-                    : 'Rupture de stock'}
-                </span>
-              )}
-            </div>
-          </motion.div>
+          {(() => {
+            // Only show stock if it's below 10 or is 0 (out of stock)
+            const stockToShow = produit.has_colors 
+              ? (couleur ? stockDisponible : null)
+              : produit.stock
+            
+            if (stockToShow === null || stockToShow >= 10) {
+              return null
+            }
+            
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <div className="flex items-center gap-2 text-sm">
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  {produit.has_colors ? (
+                    couleur ? (
+                      <span className={stockDisponible > 0 ? 'text-yellow-600' : 'text-red-600'}>
+                        {stockDisponible === 0
+                          ? 'Rupture de stock pour cette couleur'
+                          : stockDisponible === 1
+                          ? `Il ne reste qu'un seul article pour ${couleur}`
+                          : `Il ne reste que ${stockDisponible} articles pour ${couleur}`}
+                      </span>
+                    ) : null
+                  ) : (
+                    <span className={produit.stock > 0 ? 'text-yellow-600' : 'text-red-600'}>
+                      {produit.stock === 0
+                        ? 'Rupture de stock'
+                        : produit.stock === 1
+                        ? "Il ne reste qu'un seul article"
+                        : `Il ne reste que ${produit.stock} articles`}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            )
+          })()}
 
           {/* Sélecteur de couleur */}
           {produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && (
@@ -615,7 +645,7 @@ export default function PWAProduitContent() {
           )}
 
           {/* Sélecteur de taille */}
-          {taillesDisponibles.length > 0 && isAvailable && (
+          {taillesData.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -626,21 +656,28 @@ export default function PWAProduitContent() {
                 Taille:
               </label>
               <div className="flex flex-wrap gap-2">
-                {taillesDisponibles.map((t) => {
-                  const isSelected = taille === t
+                {taillesData.map((t) => {
+                  const isSelected = taille === t.nom
+                  const isOutOfStock = t.stock <= 0
                   return (
                     <button
-                      key={t}
+                      key={t.nom}
                       type="button"
-                      onClick={() => setTaille(t)}
+                      disabled={isOutOfStock}
+                      onClick={() => !isOutOfStock && setTaille(t.nom)}
                       className={cn(
-                        'w-12 h-12 rounded-lg border-2 font-medium transition-all',
-                        isSelected
-                          ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
-                          : 'bg-background text-foreground border-border hover:border-dore'
+                        'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
+                        isOutOfStock 
+                          ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                          : isSelected
+                            ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
+                            : 'bg-background text-foreground border-border hover:border-dore'
                       )}
                     >
-                      {t}
+                      {t.nom}
+                      {isOutOfStock && (
+                        <span className="absolute -top-1 -right-1 text-[8px] bg-red-600 text-white px-1 rounded">Rupture</span>
+                      )}
                     </button>
                   )
                 })}

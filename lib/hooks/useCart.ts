@@ -113,7 +113,7 @@ export function useCart() {
         
         const { data: produit, error } = await supabase
           .from('produits')
-          .select('id, stock, total_stock, has_colors, couleurs')
+          .select('id, stock, total_stock, has_colors, couleurs, tailles, taille')
           .eq('id', item.id)
           .single()
 
@@ -121,30 +121,84 @@ export function useCart() {
           throw new Error(`Produit "${item.nom}" introuvable`)
         }
 
-        // Vérifier le stock selon le type de produit
+        // Vérifier le stock selon le type de produit et la taille
         let stockDisponible: number = 0
         
-        if (produit.has_colors && item.couleur) {
-          // Produit avec couleurs - vérifier le stock de la couleur spécifique
-          if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
-            throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+        // If taille is specified, check stock for that specific size
+        if (item.taille) {
+          if (produit.has_colors && item.couleur) {
+            // Produit avec couleurs - vérifier le stock de la taille dans la couleur spécifique
+            if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
+              throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+            }
+            
+            const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
+            if (!couleurSelected) {
+              throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+            }
+            
+            // Check tailles array in color
+            if (couleurSelected.tailles && Array.isArray(couleurSelected.tailles)) {
+              const tailleData = couleurSelected.tailles.find((t: any) => t.nom === item.taille)
+              if (!tailleData) {
+                throw new Error(`Taille "${item.taille}" non disponible pour "${item.nom}" (${item.couleur})`)
+              }
+              stockDisponible = tailleData.stock || 0
+            } else if (couleurSelected.taille) {
+              // Backward compatibility: if taille exists but no tailles array, use color stock
+              const tailleList = couleurSelected.taille.split(',').map((t: string) => t.trim())
+              if (!tailleList.includes(item.taille)) {
+                throw new Error(`Taille "${item.taille}" non disponible pour "${item.nom}" (${item.couleur})`)
+              }
+              stockDisponible = couleurSelected.stock || 0
+            } else {
+              throw new Error(`Taille "${item.taille}" non disponible pour "${item.nom}" (${item.couleur})`)
+            }
+          } else if (!produit.has_colors) {
+            // Produit sans couleurs - vérifier le stock de la taille
+            if (produit.tailles && Array.isArray(produit.tailles)) {
+              const tailleData = produit.tailles.find((t: any) => t.nom === item.taille)
+              if (!tailleData) {
+                throw new Error(`Taille "${item.taille}" non disponible pour "${item.nom}"`)
+              }
+              stockDisponible = tailleData.stock || 0
+            } else if (produit.taille) {
+              // Backward compatibility
+              const tailleList = produit.taille.split(',').map((t: string) => t.trim())
+              if (!tailleList.includes(item.taille)) {
+                throw new Error(`Taille "${item.taille}" non disponible pour "${item.nom}"`)
+              }
+              stockDisponible = produit.stock || 0
+            } else {
+              throw new Error(`Taille "${item.taille}" non disponible pour "${item.nom}"`)
+            }
+          } else {
+            throw new Error(`Couleur requise pour "${item.nom}"`)
           }
-          
-          const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
-          if (!couleurSelected) {
-            throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
-          }
-          
-          stockDisponible = couleurSelected.stock || 0
-        } else if (!produit.has_colors) {
-          // Produit sans couleurs - vérifier le stock global
-          stockDisponible = produit.stock || 0
         } else {
-          throw new Error(`Couleur requise pour "${item.nom}"`)
+          // No taille specified - use old logic
+          if (produit.has_colors && item.couleur) {
+            // Produit avec couleurs - vérifier le stock de la couleur spécifique
+            if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
+              throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+            }
+            
+            const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
+            if (!couleurSelected) {
+              throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
+            }
+            
+            stockDisponible = couleurSelected.stock || 0
+          } else if (!produit.has_colors) {
+            // Produit sans couleurs - vérifier le stock global
+            stockDisponible = produit.stock || 0
+          } else {
+            throw new Error(`Couleur requise pour "${item.nom}"`)
+          }
         }
 
         if (stockDisponible <= 0) {
-          throw new Error(`Produit "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''} en rupture de stock`)
+          throw new Error(`Produit "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''}${item.taille ? ` - Taille ${item.taille}` : ''} en rupture de stock`)
         }
 
         // Récupérer les items actuels pour calculer la quantité totale

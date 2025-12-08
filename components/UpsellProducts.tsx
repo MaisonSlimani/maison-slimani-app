@@ -11,11 +11,17 @@ interface ImageItem {
   ordre?: number
 }
 
+interface Taille {
+  nom: string
+  stock: number
+}
+
 interface Couleur {
   nom: string
   code?: string
   stock?: number
-  taille?: string
+  taille?: string // backward compatibility
+  tailles?: Taille[]
 }
 
 interface Produit {
@@ -32,6 +38,7 @@ interface Produit {
   vedette: boolean
   date_ajout: string
   taille?: string | null
+  tailles?: Taille[]
   slug?: string
 }
 
@@ -118,6 +125,7 @@ export default function UpsellProducts({ productId, className = '' }: UpsellProd
                 images: product.images,
                 stock: product.stock,
                 taille: product.taille || undefined,
+                tailles: product.tailles,
                 has_colors: product.has_colors,
                 couleurs: product.couleurs,
               }}

@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { ShoppingBag, Heart } from 'lucide-react'
+import { ShoppingBag, Heart, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { useWishlistDrawer } from '@/lib/contexts/WishlistDrawerContext'
+import SearchOverlay from '@/components/search/SearchOverlay'
 
 const NavigationDesktop = () => {
   const pathname = usePathname()
@@ -21,6 +22,7 @@ const NavigationDesktop = () => {
   const { openDrawer: openWishlistDrawer } = useWishlistDrawer()
   const [cartCount, setCartCount] = useState(0)
   const [wishlistCount, setWishlistCount] = useState(0)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -194,57 +196,81 @@ const NavigationDesktop = () => {
           })}
         </div>
 
-                {/* Panier et Wishlist à droite */}
-                <div className="flex items-center gap-4">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={openWishlistDrawer}
-                    className={cn(
-                      "transition-colors relative",
-                      isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
-                    )}
-                  >
-                    <Heart className={cn(
-                      "w-5 h-5",
-                      wishlistCount > 0 && "fill-current"
-                    )} />
-                    {wishlistCount > 0 && (
-                      <span className={cn(
-                        "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
-                        isHomePage && !scrolled
-                          ? "bg-[#d4a574] text-[#f8f5f0]"
-                          : "bg-dore text-charbon"
-                      )}>
-                        {wishlistCount > 99 ? '99+' : wishlistCount}
-                      </span>
-                    )}
-                    <span className="sr-only">Favoris</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={openCartDrawer}
-                    className={cn(
-                      "transition-colors relative",
-                      isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
-                    )}
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    {cartCount > 0 && (
-                      <span className={cn(
-                        "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
-                        isHomePage && !scrolled
-                          ? "bg-[#d4a574] text-[#f8f5f0]"
-                          : "bg-dore text-charbon"
-                      )}>
-                        {cartCount > 99 ? '99+' : cartCount}
-                      </span>
-                    )}
-                    <span className="sr-only">Panier</span>
-                  </Button>
-                </div>
+        {/* Search and Actions */}
+        <div className="flex items-center gap-4">
+          {/* Search Icon */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSearchOpen(true)}
+            className={cn(
+              "transition-colors",
+              isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
+            )}
+            aria-label="Rechercher"
+          >
+            <Search className="w-5 h-5" />
+          </Button>
+
+          {/* Panier et Wishlist */}
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={openWishlistDrawer}
+              className={cn(
+                "transition-colors relative",
+                isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
+              )}
+            >
+              <Heart className={cn(
+                "w-5 h-5",
+                wishlistCount > 0 && "fill-current"
+              )} />
+              {wishlistCount > 0 && (
+                <span className={cn(
+                  "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                  isHomePage && !scrolled
+                    ? "bg-[#d4a574] text-[#f8f5f0]"
+                    : "bg-dore text-charbon"
+                )}>
+                  {wishlistCount > 99 ? '99+' : wishlistCount}
+                </span>
+              )}
+              <span className="sr-only">Favoris</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={openCartDrawer}
+              className={cn(
+                "transition-colors relative",
+                isHomePage && !scrolled && "text-[#f8f5f0] hover:text-[#d4a574] drop-shadow-md"
+              )}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className={cn(
+                  "absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                  isHomePage && !scrolled
+                    ? "bg-[#d4a574] text-[#f8f5f0]"
+                    : "bg-dore text-charbon"
+                )}>
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+              <span className="sr-only">Panier</span>
+            </Button>
+          </div>
+        </div>
       </nav>
+      
+      {/* Search Overlay */}
+      <SearchOverlay 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)}
+        basePath=""
+      />
     </header>
   )
 }

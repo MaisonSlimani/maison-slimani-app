@@ -4,7 +4,7 @@ import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 import { RECOMMENDATIONS_CONFIG } from '@/lib/config/recommendations'
 
 const PRODUCT_FIELDS =
-  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, average_rating, rating_count'
+  'id, nom, description, prix, stock, total_stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, tailles, date_ajout, average_rating, rating_count'
 
 // Next.js requires revalidate to be a literal value, not a computed one
 export const revalidate = 300 // 5 minutes (matches RECOMMENDATIONS_CONFIG.cacheTTL)
@@ -105,11 +105,8 @@ export async function GET(
         // Use total_stock which correctly handles products with colors
         const isInStock = (product.total_stock || 0) > 0
 
-        // Filter out-of-stock products if configured
-        if (!RECOMMENDATIONS_CONFIG.includeOutOfStock && !isInStock) {
-          return null
-        }
-
+        // Include all products (in-stock and out-of-stock)
+        // Out-of-stock products will be shown with overlay on frontend
         if (isInStock) {
           score += 1
         }

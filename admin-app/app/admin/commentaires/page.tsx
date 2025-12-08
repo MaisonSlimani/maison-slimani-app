@@ -1,21 +1,24 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { LuxuryLoading } from '@/components/ui/luxury-loading'
-import { MessageSquare, Search, Filter, CheckCircle, XCircle, Flag, Trash2, Eye, Star } from 'lucide-react'
+import { MessageSquare, Search, Trash2, Star, Plus, Pencil, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import OptimizedImage from '@/components/OptimizedImage'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface Comment {
   id: string
@@ -35,28 +38,42 @@ interface Comment {
   }
 }
 
+interface Produit {
+  id: string
+  nom: string
+  categorie: string
+}
+
 export default function AdminCommentairesPage() {
   const router = useRouter()
-  const [comments, setComments] = useState<Comment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'approved' | 'flagged' | 'pending'>('all')
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [operationLoading, setOperationLoading] = useState(false)
   const [page, setPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
-  const [flaggedCount, setFlaggedCount] = useState(0)
+  const [editForm, setEditForm] = useState({
+    produit_id: '',
+    nom: '',
+    email: '',
+    rating: 5,
+    commentaire: '',
+    images: [] as string[],
+  })
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const limit = 50
 
-  const fetchComments = useCallback(async () => {
-    setLoading(true)
-    try {
+  // Use React Query for comments
+  const { data: commentsData, isLoading: loading, refetch } = useQuery({
+    queryKey: ['admin-commentaires', page, search],
+    queryFn: async () => {
       const params = new URLSearchParams({
-        filter,
+        filter: 'all',
         limit: limit.toString(),
         offset: ((page - 1) * limit).toString(),
       })
@@ -71,32 +88,34 @@ export default function AdminCommentairesPage() {
         throw new Error(data.error || 'Erreur lors du chargement')
       }
 
-      setComments(data.data || [])
-      setTotalCount(data.count || 0)
-    } catch (error) {
-      console.error('Erreur:', error)
-      toast.error(error instanceof Error ? error.message : 'Erreur lors du chargement')
-    } finally {
-      setLoading(false)
-    }
-  }, [filter, search, page])
-
-  const fetchFlaggedCount = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/commentaires?filter=flagged&limit=1')
-      const data = await response.json()
-      if (response.ok) {
-        setFlaggedCount(data.count || 0)
+      return {
+        comments: data.data || [],
+        count: data.count || 0,
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement du nombre de commentaires signalés:', error)
-    }
-  }, [])
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  })
 
-  useEffect(() => {
-    fetchComments()
-    fetchFlaggedCount()
-  }, [fetchComments, fetchFlaggedCount])
+  const comments: Comment[] = commentsData?.comments || []
+  const totalCount = commentsData?.count || 0
+
+  // Use React Query for products
+  const { data: produitsData } = useQuery({
+    queryKey: ['admin-produits-list'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/produits?limit=1000')
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors du chargement')
+      }
+      return data.data || []
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - products list changes less frequently
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  })
+
+  const produits: Produit[] = produitsData || []
 
   // Real-time updates
   useEffect(() => {
@@ -107,8 +126,8 @@ export default function AdminCommentairesPage() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'commentaires' },
         () => {
-          fetchComments()
-          fetchFlaggedCount()
+          // Invalidate and refetch comments
+          queryClient.invalidateQueries({ queryKey: ['admin-commentaires'] })
         }
       )
       .subscribe()
@@ -116,79 +135,8 @@ export default function AdminCommentairesPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchComments, fetchFlaggedCount])
+  }, [queryClient])
 
-  const handleApprove = async (id: string) => {
-    setOperationLoading(true)
-    try {
-      const response = await fetch(`/api/admin/commentaires/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: true, flagged: false }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur')
-      }
-
-      toast.success('Commentaire approuvé')
-      fetchComments()
-      fetchFlaggedCount()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur')
-    } finally {
-      setOperationLoading(false)
-    }
-  }
-
-  const handleReject = async (id: string) => {
-    setOperationLoading(true)
-    try {
-      const response = await fetch(`/api/admin/commentaires/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: false }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur')
-      }
-
-      toast.success('Commentaire rejeté')
-      fetchComments()
-      fetchFlaggedCount()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur')
-    } finally {
-      setOperationLoading(false)
-    }
-  }
-
-  const handleFlag = async (id: string, flagged: boolean) => {
-    setOperationLoading(true)
-    try {
-      const response = await fetch(`/api/admin/commentaires/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flagged }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur')
-      }
-
-      toast.success(flagged ? 'Commentaire signalé' : 'Signalement retiré')
-      fetchComments()
-      fetchFlaggedCount()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur')
-    } finally {
-      setOperationLoading(false)
-    }
-  }
 
   const handleDelete = async (id: string) => {
     setOperationLoading(true)
@@ -203,8 +151,7 @@ export default function AdminCommentairesPage() {
       }
 
       toast.success('Commentaire supprimé')
-      fetchComments()
-      fetchFlaggedCount()
+      queryClient.invalidateQueries({ queryKey: ['admin-commentaires'] })
       setDeleteDialogOpen(false)
       setSelectedComment(null)
     } catch (error) {
@@ -232,8 +179,7 @@ export default function AdminCommentairesPage() {
 
       toast.success(`${selectedIds.size} commentaire(s) supprimé(s)`)
       setSelectedIds(new Set())
-      fetchComments()
-      fetchFlaggedCount()
+      queryClient.invalidateQueries({ queryKey: ['admin-commentaires'] })
       setBulkDeleteDialogOpen(false)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erreur')
@@ -258,7 +204,161 @@ export default function AdminCommentairesPage() {
     if (selectedIds.size === comments.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(comments.map((c) => c.id)))
+      setSelectedIds(new Set(comments.map((c: Comment) => c.id)))
+    }
+  }
+
+  const handleEdit = (comment: Comment) => {
+    setSelectedComment(comment)
+    setEditForm({
+      produit_id: comment.produit_id,
+      nom: comment.nom,
+      email: comment.email || '',
+      rating: comment.rating,
+      commentaire: comment.commentaire,
+      images: comment.images || [],
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleAdd = () => {
+    setSelectedComment(null)
+    setEditForm({
+      produit_id: '',
+      nom: '',
+      email: '',
+      rating: 5,
+      commentaire: '',
+      images: [],
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+
+    const filesArray = Array.from(files)
+    const MAX_IMAGES = 6
+    const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+    
+    // Check total count
+    if (editForm.images.length + filesArray.length > MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images autorisées`)
+      return
+    }
+
+    // Validate files
+    for (const file of filesArray) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} n'est pas une image valide`)
+        return
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} est trop volumineux (max 2MB)`)
+        return
+      }
+    }
+
+    setUploadingImages(true)
+
+    try {
+      const formData = new FormData()
+      filesArray.forEach(file => formData.append('files', file))
+
+      const response = await fetch('/api/admin/commentaires/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors de l\'upload des images')
+      }
+
+      const newImageUrls = data.images || [data.imageUrl].filter(Boolean)
+      setEditForm(prev => ({
+        ...prev,
+        images: [...prev.images, ...newImageUrls]
+      }))
+      toast.success(`${newImageUrls.length} image(s) uploadée(s) avec succès`)
+    } catch (error) {
+      console.error('Erreur upload images:', error)
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'upload des images')
+    } finally {
+      setUploadingImages(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const removeImage = (index: number) => {
+    setEditForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editForm.nom.trim() || !editForm.commentaire.trim() || !editForm.produit_id) {
+      toast.error('Veuillez remplir tous les champs requis')
+      return
+    }
+
+    setOperationLoading(true)
+    try {
+      if (selectedComment) {
+        // Update existing comment
+        const response = await fetch(`/api/admin/commentaires/${selectedComment.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nom: editForm.nom,
+            email: editForm.email || null,
+            rating: editForm.rating,
+            commentaire: editForm.commentaire,
+            images: editForm.images,
+          }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Erreur')
+        }
+
+        toast.success('Commentaire modifié')
+      } else {
+        // Create new comment
+        const response = await fetch('/api/admin/commentaires', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            produit_id: editForm.produit_id,
+            nom: editForm.nom,
+            email: editForm.email || null,
+            rating: editForm.rating,
+            commentaire: editForm.commentaire,
+            images: editForm.images,
+            approved: true,
+          }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Erreur')
+        }
+
+        toast.success('Commentaire ajouté')
+      }
+
+      setEditDialogOpen(false)
+      setSelectedComment(null)
+      queryClient.invalidateQueries({ queryKey: ['admin-commentaires'] })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur')
+    } finally {
+      setOperationLoading(false)
     }
   }
 
@@ -278,64 +378,54 @@ export default function AdminCommentairesPage() {
             Gérez les avis et commentaires des clients
           </p>
         </div>
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {selectedIds.size} sélectionné(s)
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setBulkDeleteDialogOpen(true)}
-              disabled={operationLoading}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Supprimer
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleAdd}
+            disabled={operationLoading}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter
+          </Button>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {selectedIds.size} sélectionné(s)
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setBulkDeleteDialogOpen(true)}
+                disabled={operationLoading}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <Card className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par nom, commentaire ou produit..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value)
-                  setPage(1)
-                }}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <Select value={filter} onValueChange={(value: any) => {
-            setFilter(value)
-            setPage(1)
-          }}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="approved">Approuvés</SelectItem>
-              <SelectItem value="flagged">
-                Signalés {flaggedCount > 0 && `(${flaggedCount})`}
-              </SelectItem>
-              <SelectItem value="pending">En attente</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher par nom, commentaire ou produit..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
+            className="pl-10"
+          />
         </div>
       </Card>
 
       {/* Comments Table */}
       <Card>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto admin-scroll">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -348,9 +438,8 @@ export default function AdminCommentairesPage() {
                 <th className="p-4 text-left text-sm font-medium">Produit</th>
                 <th className="p-4 text-left text-sm font-medium">Auteur</th>
                 <th className="p-4 text-left text-sm font-medium">Note</th>
-                <th className="p-4 text-left text-sm font-medium">Commentaire</th>
+                <th className="p-4 text-left text-sm font-medium min-w-[200px]">Commentaire</th>
                 <th className="p-4 text-left text-sm font-medium">Date</th>
-                <th className="p-4 text-left text-sm font-medium">Statut</th>
                 <th className="p-4 text-left text-sm font-medium">Actions</th>
               </tr>
             </thead>
@@ -358,10 +447,7 @@ export default function AdminCommentairesPage() {
               {comments.map((comment) => (
                 <tr
                   key={comment.id}
-                  className={cn(
-                    'border-b border-border hover:bg-muted/50 transition-colors',
-                    comment.flagged && 'bg-red-50/50 dark:bg-red-950/10'
-                  )}
+                  className="border-b border-border hover:bg-muted/50 transition-colors"
                 >
                   <td className="p-4">
                     <Checkbox
@@ -398,77 +484,22 @@ export default function AdminCommentairesPage() {
                       ))}
                     </div>
                   </td>
-                  <td className="p-4 max-w-md">
-                    <p className="text-sm line-clamp-2">{comment.commentaire}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-1 text-xs"
-                      onClick={() => {
-                        setSelectedComment(comment)
-                        setViewDialogOpen(true)
-                      }}
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      Voir tout
-                    </Button>
+                  <td className="p-4 min-w-[200px] max-w-md">
+                    <p className="text-sm break-words whitespace-pre-wrap" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{comment.commentaire}</p>
                   </td>
                   <td className="p-4 text-sm text-muted-foreground">
                     {new Date(comment.created_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="p-4">
-                    <div className="flex flex-col gap-1">
-                      {comment.approved ? (
-                        <span className="inline-flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
-                          <CheckCircle className="w-3 h-3" />
-                          Approuvé
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded">
-                          <XCircle className="w-3 h-3" />
-                          En attente
-                        </span>
-                      )}
-                      {comment.flagged && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-1 rounded">
-                          <Flag className="w-3 h-3" />
-                          Signalé
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
                     <div className="flex items-center gap-1">
-                      {!comment.approved && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleApprove(comment.id)}
-                          disabled={operationLoading}
-                          title="Approuver"
-                        >
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        </Button>
-                      )}
-                      {comment.approved && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReject(comment.id)}
-                          disabled={operationLoading}
-                          title="Rejeter"
-                        >
-                          <XCircle className="w-4 h-4 text-yellow-600" />
-                        </Button>
-                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleFlag(comment.id, !comment.flagged)}
+                        onClick={() => handleEdit(comment)}
                         disabled={operationLoading}
-                        title={comment.flagged ? 'Retirer le signalement' : 'Signaler'}
+                        title="Modifier"
                       >
-                        <Flag className={cn('w-4 h-4', comment.flagged && 'text-red-600 fill-current')} />
+                        <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -641,6 +672,161 @@ export default function AdminCommentairesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit/Add Comment Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto admin-scroll">
+          <DialogHeader>
+            <DialogTitle>{selectedComment ? 'Modifier le commentaire' : 'Ajouter un commentaire'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="produit_id">Produit *</Label>
+              <Select
+                value={editForm.produit_id}
+                onValueChange={(value) => setEditForm({ ...editForm, produit_id: value })}
+                disabled={!!selectedComment}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un produit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {produits.map((produit) => (
+                    <SelectItem key={produit.id} value={produit.id}>
+                      {produit.nom} ({produit.categorie})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="nom">Nom *</Label>
+              <Input
+                id="nom"
+                value={editForm.nom}
+                onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
+                placeholder="Nom du client"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                placeholder="email@exemple.com (optionnel)"
+              />
+            </div>
+            <div>
+              <Label>Note *</Label>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setEditForm({ ...editForm, rating: star })}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      className={cn(
+                        'w-6 h-6 cursor-pointer transition-colors',
+                        star <= editForm.rating
+                          ? 'fill-dore text-dore'
+                          : 'text-muted-foreground/30 hover:text-dore/50'
+                      )}
+                    />
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-muted-foreground">{editForm.rating}/5</span>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="commentaire">Commentaire *</Label>
+              <Textarea
+                id="commentaire"
+                value={editForm.commentaire}
+                onChange={(e) => setEditForm({ ...editForm, commentaire: e.target.value })}
+                placeholder="Commentaire du client"
+                rows={5}
+              />
+            </div>
+            <div>
+              <Label>Images (max 6)</Label>
+              <div className="space-y-3">
+                {/* File input */}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={(e) => handleImageUpload(e.target.files)}
+                    className="hidden"
+                    disabled={uploadingImages || editForm.images.length >= 6}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImages || editForm.images.length >= 6}
+                  >
+                    {uploadingImages ? (
+                      <>
+                        <div className="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Upload en cours...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        {editForm.images.length >= 6 ? 'Maximum atteint' : 'Ajouter des images'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Image previews */}
+                {editForm.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {editForm.images.map((imageUrl, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group"
+                      >
+                        <OptimizedImage
+                          src={imageUrl}
+                          alt={`Image ${index + 1}`}
+                          fill
+                          objectFit="cover"
+                          className="transition-transform group-hover:scale-105"
+                          sizes="(max-width: 768px) 150px, 200px"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                          title="Supprimer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={operationLoading}>
+                {operationLoading ? 'Enregistrement...' : selectedComment ? 'Modifier' : 'Ajouter'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

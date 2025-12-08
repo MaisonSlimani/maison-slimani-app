@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const categorie = searchParams.get('categorie')
 
     // Build base query
-    let query = supabase.from('produits').select('prix, stock, taille, couleurs, has_colors, categorie')
+    let query = supabase.from('produits').select('prix, stock, taille, tailles, couleurs, has_colors, categorie')
 
     // Filter by category if provided
     if (categorie) {
@@ -41,27 +41,50 @@ export async function GET(request: NextRequest) {
     const minPrice = Math.min(...prices)
     const maxPrice = Math.max(...prices)
 
-    // Extract unique tailles - split comma-separated values into individual sizes
+    // Extract unique tailles from tailles array structure (only sizes with stock > 0)
     const taillesSet = new Set<string>()
     produits.forEach((p: any) => {
-      // Check product.taille field (comma-separated string like "40, 41, 42")
-      if (p.taille) {
-        const productTailles = p.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
-        productTailles.forEach((taille: string) => {
-          taillesSet.add(taille)
+      // Check product.tailles array (new structure)
+      if (p.tailles && Array.isArray(p.tailles)) {
+        p.tailles.forEach((t: any) => {
+          if (t.nom && t.stock > 0) {
+            taillesSet.add(t.nom)
+          }
         })
       }
-      // Check couleurs array - each couleur can have a taille field
+      // Backward compatibility: Check product.taille field (comma-separated string)
+      else if (p.taille) {
+        const productTailles = p.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+        // Only add if product has stock
+        if (p.stock > 0) {
+          productTailles.forEach((taille: string) => {
+            taillesSet.add(taille)
+          })
+        }
+      }
+      // Check couleurs array - each couleur can have tailles array
       if (p.has_colors && p.couleurs) {
         try {
           const couleurs = typeof p.couleurs === 'string' ? JSON.parse(p.couleurs) : p.couleurs
           if (Array.isArray(couleurs)) {
             couleurs.forEach((c: any) => {
-              if (c.taille) {
-                const couleurTailles = c.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
-                couleurTailles.forEach((taille: string) => {
-                  taillesSet.add(taille)
+              // Check tailles array (new structure)
+              if (c.tailles && Array.isArray(c.tailles)) {
+                c.tailles.forEach((t: any) => {
+                  if (t.nom && t.stock > 0) {
+                    taillesSet.add(t.nom)
+                  }
                 })
+              }
+              // Backward compatibility: Check taille field
+              else if (c.taille) {
+                const couleurTailles = c.taille.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                // Only add if color has stock
+                if (c.stock > 0) {
+                  couleurTailles.forEach((taille: string) => {
+                    taillesSet.add(taille)
+                  })
+                }
               }
             })
           }

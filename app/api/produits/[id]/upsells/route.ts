@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags'
 
 const PRODUCT_FIELDS =
-  'id, nom, description, prix, stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, date_ajout, average_rating, rating_count'
+  'id, nom, description, prix, stock, categorie, vedette, image_url, images, couleurs, has_colors, taille, tailles, date_ajout, average_rating, rating_count'
 
 export const revalidate = 300
 export const dynamic = 'force-dynamic'
