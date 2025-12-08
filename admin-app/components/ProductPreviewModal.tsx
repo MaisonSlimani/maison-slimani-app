@@ -23,7 +23,9 @@ interface ProductPreviewModalProps {
     nom: string
     code: string
     stock: number
-    taille: string
+    taille?: string // backward compatibility
+    tailles?: Array<{ nom: string; stock: number }>
+    images?: File[]
     imageUrls: string[]
   }>
   imagesGenerales?: Array<{

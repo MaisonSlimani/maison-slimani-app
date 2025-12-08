@@ -107,20 +107,10 @@ export async function GET(request: NextRequest) {
     const totalCount = filteredData.length
     const paginatedData = filteredData.slice(offset, offset + limit)
 
-    const { data, error, count } = { data: paginatedData, error: null, count: totalCount }
-
-    if (error) {
-      console.error('Erreur lors de la récupération des commentaires:', error)
-      return NextResponse.json(
-        { error: 'Erreur lors de la récupération des commentaires', details: error.message },
-        { status: 500 }
-      )
-    }
-
     return NextResponse.json({
       success: true,
-      data: data || [],
-      count: count || 0,
+      data: paginatedData || [],
+      count: totalCount || 0,
     })
   } catch (error: any) {
     console.error('Erreur serveur:', error)
