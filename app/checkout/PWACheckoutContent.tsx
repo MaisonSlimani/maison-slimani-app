@@ -126,8 +126,9 @@ export default function PWACheckoutContent() {
       setOrderComplete(true)
       // Vider le panier immédiatement
       clearCart()
-      // Rediriger vers la page de confirmation simple (sans exposer l'ID)
-      router.replace('/commande/confirme')
+      // Rediriger vers la page de confirmation
+      // Utiliser window.location pour une redirection plus fiable sur mobile/PWA
+      window.location.href = '/commande/confirme'
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error)
       toast.error(error instanceof Error ? error.message : 'Erreur lors de la création de la commande')

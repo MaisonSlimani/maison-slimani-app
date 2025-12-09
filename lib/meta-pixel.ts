@@ -44,6 +44,27 @@ export function trackEvent(eventName: string, params?: Record<string, any>) {
 }
 
 /**
+ * Track a custom event (for non-standard events)
+ * Use this for events that are not part of Meta's standard event library
+ */
+export function trackCustom(eventName: string, params?: Record<string, any>) {
+  if (typeof window === 'undefined' || typeof window.fbq !== 'function') {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Meta Pixel not loaded, custom event not tracked:', eventName)
+    }
+    return
+  }
+
+  try {
+    window.fbq('trackCustom', eventName, params)
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error tracking Meta Pixel custom event:', error)
+    }
+  }
+}
+
+/**
  * Track PageView
  */
 export function trackPageView() {
@@ -184,9 +205,10 @@ export function trackSearch(searchString: string) {
 
 /**
  * Track ViewCategory
+ * Uses trackCustom since ViewCategory is a non-standard event
  */
 export function trackViewCategory(categoryName: string) {
-  trackEvent('ViewCategory', {
+  trackCustom('ViewCategory', {
     content_name: categoryName,
     content_category: categoryName,
   })
