@@ -17,7 +17,7 @@ import SimilarProducts from '@/components/SimilarProducts'
 import { createClient } from '@/lib/supabase/client'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWAProduitContent from './PWAProduitContent'
-import { trackViewContent } from '@/lib/meta-pixel'
+import { trackViewContent } from '@/lib/analytics'
 import ProductRatingSummary from '@/components/ProductRatingSummary'
 import CommentsList from '@/components/CommentsList'
 import CommentForm from '@/components/CommentForm'
@@ -192,7 +192,7 @@ export default function ProduitSlugPage() {
         },
         (payload) => {
           const updated = payload.new as Produit
-          
+
           // Update product state with new stock data
           setProduit((prev) => {
             if (!prev) return prev
@@ -207,7 +207,7 @@ export default function ProduitSlugPage() {
           const currentStock = produit.has_colors && couleur && produit.couleurs
             ? produit.couleurs.find(c => c.nom === couleur)?.stock || 0
             : produit.stock || 0
-          
+
           const newStock = updated.has_colors && couleur && updated.couleurs
             ? updated.couleurs.find(c => c.nom === couleur)?.stock || 0
             : updated.stock || 0
@@ -243,7 +243,7 @@ export default function ProduitSlugPage() {
 
   useEffect(() => {
     if (!produit) return
-    
+
     // Track ViewContent for Meta Pixel
     trackViewContent({
       content_name: produit.nom,
@@ -257,7 +257,7 @@ export default function ProduitSlugPage() {
         item_price: produit.prix,
       }],
     })
-    
+
     document.title = `${produit.nom} | Maison Slimani`
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
@@ -287,7 +287,7 @@ export default function ProduitSlugPage() {
       document.head.appendChild(meta)
     }
     const ogImage = document.querySelector('meta[property="og:image"]')
-    const imageUrl = produit.image_url || (produit.images && Array.isArray(produit.images) && produit.images.length > 0 
+    const imageUrl = produit.image_url || (produit.images && Array.isArray(produit.images) && produit.images.length > 0
       ? (typeof produit.images[0] === 'string' ? produit.images[0] : produit.images[0].url)
       : '')
     if (ogImage && imageUrl) {
@@ -315,7 +315,7 @@ export default function ProduitSlugPage() {
     }
 
     if (produit) {
-      const imageUrl = produit.image_url || (produit.images && Array.isArray(produit.images) && produit.images.length > 0 
+      const imageUrl = produit.image_url || (produit.images && Array.isArray(produit.images) && produit.images.length > 0
         ? (typeof produit.images[0] === 'string' ? produit.images[0] : produit.images[0].url)
         : '')
 
@@ -323,19 +323,19 @@ export default function ProduitSlugPage() {
       const allImages: string[] = []
       if (imageUrl) {
         // Ensure absolute URL
-        const absoluteImageUrl = imageUrl.startsWith('http') 
-          ? imageUrl 
+        const absoluteImageUrl = imageUrl.startsWith('http')
+          ? imageUrl
           : `${window.location.origin}${imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl}`
         allImages.push(absoluteImageUrl)
       }
-      
+
       // Add additional images if available
       if (produit.images && Array.isArray(produit.images) && produit.images.length > 0) {
         produit.images.forEach((img: any) => {
           const imgUrl = typeof img === 'string' ? img : (img.url || img.src)
           if (imgUrl && !allImages.includes(imgUrl)) {
-            const absoluteImgUrl = imgUrl.startsWith('http') 
-              ? imgUrl 
+            const absoluteImgUrl = imgUrl.startsWith('http')
+              ? imgUrl
               : `${window.location.origin}${imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl}`
             allImages.push(absoluteImgUrl)
           }
@@ -361,8 +361,8 @@ export default function ProduitSlugPage() {
           '@type': 'Offer',
           price: produit.prix,
           priceCurrency: 'MAD',
-          availability: produit.stock > 0 
-            ? 'https://schema.org/InStock' 
+          availability: produit.stock > 0
+            ? 'https://schema.org/InStock'
             : 'https://schema.org/OutOfStock',
           url: window.location.href,
           priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
@@ -411,7 +411,7 @@ export default function ProduitSlugPage() {
       const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
       taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
     }
-    
+
     if (taillesData.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
@@ -441,9 +441,9 @@ export default function ProduitSlugPage() {
         image_url: produit.image_url,
         taille: taille || undefined,
         couleur: produit.has_colors && couleur ? couleur : undefined,
-        stock: taillesData.length > 0 && taille 
+        stock: taillesData.length > 0 && taille
           ? (taillesData.find(t => t.nom === taille)?.stock || 0)
-          : (produit.has_colors && couleur && produit.couleurs 
+          : (produit.has_colors && couleur && produit.couleurs
             ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
             : produit.stock),
         categorie: produit.categorie,
@@ -452,7 +452,7 @@ export default function ProduitSlugPage() {
       })
       setAddedToCart(true)
       if ((window as any).playSuccessSound) {
-        ;(window as any).playSuccessSound()
+        ; (window as any).playSuccessSound()
       }
       setTimeout(() => {
         setAddedToCart(false)
@@ -469,7 +469,7 @@ export default function ProduitSlugPage() {
 
   const handleBuyNow = async () => {
     if (!produit) return
-    
+
     // Validate product selection (same as handleAddToCart)
     if (produit.has_colors && !couleur) {
       toast.error('Veuillez sélectionner une couleur')
@@ -507,7 +507,7 @@ export default function ProduitSlugPage() {
       const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
       taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
     }
-    
+
     if (taillesData.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
@@ -530,10 +530,10 @@ export default function ProduitSlugPage() {
     try {
       // Clear existing cart first
       clearCart()
-      
+
       // Small delay to ensure cart is cleared before adding new item
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Add the current product to cart (without opening drawer)
       const categorie = params.categorie as string
       const slug = params.slug as string
@@ -545,17 +545,17 @@ export default function ProduitSlugPage() {
         image_url: produit.image_url,
         taille: taille || undefined,
         couleur: produit.has_colors && couleur ? couleur : undefined,
-        stock: produit.has_colors && couleur && produit.couleurs 
+        stock: produit.has_colors && couleur && produit.couleurs
           ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
           : produit.stock,
         categorie: produit.categorie,
         slug: produit.slug || slug,
         categorySlug: categorie,
       }, false) // Don't open cart drawer for "Buy Now"
-      
+
       // Small delay before redirect to ensure cart is updated
       await new Promise(resolve => setTimeout(resolve, 200))
-      
+
       // Redirect to checkout
       router.push('/checkout')
     } catch (error) {
@@ -715,10 +715,10 @@ export default function ProduitSlugPage() {
               </p>
             </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.6 }} 
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
               className="prose prose-sm max-w-none prose-headings:font-serif prose-headings:text-foreground prose-headings:font-bold prose-h1:text-4xl prose-h1:font-bold prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-2xl prose-h3:font-semibold prose-h3:mt-4 prose-h3:mb-2 prose-p:text-foreground/80 prose-p:leading-relaxed prose-p:text-lg prose-strong:text-foreground prose-strong:font-semibold prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:text-foreground prose-blockquote:border-l-dore prose-blockquote:text-muted-foreground prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground prose-table:text-foreground overflow-hidden"
             >
               <div
@@ -763,8 +763,8 @@ export default function ProduitSlugPage() {
                       {selectedColorStock === 0
                         ? 'Rupture de stock pour cette couleur'
                         : selectedColorStock === 1
-                        ? `Il ne reste qu'un seul article pour ${couleur}`
-                        : `Il ne reste que ${selectedColorStock} articles pour ${couleur}`}
+                          ? `Il ne reste qu'un seul article pour ${couleur}`
+                          : `Il ne reste que ${selectedColorStock} articles pour ${couleur}`}
                     </span>
                   </div>
                 </motion.div>
@@ -857,7 +857,7 @@ export default function ProduitSlugPage() {
                 const stockPerSize = tailleList.length > 0 ? Math.floor((produit.stock || 0) / tailleList.length) : 0
                 taillesData = tailleList.map(t => ({ nom: t, stock: stockPerSize }))
               }
-              
+
               // Show size selector if sizes are defined (regardless of stock)
               if (taillesData.length > 0) {
                 return (
@@ -876,10 +876,10 @@ export default function ProduitSlugPage() {
                             onClick={() => !isOutOfStock && setTaille(tailleValue)}
                             className={cn(
                               'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
-                              isOutOfStock 
-                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
-                                : isSelected 
-                                  ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105' 
+                              isOutOfStock
+                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted'
+                                : isSelected
+                                  ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105'
                                   : 'bg-background text-foreground border-border hover:border-dore hover:scale-105'
                             )}
                           >
@@ -924,26 +924,26 @@ export default function ProduitSlugPage() {
                 return produit.stock > 0
               }
             })() && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="flex items-center gap-4">
-                <label htmlFor="quantite" className="text-sm font-medium">Quantité:</label>
-                <div className="flex items-center gap-2 border border-border rounded-lg">
-                  <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setQuantite(Math.max(1, quantite - 1))} disabled={quantite <= 1}>−</Button>
-                  <span className="w-12 text-center font-medium">{quantite}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10"
-                    onClick={() => {
-                      const maxStock = produit.has_colors && couleur ? (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) : produit.stock
-                      setQuantite(Math.min(maxStock, quantite + 1))
-                    }}
-                    disabled={quantite >= (produit.has_colors && couleur ? (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) : produit.stock)}
-                  >
-                    +
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="flex items-center gap-4">
+                  <label htmlFor="quantite" className="text-sm font-medium">Quantité:</label>
+                  <div className="flex items-center gap-2 border border-border rounded-lg">
+                    <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setQuantite(Math.max(1, quantite - 1))} disabled={quantite <= 1}>−</Button>
+                    <span className="w-12 text-center font-medium">{quantite}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => {
+                        const maxStock = produit.has_colors && couleur ? (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) : produit.stock
+                        setQuantite(Math.min(maxStock, quantite + 1))
+                      }}
+                      disabled={quantite >= (produit.has_colors && couleur ? (produit.couleurs?.find(c => c.nom === couleur)?.stock || 0) : produit.stock)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="flex flex-col gap-4 pt-4">
               <div className="flex flex-col sm:flex-row gap-4">
@@ -1034,9 +1034,9 @@ export default function ProduitSlugPage() {
         </div>
 
         {/* Avis et Commentaires Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1 }}
           className="max-w-4xl mx-auto space-y-8 pt-12 border-t border-border"
         >
@@ -1058,7 +1058,7 @@ export default function ProduitSlugPage() {
 
           {/* Comments List */}
           <div>
-            <CommentsList 
+            <CommentsList
               produitId={produit.id}
               onCommentUpdate={() => {
                 // Refresh product data to update ratings
@@ -1066,7 +1066,7 @@ export default function ProduitSlugPage() {
               }}
             />
           </div>
-          
+
           {/* Comment Form */}
           <div className="border-t border-border pt-8">
             <h3 className="text-2xl font-serif font-semibold mb-6">Laisser un commentaire</h3>

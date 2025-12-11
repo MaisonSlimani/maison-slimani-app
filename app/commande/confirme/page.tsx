@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACommandeConfirmeContent from './PWACommandeConfirmeContent'
-import { trackPurchase } from '@/lib/meta-pixel'
+import { trackPurchase } from '@/lib/analytics'
 
 export default function CommandeConfirmePage() {
   const { isPWA, isLoading } = useIsPWA()
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    
+
     // Track Purchase event for Meta Pixel
     try {
       const orderDataStr = localStorage.getItem('lastOrder')
@@ -23,7 +23,7 @@ export default function CommandeConfirmePage() {
         if (orderData.id && orderData.produits) {
           const total = orderData.total || 0
           const numItems = orderData.produits.reduce((sum: number, p: any) => sum + (p.quantite || 0), 0)
-          
+
           trackPurchase({
             value: total,
             currency: 'MAD',
@@ -35,7 +35,7 @@ export default function CommandeConfirmePage() {
             order_id: orderData.id,
             num_items: numItems,
           })
-          
+
           // Clear after tracking
           localStorage.removeItem('lastOrder')
         }
@@ -79,10 +79,10 @@ export default function CommandeConfirmePage() {
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                delay: 0.2, 
-                type: 'spring', 
-                stiffness: 200, 
+              transition={{
+                delay: 0.2,
+                type: 'spring',
+                stiffness: 200,
                 damping: 15,
                 duration: 0.6
               }}
@@ -94,7 +94,7 @@ export default function CommandeConfirmePage() {
                   className="absolute inset-0"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1.3, opacity: 0 }}
-                  transition={{ 
+                  transition={{
                     delay: 0.4,
                     duration: 1.5,
                     repeat: Infinity,
@@ -110,10 +110,10 @@ export default function CommandeConfirmePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.4, 
-                duration: 0.8, 
-                ease: [0.22, 1, 0.36, 1] 
+              transition={{
+                delay: 0.4,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
               }}
             >
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif mb-6 text-charbon leading-tight">
@@ -126,10 +126,10 @@ export default function CommandeConfirmePage() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.6, 
-                duration: 0.8, 
-                ease: [0.22, 1, 0.36, 1] 
+              transition={{
+                delay: 0.6,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
               }}
               className="text-lg md:text-xl text-charbon/80 mb-6 max-w-2xl mx-auto leading-relaxed"
             >
@@ -140,10 +140,10 @@ export default function CommandeConfirmePage() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.8, 
-                duration: 0.8, 
-                ease: [0.22, 1, 0.36, 1] 
+              transition={{
+                delay: 0.8,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
               }}
               className="text-base md:text-lg text-charbon/70 mb-8 max-w-2xl mx-auto leading-relaxed"
             >
@@ -159,10 +159,10 @@ export default function CommandeConfirmePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              delay: 1.0, 
-              duration: 0.8, 
-              ease: [0.22, 1, 0.36, 1] 
+            transition={{
+              delay: 1.0,
+              duration: 0.8,
+              ease: [0.22, 1, 0.36, 1]
             }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
@@ -172,9 +172,9 @@ export default function CommandeConfirmePage() {
               transition={{ duration: 0.2 }}
               className="w-full sm:w-auto"
             >
-              <Button 
-                asChild 
-                variant="outline" 
+              <Button
+                asChild
+                variant="outline"
                 className="w-full sm:w-[200px] text-base md:text-lg py-6 px-8 border-charbon/20 hover:border-charbon/40 transition-all duration-300"
               >
                 <Link href="/boutique">Continuer mes achats</Link>
@@ -186,8 +186,8 @@ export default function CommandeConfirmePage() {
               transition={{ duration: 0.2 }}
               className="w-full sm:w-auto"
             >
-              <Button 
-                asChild 
+              <Button
+                asChild
                 className="w-full sm:w-[200px] text-base md:text-lg py-6 px-8 bg-dore text-charbon hover:bg-dore/90 transition-all duration-300"
               >
                 <Link href="/">Retour à l'accueil</Link>

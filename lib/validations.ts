@@ -33,7 +33,7 @@ export const produitQuerySchema = z.object({
     .pipe(z.number().int().nonnegative())
     .optional(),
   sort: z
-    .enum(['recent', 'prix-asc', 'prix-desc'])
+    .enum(['prix_asc', 'prix_desc', 'prix-asc', 'prix-desc'])
     .optional(),
   useFullText: z
     .string()

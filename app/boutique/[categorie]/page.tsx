@@ -16,16 +16,16 @@ import { useCart } from '@/lib/hooks/useCart'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACategorieContent from './PWACategorieContent'
-import { trackViewCategory } from '@/lib/meta-pixel'
+import { trackViewCategory } from '@/lib/analytics'
 
 export default function CategoriePage() {
   const { isPWA, isLoading } = useIsPWA()
   const params = useParams()
   const categorieSlug = params.categorie as string
-  
+
   const [loadingCategory, setLoadingCategory] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
-  const [triPrix, setTriPrix] = useState<string>('pertinence')
+  const [triPrix, setTriPrix] = useState<string>('')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<FilterState>({})
@@ -81,8 +81,8 @@ export default function CategoriePage() {
 
         const categoryInfo = {
           nom: data.nom,
-          image: (!data.image_url || data.image_url.trim() === '') 
-            ? '/assets/hero-chaussures.jpg' 
+          image: (!data.image_url || data.image_url.trim() === '')
+            ? '/assets/hero-chaussures.jpg'
             : data.image_url,
           description: data.description || '',
         }
@@ -117,7 +117,7 @@ export default function CategoriePage() {
 
     // Update title dynamically based on category
     document.title = `${categorieInfo.nom} - Chaussures Homme Luxe | Maison Slimani`
-    
+
     // Update meta description dynamically
     const metaDescription = document.querySelector('meta[name="description"]')
     const description = `${categorieInfo.description} Découvrez notre collection ${categorieInfo.nom} de chaussures homme haut de gamme. Livraison gratuite au Maroc.`
@@ -187,7 +187,7 @@ export default function CategoriePage() {
     if (existingScript) {
       existingScript.remove()
     }
-    
+
     const script = document.createElement('script')
     script.id = 'category-structured-data'
     script.type = 'application/ld+json'
@@ -251,11 +251,9 @@ export default function CategoriePage() {
       }
 
       if (triPrix === 'prix-asc') {
-        searchParams.set('sort', 'prix-asc')
+        searchParams.set('sort', 'prix_asc')
       } else if (triPrix === 'prix-desc') {
-        searchParams.set('sort', 'prix-desc')
-      } else {
-        searchParams.set('sort', 'recent')
+        searchParams.set('sort', 'prix_desc')
       }
 
       // Add search query
@@ -392,7 +390,7 @@ export default function CategoriePage() {
         </motion.div>
         {/* Overlay dégradé sombre pour meilleure lisibilité */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-        
+
         <motion.div
           className="relative z-10 container text-center px-6"
           initial={{ opacity: 0, y: 40 }}
@@ -454,7 +452,7 @@ export default function CategoriePage() {
                 className="pl-10 h-11 bg-muted border-0"
               />
             </div>
-            
+
             {/* Bouton panier */}
             <button
               onClick={() => openDrawer()}
@@ -469,7 +467,7 @@ export default function CategoriePage() {
               )}
             </button>
           </div>
-          
+
           {/* Filter and Sort Buttons */}
           <div className="flex items-center justify-start gap-3 flex-wrap">
             <Select value={triPrix} onValueChange={setTriPrix}>
@@ -477,10 +475,8 @@ export default function CategoriePage() {
                 <SelectValue placeholder="Trier" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pertinence">Pertinence</SelectItem>
                 <SelectItem value="prix-asc">Prix croissant</SelectItem>
                 <SelectItem value="prix-desc">Prix décroissant</SelectItem>
-                <SelectItem value="nouveaute">Nouveautés</SelectItem>
               </SelectContent>
             </Select>
             <ProductFilter
@@ -489,93 +485,93 @@ export default function CategoriePage() {
               categoryName={categorieSlug === 'tous' ? undefined : categorieNom || undefined}
             />
           </div>
-          
+
           {/* Active Filters Chips */}
-          {((filters.categorie && filters.categorie.length > 0) || 
-            (filters.couleur && filters.couleur.length > 0) || 
-            (filters.taille && filters.taille.length > 0) || 
+          {((filters.categorie && filters.categorie.length > 0) ||
+            (filters.couleur && filters.couleur.length > 0) ||
+            (filters.taille && filters.taille.length > 0) ||
             filters.minPrice || filters.maxPrice || filters.inStock !== undefined) && (
-            <div className="flex flex-wrap gap-2 items-center pt-2">
-              {filters.categorie && filters.categorie.length > 0 && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
-                  <span>Catégorie: {filters.categorie.join(', ')}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ ...filters, categorie: undefined })}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label="Retirer le filtre catégorie"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {filters.couleur && filters.couleur.length > 0 && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
-                  <span>Couleur: {filters.couleur.join(', ')}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ ...filters, couleur: undefined })}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label="Retirer le filtre couleur"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {filters.taille && filters.taille.length > 0 && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
-                  <span>Taille: {filters.taille.join(', ')}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ ...filters, taille: undefined })}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label="Retirer le filtre taille"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {filters.minPrice && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
-                  <span>Prix min: {filters.minPrice} DH</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ ...filters, minPrice: undefined })}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label="Retirer le filtre prix min"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {filters.maxPrice && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
-                  <span>Prix max: {filters.maxPrice} DH</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ ...filters, maxPrice: undefined })}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label="Retirer le filtre prix max"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-              {filters.inStock !== undefined && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
-                  <span>{filters.inStock ? 'En stock' : 'Rupture'}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ ...filters, inStock: undefined })}
-                    className="ml-1 hover:text-destructive transition-colors"
-                    aria-label="Retirer le filtre stock"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+              <div className="flex flex-wrap gap-2 items-center pt-2">
+                {filters.categorie && filters.categorie.length > 0 && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                    <span>Catégorie: {filters.categorie.join(', ')}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ ...filters, categorie: undefined })}
+                      className="ml-1 hover:text-destructive transition-colors"
+                      aria-label="Retirer le filtre catégorie"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {filters.couleur && filters.couleur.length > 0 && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                    <span>Couleur: {filters.couleur.join(', ')}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ ...filters, couleur: undefined })}
+                      className="ml-1 hover:text-destructive transition-colors"
+                      aria-label="Retirer le filtre couleur"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {filters.taille && filters.taille.length > 0 && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                    <span>Taille: {filters.taille.join(', ')}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ ...filters, taille: undefined })}
+                      className="ml-1 hover:text-destructive transition-colors"
+                      aria-label="Retirer le filtre taille"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {filters.minPrice && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                    <span>Prix min: {filters.minPrice} DH</span>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ ...filters, minPrice: undefined })}
+                      className="ml-1 hover:text-destructive transition-colors"
+                      aria-label="Retirer le filtre prix min"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {filters.maxPrice && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                    <span>Prix max: {filters.maxPrice} DH</span>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ ...filters, maxPrice: undefined })}
+                      className="ml-1 hover:text-destructive transition-colors"
+                      aria-label="Retirer le filtre prix max"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {filters.inStock !== undefined && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-dore/20 border border-dore/50 rounded-full text-xs font-medium">
+                    <span>{filters.inStock ? 'En stock' : 'Rupture'}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ ...filters, inStock: undefined })}
+                      className="ml-1 hover:text-destructive transition-colors"
+                      aria-label="Retirer le filtre stock"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
         </motion.div>
 
         {/* Produits avec animations en cascade */}

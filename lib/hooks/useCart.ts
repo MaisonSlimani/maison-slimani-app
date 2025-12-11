@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { trackAddToCart } from '@/lib/meta-pixel'
+import { trackAddToCart } from '@/lib/analytics'
 
 export interface CartItem {
   id: string
@@ -58,7 +58,7 @@ export function useCart() {
     if (typeof window === 'undefined' || !isLoaded) {
       return
     }
-    
+
     const handleCartUpdate = () => {
       // Recharger le panier depuis localStorage quand un autre composant le met à jour
       loadCartFromStorage()
@@ -77,16 +77,16 @@ export function useCart() {
     if (isLoaded && typeof window !== 'undefined') {
       const itemsJson = JSON.stringify(items)
       const prevItemsJson = prevItemsRef.current
-      
+
       // Sauvegarder dans localStorage
       localStorage.setItem('cart', itemsJson)
-      
+
       // Déclencher un événement seulement si les items ont vraiment changé
       // (pas juste lors du rechargement depuis localStorage)
       if (prevItemsJson && prevItemsJson !== itemsJson) {
         window.dispatchEvent(new Event('cartUpdated'))
       }
-      
+
       prevItemsRef.current = itemsJson
     }
   }, [items, isLoaded])
@@ -96,11 +96,11 @@ export function useCart() {
     if (item.stock === undefined || item.stock === null) {
       throw new Error(`Stock non disponible pour "${item.nom}"`)
     }
-    
+
     if (item.stock <= 0) {
       throw new Error(`Produit "${item.nom}" en rupture de stock`)
     }
-    
+
     if (item.stock < item.quantite) {
       throw new Error(`Stock insuffisant pour "${item.nom}". Stock disponible: ${item.stock}`)
     }
@@ -110,7 +110,7 @@ export function useCart() {
       if (typeof window !== 'undefined') {
         const { createClient } = await import('@/lib/supabase/client')
         const supabase = createClient()
-        
+
         const { data: produit, error } = await supabase
           .from('produits')
           .select('id, stock, total_stock, has_colors, couleurs, tailles, taille')
@@ -123,7 +123,7 @@ export function useCart() {
 
         // Vérifier le stock selon le type de produit et la taille
         let stockDisponible: number = 0
-        
+
         // If taille is specified, check stock for that specific size
         if (item.taille) {
           if (produit.has_colors && item.couleur) {
@@ -131,12 +131,12 @@ export function useCart() {
             if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
               throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
             }
-            
+
             const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
             if (!couleurSelected) {
               throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
             }
-            
+
             // Check tailles array in color
             if (couleurSelected.tailles && Array.isArray(couleurSelected.tailles)) {
               const tailleData = couleurSelected.tailles.find((t: any) => t.nom === item.taille)
@@ -182,12 +182,12 @@ export function useCart() {
             if (!produit.couleurs || !Array.isArray(produit.couleurs)) {
               throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
             }
-            
+
             const couleurSelected = produit.couleurs.find((c: any) => c.nom === item.couleur)
             if (!couleurSelected) {
               throw new Error(`Couleur "${item.couleur}" non disponible pour "${item.nom}"`)
             }
-            
+
             stockDisponible = couleurSelected.stock || 0
           } else if (!produit.has_colors) {
             // Produit sans couleurs - vérifier le stock global
@@ -207,7 +207,7 @@ export function useCart() {
         const existing = produit.has_colors && item.couleur
           ? currentItems.find((i) => i.id === item.id && i.couleur === item.couleur)
           : currentItems.find((i) => i.id === item.id && !i.couleur)
-        
+
         const quantiteTotale = existing ? existing.quantite + item.quantite : item.quantite
 
         if (stockDisponible < quantiteTotale) {
@@ -225,14 +225,14 @@ export function useCart() {
       // Sinon, lancer une erreur générique
       throw new Error(`Erreur lors de la vérification du stock pour "${item.nom}"`)
     }
-    
+
     // Si tout est OK, ajouter au panier
     setItems((prev) => {
       // Pour les produits avec couleurs, vérifier la même couleur
       const existing = item.couleur
         ? prev.find((i) => i.id === item.id && i.couleur === item.couleur && i.taille === item.taille)
         : prev.find((i) => i.id === item.id && !i.couleur && i.taille === item.taille)
-      
+
       if (existing) {
         const nouvelleQuantite = existing.quantite + item.quantite
         return prev.map((i) =>
@@ -243,7 +243,7 @@ export function useCart() {
       }
       return [...prev, item]
     })
-    
+
     // Track AddToCart event for Meta Pixel
     trackAddToCart({
       content_name: item.nom,
@@ -257,10 +257,10 @@ export function useCart() {
         item_price: item.prix,
       }],
     })
-    
+
     // Son d'ajout au panier
     if ((window as any).playSuccessSound) {
-      ;(window as any).playSuccessSound()
+      ; (window as any).playSuccessSound()
     }
 
     // Ouvrir le drawer du panier après ajout (sauf si openDrawer est false)
@@ -281,8 +281,8 @@ export function useCart() {
     setItems((prev) => {
       if (couleur !== undefined || taille !== undefined) {
         // Supprimer un item spécifique avec couleur/taille
-        return prev.filter((item) => 
-          !(item.id === id && 
+        return prev.filter((item) =>
+          !(item.id === id &&
             (couleur === undefined || item.couleur === couleur) &&
             (taille === undefined || item.taille === taille))
         )
@@ -305,19 +305,19 @@ export function useCart() {
     setItems((prev) => {
       // Trouver l'item spécifique
       const item = couleur !== undefined || taille !== undefined
-        ? prev.find((i) => 
-            i.id === id && 
-            (couleur === undefined || i.couleur === couleur) &&
-            (taille === undefined || i.taille === taille)
-          )
+        ? prev.find((i) =>
+          i.id === id &&
+          (couleur === undefined || i.couleur === couleur) &&
+          (taille === undefined || i.taille === taille)
+        )
         : prev.find((i) => i.id === id && !i.couleur && !i.taille)
-      
+
       if (item && item.stock !== undefined && item.stock < quantite) {
         throw new Error(`Stock insuffisant pour "${item.nom}". Stock disponible: ${item.stock}`)
       }
-      
+
       return prev.map((item) => {
-        const matches = item.id === id && 
+        const matches = item.id === id &&
           (couleur === undefined || item.couleur === couleur) &&
           (taille === undefined || item.taille === taille)
         return matches ? { ...item, quantite } : item

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { trackAddToWishlist } from '@/lib/analytics'
 
 export interface WishlistItem {
   id: string
@@ -79,11 +80,11 @@ export function useWishlist() {
 
     // Listen for storage events (cross-tab updates)
     window.addEventListener('storage', handleStorageChange)
-    
+
     // Listen for wishlistUpdated events (same-tab updates)
     // This ensures components get the latest data when items are added
     window.addEventListener('wishlistUpdated', refreshFromStorage)
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('wishlistUpdated', refreshFromStorage)

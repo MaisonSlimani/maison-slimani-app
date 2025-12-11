@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/card'
 import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { CheckoutLoading } from '@/components/CheckoutLoading'
-import { trackInitiateCheckout } from '@/lib/meta-pixel'
+import { trackInitiateCheckout, trackAddPaymentInfo } from '@/lib/analytics'
 
 export default function PWACheckoutContent() {
   const router = useRouter()
@@ -38,7 +38,7 @@ export default function PWACheckoutContent() {
     if (isLoaded && items.length > 0) {
       const total = items.reduce((sum, item) => sum + (item.prix * item.quantite), 0)
       const numItems = items.reduce((sum, item) => sum + item.quantite, 0)
-      
+
       trackInitiateCheckout({
         value: total,
         currency: 'MAD',
@@ -103,7 +103,7 @@ export default function PWACheckoutContent() {
       if (!response.ok || !result.success) {
         // Formater le message d'erreur pour l'utilisateur
         let errorMessage = result.error || 'Erreur lors de la création de la commande'
-        
+
         // Messages d'erreur plus clairs pour l'utilisateur
         if (errorMessage.includes('Stock insuffisant') || errorMessage.includes('stock insuffisant')) {
           errorMessage = 'Stock insuffisant pour certains produits. Veuillez vérifier votre panier.'
@@ -113,7 +113,7 @@ export default function PWACheckoutContent() {
           // Si c'est une erreur de validation, afficher un message générique
           errorMessage = 'Veuillez vérifier les informations de votre commande.'
         }
-        
+
         throw new Error(errorMessage)
       }
 
@@ -201,65 +201,65 @@ export default function PWACheckoutContent() {
         </Card>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-4 space-y-4 bg-secondary/40">
-          <h2 className="text-lg font-serif mb-4">Informations de livraison</h2>
-          
-          <div className="space-y-2">
-            <Label htmlFor="nom_client">Nom complet *</Label>
-            <Input
-              id="nom_client"
-              required
-              value={formData.nom_client}
-              onChange={(e) => setFormData({ ...formData, nom_client: e.target.value })}
-              placeholder="Votre nom"
-            />
-          </div>
+          <Card className="p-4 space-y-4 bg-secondary/40">
+            <h2 className="text-lg font-serif mb-4">Informations de livraison</h2>
 
-          <div className="space-y-2">
-            <Label htmlFor="telephone">Téléphone *</Label>
-            <Input
-              id="telephone"
-              type="tel"
-              required
-              value={formData.telephone}
-              onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-              placeholder="+212 6XX-XXXXXX"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="nom_client">Nom complet *</Label>
+              <Input
+                id="nom_client"
+                required
+                value={formData.nom_client}
+                onChange={(e) => setFormData({ ...formData, nom_client: e.target.value })}
+                placeholder="Votre nom"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email (optionnel)</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="votre@email.com"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="telephone">Téléphone *</Label>
+              <Input
+                id="telephone"
+                type="tel"
+                required
+                value={formData.telephone}
+                onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                placeholder="+212 6XX-XXXXXX"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="adresse">Adresse *</Label>
-            <Input
-              id="adresse"
-              required
-              value={formData.adresse}
-              onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-              placeholder="Votre adresse"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email (optionnel)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="votre@email.com"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ville">Ville *</Label>
-            <Input
-              id="ville"
-              required
-              value={formData.ville}
-              onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
-              placeholder="Votre ville"
-            />
-          </div>
-        </Card>
+            <div className="space-y-2">
+              <Label htmlFor="adresse">Adresse *</Label>
+              <Input
+                id="adresse"
+                required
+                value={formData.adresse}
+                onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+                placeholder="Votre adresse"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="ville">Ville *</Label>
+              <Input
+                id="ville"
+                required
+                value={formData.ville}
+                onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
+                placeholder="Votre ville"
+              />
+            </div>
+          </Card>
 
           <Button
             type="submit"

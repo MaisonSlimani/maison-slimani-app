@@ -8,6 +8,7 @@ import { Providers } from '@/components/Providers'
 import PWARedirect from '@/components/PWARedirect'
 import NavigationWrapper from '@/components/NavigationWrapper'
 import MetaPixel from '@/components/MetaPixel'
+import GoogleTagManager from '@/components/GoogleTagManager'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -91,6 +92,7 @@ export default function RootLayout({
         {/* Facebook Domain Verification */}
         <meta name="facebook-domain-verification" content="ln1wiizsft23o3ned6y6lyafkjm5or" />
         <MetaPixel />
+        <GoogleTagManager />
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
         <Providers>

@@ -16,6 +16,8 @@ export default function AdminSocialsPage() {
     facebook: '',
     instagram: '',
     meta_pixel_code: '',
+    google_tag_manager_header: '',
+    google_tag_manager_body: '',
   })
 
   useEffect(() => {
@@ -23,13 +25,15 @@ export default function AdminSocialsPage() {
       try {
         const response = await fetch('/api/admin/settings')
         if (!response.ok) throw new Error('Erreur lors du chargement')
-        
+
         const result = await response.json()
         if (result.data) {
           setFormData({
             facebook: result.data.facebook || '',
             instagram: result.data.instagram || '',
             meta_pixel_code: result.data.meta_pixel_code || '',
+            google_tag_manager_header: result.data.google_tag_manager_header || '',
+            google_tag_manager_body: result.data.google_tag_manager_body || '',
           })
         }
       } catch (error) {
@@ -46,7 +50,7 @@ export default function AdminSocialsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    
+
     try {
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
@@ -116,7 +120,7 @@ export default function AdminSocialsPage() {
               L'URL complète de votre page Facebook
             </p>
           </div>
-          
+
           <div>
             <Label htmlFor="instagram">Instagram URL</Label>
             <Input
@@ -144,6 +148,40 @@ export default function AdminSocialsPage() {
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Collez ici le code complet de votre Meta Pixel (incluant les balises &lt;script&gt; et &lt;noscript&gt;)
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t space-y-6">
+            <h3 className="text-lg font-medium">Google Tag Manager</h3>
+
+            <div>
+              <Label htmlFor="google_tag_manager_header">Code Header (Head)</Label>
+              <Textarea
+                id="google_tag_manager_header"
+                rows={8}
+                placeholder="<!-- Google Tag Manager -->&#10;&lt;script&gt;...&lt;/script&gt;"
+                value={formData.google_tag_manager_header}
+                onChange={(e) => setFormData({ ...formData, google_tag_manager_header: e.target.value })}
+                className="font-mono text-sm"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Collez ici le code à placer dans la section &lt;head&gt;
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="google_tag_manager_body">Code Body (Body)</Label>
+              <Textarea
+                id="google_tag_manager_body"
+                rows={4}
+                placeholder="<!-- Google Tag Manager (noscript) -->&#10;&lt;noscript&gt;...&lt;/noscript&gt;"
+                value={formData.google_tag_manager_body}
+                onChange={(e) => setFormData({ ...formData, google_tag_manager_body: e.target.value })}
+                className="font-mono text-sm"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Collez ici le code à placer juste après l'ouverture de la balise &lt;body&gt;
               </p>
             </div>
           </div>
