@@ -105,9 +105,12 @@ class MixpanelTracker {
             ignore_dnt: false, // Respect Do Not Track
             ip: false, // Don't track IP (privacy)
             api_host: 'https://api-eu.mixpanel.com', // EU data residency
-            record_sessions_percent: 100, // Enable Session Replay for 100% of users
-            record_mask_text_class: "mask-text", // Class to mask text content
-            record_block_class: "block-recording", // Class to block element recording
+            record_sessions_percent: 100,
+            record_mask_text_class: "mask-text",
+            record_block_class: "block-recording",
+            // Only mask/block elements with these specific classes (unmasks everything else by default)
+            record_mask_text_selector: ".mask-text",
+            record_block_selector: ".block-recording",
             loaded: (mixpanel) => {
                 console.log('✅ Mixpanel initialized')
             },
