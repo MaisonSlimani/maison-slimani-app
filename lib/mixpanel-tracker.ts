@@ -105,6 +105,9 @@ class MixpanelTracker {
             ignore_dnt: false, // Respect Do Not Track
             ip: false, // Don't track IP (privacy)
             api_host: 'https://api-eu.mixpanel.com', // EU data residency
+            record_sessions_percent: 100, // Enable Session Replay for 100% of users
+            record_mask_text_class: "mask-text", // Class to mask text content
+            record_block_class: "block-recording", // Class to block element recording
             loaded: (mixpanel) => {
                 console.log('✅ Mixpanel initialized')
             },
