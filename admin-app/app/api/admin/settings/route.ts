@@ -12,7 +12,7 @@ export async function GET() {
     // First try with all columns (including new social fields)
     const { data, error } = await supabase
       .from('settings')
-      .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code')
+      .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code, google_tag_manager_header, google_tag_manager_body')
       .limit(1)
       .single()
 
@@ -36,6 +36,8 @@ export async function GET() {
           facebook: null,
           instagram: null,
           meta_pixel_code: null,
+          google_tag_manager_header: null,
+          google_tag_manager_body: null,
         } : null
       })
     }
@@ -112,7 +114,7 @@ export async function PUT(request: NextRequest) {
       // If error is about missing columns, try without the new columns
       if (error && (error.message?.includes('column') || error.code === '42703')) {
         console.warn('New social columns not found, updating without them')
-        const { facebook: _, instagram: __, meta_pixel_code: ___, ...basicUpdateData } = updateData
+        const { facebook: _, instagram: __, meta_pixel_code: ___, google_tag_manager_header: ____, google_tag_manager_body: _____, ...basicUpdateData } = updateData
         const fallbackResult = await supabase
           .from('settings')
           .update(basicUpdateData)
@@ -136,7 +138,7 @@ export async function PUT(request: NextRequest) {
       // If error is about missing columns, try without the new columns
       if (error && (error.message?.includes('column') || error.code === '42703')) {
         console.warn('New social columns not found, inserting without them')
-        const { facebook: _, instagram: __, meta_pixel_code: ___, ...basicUpdateData } = updateData
+        const { facebook: _, instagram: __, meta_pixel_code: ___, google_tag_manager_header: ____, google_tag_manager_body: _____, ...basicUpdateData } = updateData
         const fallbackResult = await supabase
           .from('settings')
           .insert(basicUpdateData)
