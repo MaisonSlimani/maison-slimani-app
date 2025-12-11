@@ -156,7 +156,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [produit?.id])
+  }, [produit?.id, router])
 
   // Parse les tailles disponibles (check new tailles array first, then fallback to old taille string)
   const taillesDisponibles: string[] = (() => {

@@ -12,6 +12,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWAPanierContent from './PWAPanierContent'
+import { tracker } from '@/lib/mixpanel-tracker'
 
 export default function PanierPage() {
   const router = useRouter()
@@ -21,6 +22,13 @@ export default function PanierPage() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  // Track cart viewed in Mixpanel
+  useEffect(() => {
+    if (isLoaded && items.length > 0) {
+      tracker.trackCartViewed(items, total)
+    }
+  }, [isLoaded, items, total])
 
   // SEO: Noindex (user-specific page)
   useEffect(() => {
@@ -148,7 +156,14 @@ export default function PanierPage() {
                           size="icon"
                           onClick={() => {
                             try {
+                              const oldQuantity = article.quantite
                               updateQuantity(article.id, article.quantite - 1)
+                              // Track quantity update
+                              tracker.trackCartQuantityUpdated(
+                                { id: article.id, name: article.nom },
+                                oldQuantity,
+                                article.quantite - 1
+                              )
                             } catch (error) {
                               toast.error(error instanceof Error ? error.message : 'Erreur lors de la mise à jour')
                             }
@@ -163,7 +178,14 @@ export default function PanierPage() {
                           size="icon"
                           onClick={() => {
                             try {
+                              const oldQuantity = article.quantite
                               updateQuantity(article.id, article.quantite + 1)
+                              // Track quantity update
+                              tracker.trackCartQuantityUpdated(
+                                { id: article.id, name: article.nom },
+                                oldQuantity,
+                                article.quantite + 1
+                              )
                             } catch (error) {
                               toast.error(error instanceof Error ? error.message : 'Erreur lors de la mise à jour')
                             }
@@ -177,7 +199,16 @@ export default function PanierPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => removeItem(article.id)}
+                      onClick={() => {
+                        // Track remove from cart
+                        tracker.trackRemoveFromCart({
+                          id: article.id,
+                          name: article.nom,
+                          price: article.prix,
+                          quantity: article.quantite,
+                        })
+                        removeItem(article.id)
+                      }}
                     >
                       <Trash2 className="w-5 h-5" />
                     </Button>

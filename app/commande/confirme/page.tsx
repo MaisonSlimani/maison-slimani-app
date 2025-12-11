@@ -8,6 +8,7 @@ import { CheckCircle } from 'lucide-react'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACommandeConfirmeContent from './PWACommandeConfirmeContent'
 import { trackPurchase } from '@/lib/analytics'
+import { tracker } from '@/lib/mixpanel-tracker'
 
 export default function CommandeConfirmePage() {
   const { isPWA, isLoading } = useIsPWA()
@@ -34,7 +35,32 @@ export default function CommandeConfirmePage() {
             })),
             order_id: orderData.id,
             num_items: numItems,
+
           })
+
+          // Track Order Completed in Mixpanel
+          tracker.trackOrderCompleted({
+            id: orderData.id,
+            total: total,
+            numItems: numItems,
+            items: orderData.produits.map((p: any) => ({
+              id: p.id,
+              name: p.nom,
+              quantity: p.quantite || 1,
+              price: p.prix || 0,
+            })),
+            paymentMethod: 'COD',
+          })
+
+          // Update user profile in Mixpanel
+          if (orderData.nom_client) {
+            tracker.setUserProfile({
+              $name: orderData.nom_client,
+              $email: orderData.email || undefined,
+              $phone: orderData.telephone || undefined,
+              city: orderData.ville,
+            })
+          }
 
           // Clear after tracking
           localStorage.removeItem('lastOrder')

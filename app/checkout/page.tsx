@@ -14,6 +14,7 @@ import { CheckoutLoading } from '@/components/CheckoutLoading'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACheckoutContent from './PWACheckoutContent'
 import { trackInitiateCheckout } from '@/lib/analytics'
+import { tracker } from '@/lib/mixpanel-tracker'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -66,6 +67,9 @@ export default function CheckoutPage() {
         })),
         num_items: numItems,
       })
+
+      // Track Checkout Started in Mixpanel
+      tracker.trackCheckoutStarted(items, total)
     }
   }, [isLoaded, items])
 

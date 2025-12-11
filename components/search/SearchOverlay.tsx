@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { slugify } from '@/lib/utils/product-urls'
 import { useRecentSearches } from './useRecentSearches'
 import { trackSearch } from '@/lib/analytics'
+import { tracker } from '@/lib/mixpanel-tracker'
 
 interface SearchOverlayProps {
   isOpen: boolean
@@ -162,8 +163,9 @@ export default function SearchOverlay({
   const handleSearch = useCallback(() => {
     const trimmedQuery = debouncedQuery.trim()
     if (trimmedQuery) {
-      // Track Search event for Meta Pixel
+      // Track Search event
       trackSearch(trimmedQuery)
+      tracker.trackSearch(trimmedQuery, searchResults.length) // Track with live results count
       addSearch(trimmedQuery)
       const params = new URLSearchParams()
       params.set('search', trimmedQuery)
@@ -177,22 +179,32 @@ export default function SearchOverlay({
       }
       onClose()
     }
-  }, [debouncedQuery, basePath, router, onClose, addSearch])
+  }, [debouncedQuery, basePath, router, onClose, addSearch, searchResults])
 
   // Handle item selection
   const handleItemSelect = useCallback(
     (item: { type: string; data: any }) => {
       switch (item.type) {
-        case 'product':
+        case 'product': {
           addSearch(item.data.nom)
-          // Use hierarchical URL if category is available, otherwise fallback to ID route
-          if (item.data.categorie && item.data.nom) {
-            const productSlug = item.data.slug || slugify(item.data.nom)
-            const categorySlug = slugify(item.data.categorie)
+          // Generate hierarchical URL if category is available
+          const productSlug = item.data.slug || slugify(item.data.nom || '')
+          const categorySlug = item.data.categorie ? slugify(item.data.categorie) : null
+
+          if (categorySlug) {
             router.push(`${basePath}/boutique/${categorySlug}/${productSlug}`)
           } else {
             router.push(`${basePath}/produit/${item.data.id}`)
           }
+        }
+
+          // Track search result clicked
+          tracker.trackSearchResultClicked(
+            debouncedQuery,
+            { id: item.data.id, name: item.data.nom },
+            0 // We don't have exact position easily here, defaulting to 0 or could pass index if available
+          )
+
           onClose()
           break
         case 'category':
@@ -215,7 +227,7 @@ export default function SearchOverlay({
           break
       }
     },
-    [basePath, router, onClose, addSearch, handleSearch]
+    [basePath, router, onClose, addSearch, handleSearch, debouncedQuery]
   )
 
   // Handle keyboard navigation
