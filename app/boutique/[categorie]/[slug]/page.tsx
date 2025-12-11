@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWAProduitContent from './PWAProduitContent'
 import { trackViewContent } from '@/lib/analytics'
+import { tracker } from '@/lib/mixpanel-tracker'
 import ProductRatingSummary from '@/components/ProductRatingSummary'
 import CommentsList from '@/components/CommentsList'
 import CommentForm from '@/components/CommentForm'
@@ -227,7 +228,7 @@ export default function ProduitSlugPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [produit?.id, couleur])
+  }, [produit, couleur])
 
 
   useEffect(() => {
@@ -257,6 +258,30 @@ export default function ProduitSlugPage() {
         item_price: produit.prix,
       }],
     })
+
+    // Track product view in Mixpanel (after 2 seconds to avoid bounce inflation)
+    const viewTimer = setTimeout(() => {
+      tracker.trackProductViewed({
+        id: produit.id,
+        name: produit.nom,
+        category: produit.categorie,
+        price: produit.prix,
+        inStock: produit.stock > 0,
+        images: Array.isArray(produit.images) ? produit.images.length : 0,
+        rating: produit.average_rating || 0,
+      })
+
+      // Track out of stock view if applicable
+      if (produit.stock === 0 || (produit.has_colors && produit.couleurs && produit.couleurs.every(c => (c.stock || 0) === 0))) {
+        tracker.trackOutOfStockViewed({
+          id: produit.id,
+          name: produit.nom,
+          price: produit.prix,
+        })
+      }
+    }, 2000)
+
+
 
     document.title = `${produit.nom} | Maison Slimani`
     const metaDescription = document.querySelector('meta[name="description"]')
@@ -371,6 +396,7 @@ export default function ProduitSlugPage() {
       })
       document.head.appendChild(script)
     }
+    return () => clearTimeout(viewTimer)
   }, [produit])
 
   const handleAddToCart = async () => {
@@ -450,6 +476,17 @@ export default function ProduitSlugPage() {
         slug: produit.slug || slug,
         categorySlug: categorie,
       })
+      // Track add to cart in Mixpanel
+      tracker.trackAddToCart({
+        id: produit.id,
+        name: produit.nom,
+        category: produit.categorie,
+        price: produit.prix,
+        quantity: quantite,
+        size: taille || undefined,
+        color: couleur || undefined,
+      })
+
       setAddedToCart(true)
       if ((window as any).playSuccessSound) {
         ; (window as any).playSuccessSound()
@@ -565,6 +602,10 @@ export default function ProduitSlugPage() {
 
   const handleShare = async () => {
     if (!produit) return
+
+    // Track share attempt in Mixpanel
+    tracker.trackProductShared({ id: produit.id, name: produit.nom }, 'native_share')
+
     const shareData = {
       title: `${produit.nom} - Maison Slimani`,
       text: produit.description,
@@ -788,6 +829,11 @@ export default function ProduitSlugPage() {
                         onClick={() => {
                           if (!isOutOfStock) {
                             setCouleur(couleurNom)
+                            // Track color selection
+                            tracker.trackColorSelected(
+                              { id: produit.id, name: produit.nom },
+                              couleurNom
+                            )
                             if (quantite > stockCouleur) {
                               setQuantite(stockCouleur)
                             }
@@ -873,7 +919,16 @@ export default function ProduitSlugPage() {
                             key={tailleValue}
                             type="button"
                             disabled={isOutOfStock}
-                            onClick={() => !isOutOfStock && setTaille(tailleValue)}
+                            onClick={() => {
+                              if (!isOutOfStock) {
+                                setTaille(tailleValue)
+                                // Track size selection
+                                tracker.trackSizeSelected(
+                                  { id: produit.id, name: produit.nom },
+                                  tailleValue
+                                )
+                              }
+                            }}
                             className={cn(
                               'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
                               isOutOfStock

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,21 +17,44 @@ import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACategorieContent from './PWACategorieContent'
 import { trackViewCategory } from '@/lib/analytics'
+import { tracker } from '@/lib/mixpanel-tracker'
 
 export default function CategoriePage() {
   const { isPWA, isLoading } = useIsPWA()
   const params = useParams()
+  const searchParams = useSearchParams()
   const categorieSlug = params.categorie as string
 
   const [loadingCategory, setLoadingCategory] = useState(true)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [triPrix, setTriPrix] = useState<string>('')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string } | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [filters, setFilters] = useState<FilterState>({})
   const categorieNom = categorieInfo?.nom || null
   const { openDrawer } = useCartDrawer()
   const { totalItems } = useCart()
+
+  // Track Page View
+  useEffect(() => {
+    if (!categorieInfo) return
+    if (categorieSlug === 'tous') {
+      tracker.track('Page Viewed', { page_name: 'All Products' })
+    } else {
+      tracker.track('Category Viewed', {
+        category_name: categorieInfo.nom,
+        category_slug: categorieSlug
+      })
+    }
+  }, [categorieInfo, categorieSlug])
+
+  // Update search query when URL param changes
+  useEffect(() => {
+    const query = searchParams.get('search')
+    if (query && query !== searchQuery) {
+      setSearchQuery(query)
+    }
+  }, [searchParams, searchQuery])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -306,8 +329,24 @@ export default function CategoriePage() {
   useEffect(() => {
     if (produitsError) {
       console.error('Erreur lors du chargement des produits:', produitsError)
+    } else if (produits) {
+      // Track Product List Viewed
+      tracker.trackProductListViewed('Category List', produits, categorieNom || 'All')
+
+      // Track Search if valid query exists
+      if (searchQuery && searchQuery.trim().length > 2) {
+        // Create a stable key for the search to avoid duplicates
+        const searchKey = `${searchQuery}-${produits.length}`
+        // Use session storage to check if we recently tracked this exact search result
+        const lastTracked = sessionStorage.getItem('last_tracked_search')
+
+        if (lastTracked !== searchKey) {
+          tracker.trackSearch(searchQuery, produits.length)
+          sessionStorage.setItem('last_tracked_search', searchKey)
+        }
+      }
     }
-  }, [produitsError])
+  }, [produits, produitsError, categorieNom, searchQuery])
 
   const produitsLoading =
     produitsPending ||

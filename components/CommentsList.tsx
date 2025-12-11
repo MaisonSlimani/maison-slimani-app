@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -51,13 +51,13 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
   const [editForm, setEditForm] = useState({ nom: '', rating: 0, commentaire: '', images: [] as string[] })
   const [uploadingImages, setUploadingImages] = useState(false)
   const editFileInputRef = useRef<HTMLInputElement>(null)
-  
+
   const MAX_IMAGES = 6
   const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 
   const limit = 10
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(
@@ -75,11 +75,11 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
     } finally {
       setLoading(false)
     }
-  }
+  }, [produitId, sort, page])
 
   useEffect(() => {
     fetchComments()
-  }, [produitId, sort, page])
+  }, [fetchComments])
 
   const handleEdit = (comment: Comment) => {
     setEditingId(comment.id)
@@ -95,7 +95,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
     if (!files || files.length === 0) return
 
     const filesArray = Array.from(files)
-    
+
     // Check total count
     if (editForm.images.length + filesArray.length > MAX_IMAGES) {
       toast.error(`Maximum ${MAX_IMAGES} images autorisées`)
@@ -204,7 +204,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
 
     setDeletingId(commentToDelete)
     setDeleteDialogOpen(false)
-    
+
     try {
       const response = await fetch(`/api/commentaires/${commentToDelete}`, {
         method: 'DELETE',
@@ -320,7 +320,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
                   rows={3}
                   placeholder="Commentaire"
                 />
-                
+
                 {/* Image Upload Section */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Images ({editForm.images.length}/{MAX_IMAGES})</Label>
@@ -350,7 +350,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
                       </Label>
                     </div>
                   )}
-                  
+
                   {/* Image Previews */}
                   {editForm.images.length > 0 && (
                     <div className="grid grid-cols-3 gap-2">
@@ -376,7 +376,7 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -455,14 +455,14 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
                 <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
                   {comment.commentaire}
                 </p>
-                
+
                 {/* Display images if any */}
                 {comment.images && comment.images.length > 0 && (
                   <div className={cn(
                     "grid gap-2 mt-3",
                     comment.images.length === 1 ? "grid-cols-1" :
-                    comment.images.length === 2 ? "grid-cols-2" :
-                    comment.images.length >= 3 ? "grid-cols-3" : "grid-cols-3"
+                      comment.images.length === 2 ? "grid-cols-2" :
+                        comment.images.length >= 3 ? "grid-cols-3" : "grid-cols-3"
                   )}>
                     {comment.images.map((imageUrl, index) => (
                       <div
