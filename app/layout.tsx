@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Suspense } from 'react'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
@@ -9,6 +10,7 @@ import PWARedirect from '@/components/PWARedirect'
 import NavigationWrapper from '@/components/NavigationWrapper'
 import MetaPixel from '@/components/MetaPixel'
 import GoogleTagManager from '@/components/GoogleTagManager'
+import { AnalyticsProvider } from '@/components/analytics-provider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -96,13 +98,17 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
         <Providers>
-          <PWARedirect />
-          <NavigationWrapper>
-            {children}
-          </NavigationWrapper>
-          <Toaster />
-          <Sonner />
-          <SpeedInsights />
+          <Suspense fallback={null}>
+            <AnalyticsProvider>
+              <PWARedirect />
+              <NavigationWrapper>
+                {children}
+              </NavigationWrapper>
+              <Toaster />
+              <Sonner />
+              <SpeedInsights />
+            </AnalyticsProvider>
+          </Suspense>
         </Providers>
       </body>
     </html>
