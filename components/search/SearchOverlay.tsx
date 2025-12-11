@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { slugify } from '@/lib/utils/product-urls'
 import { useRecentSearches } from './useRecentSearches'
-import { trackSearch } from '@/lib/meta-pixel'
+import { trackSearch } from '@/lib/analytics'
 
 interface SearchOverlayProps {
   isOpen: boolean
@@ -127,18 +127,18 @@ export default function SearchOverlay({
   // Calculate all navigable items for keyboard navigation
   const getAllNavigableItems = useCallback(() => {
     const items: Array<{ type: 'product' | 'category' | 'trending' | 'recent' | 'viewAll'; data: any }> = []
-    
+
     if (debouncedQuery.trim()) {
       // Show search results
       searchResults.forEach((product: any) => {
         items.push({ type: 'product', data: product })
       })
-      
+
       // Show matching categories
       suggestions?.categories.forEach((cat) => {
         items.push({ type: 'category', data: cat })
       })
-      
+
       // Add "View all results" option
       if (searchResults.length > 0) {
         items.push({ type: 'viewAll', data: { query: debouncedQuery } })
@@ -148,13 +148,13 @@ export default function SearchOverlay({
       recentSearches.forEach((search) => {
         items.push({ type: 'recent', data: search })
       })
-      
+
       // Show trending searches
       suggestions?.trending.forEach((trend) => {
         items.push({ type: 'trending', data: trend })
       })
     }
-    
+
     return items
   }, [debouncedQuery, searchResults, suggestions, recentSearches])
 
@@ -167,8 +167,8 @@ export default function SearchOverlay({
       addSearch(trimmedQuery)
       const params = new URLSearchParams()
       params.set('search', trimmedQuery)
-      
-      
+
+
       // If basePath already includes /boutique, just update query params
       if (basePath.includes('/boutique')) {
         router.push(`${basePath}?${params.toString()}`)
@@ -334,7 +334,7 @@ export default function SearchOverlay({
                   <X className="w-5 h-5" />
                 </button>
               </form>
-              
+
             </div>
 
             {/* Results Area */}
@@ -392,42 +392,42 @@ export default function SearchOverlay({
                           // Generate hierarchical URL if category is available
                           const productSlug = product.slug || slugify(product.nom || '')
                           const categorySlug = product.categorie ? slugify(product.categorie) : null
-                          const productHref = categorySlug 
+                          const productHref = categorySlug
                             ? `${basePath}/boutique/${categorySlug}/${productSlug}`
                             : `${basePath}/produit/${product.id}` // Fallback to ID route
-                          
+
                           return (
-                          <Link
-                            key={product.id}
-                            href={productHref}
-                            onClick={() => {
-                              addSearch(searchQuery)
-                              onClose()
-                            }}
-                            className={cn(
-                              'flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors',
-                              selectedIndex === idx && 'bg-muted ring-2 ring-dore'
-                            )}
-                          >
-                            <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                              <Image
-                                src={product.image_url || '/assets/placeholder.jpg'}
-                                alt={product.nom}
-                                fill
-                                className="object-cover"
-                                sizes="64px"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm text-foreground line-clamp-2">
-                                {product.nom}
-                              </h4>
-                              <p className="text-dore font-semibold text-sm mt-1">
-                                {product.prix?.toLocaleString('fr-MA')} MAD
-                              </p>
-                            </div>
-                            <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          </Link>
+                            <Link
+                              key={product.id}
+                              href={productHref}
+                              onClick={() => {
+                                addSearch(searchQuery)
+                                onClose()
+                              }}
+                              className={cn(
+                                'flex items-center gap-4 p-3 rounded-xl hover:bg-muted transition-colors',
+                                selectedIndex === idx && 'bg-muted ring-2 ring-dore'
+                              )}
+                            >
+                              <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                                <Image
+                                  src={product.image_url || '/assets/placeholder.jpg'}
+                                  alt={product.nom}
+                                  fill
+                                  className="object-cover"
+                                  sizes="64px"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-sm text-foreground line-clamp-2">
+                                  {product.nom}
+                                </h4>
+                                <p className="text-dore font-semibold text-sm mt-1">
+                                  {product.prix?.toLocaleString('fr-MA')} MAD
+                                </p>
+                              </div>
+                              <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </Link>
                           )
                         })}
                       </div>
@@ -439,7 +439,7 @@ export default function SearchOverlay({
                           className={cn(
                             'w-full mt-4 py-3 text-center text-dore font-medium hover:underline flex items-center justify-center gap-2',
                             selectedIndex === searchResults.length + (suggestions?.categories?.length || 0) &&
-                              'underline'
+                            'underline'
                           )}
                         >
                           Voir tous les résultats

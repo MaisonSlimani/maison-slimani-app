@@ -9,7 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { slugify, getProductUrlSync } from '@/lib/utils/product-urls'
-import { trackSearch } from '@/lib/meta-pixel'
+import { trackSearch } from '@/lib/analytics'
 
 interface SearchModalProps {
   isOpen: boolean

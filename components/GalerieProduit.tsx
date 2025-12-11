@@ -215,10 +215,14 @@ export default function GalerieProduit({
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => {
-          // On mobile, ouvrir la galerie au clic
+        onClick={(e) => {
+          // On mobile, ouvrir la galerie au clic (but not if clicking on arrows)
           if (typeof window !== 'undefined' && window.innerWidth < 768) {
-            setGalleryOpen(true)
+            const target = e.target as HTMLElement
+            // Don't open gallery if clicking on navigation buttons
+            if (!target.closest('button')) {
+              setGalleryOpen(true)
+            }
           }
         }}
       >
@@ -251,6 +255,40 @@ export default function GalerieProduit({
             />
           </motion.div>
         </AnimatePresence>
+
+        {/* Navigation arrows for image switching */}
+        {filteredImages.length > 1 && (
+          <>
+            {/* Left Arrow */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                goToPrevious()
+              }}
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 active:bg-black/80 backdrop-blur-sm rounded-full p-2 md:p-3 transition-all duration-200 opacity-100 md:opacity-0 md:group-hover:opacity-100 touch-manipulation"
+              aria-label="Image précédente"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </button>
+            
+            {/* Right Arrow */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                goToNext()
+              }}
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 active:bg-black/80 backdrop-blur-sm rounded-full p-2 md:p-3 transition-all duration-200 opacity-100 md:opacity-0 md:group-hover:opacity-100 touch-manipulation"
+              aria-label="Image suivante"
+            >
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </button>
+
+            {/* Image counter indicator */}
+            <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-30 bg-black/50 backdrop-blur-sm text-white text-xs md:text-sm px-3 py-1.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+              {currentImageIndex + 1} / {filteredImages.length}
+            </div>
+          </>
+        )}
 
         {/* Indicateur de zoom au hover (desktop uniquement) */}
         {isHovering && enableZoom && (

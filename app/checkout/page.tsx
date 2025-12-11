@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { CheckoutLoading } from '@/components/CheckoutLoading'
 import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWACheckoutContent from './PWACheckoutContent'
-import { trackInitiateCheckout } from '@/lib/meta-pixel'
+import { trackInitiateCheckout } from '@/lib/analytics'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -55,7 +55,7 @@ export default function CheckoutPage() {
     if (isLoaded && items.length > 0) {
       const total = items.reduce((sum, item) => sum + (item.prix * item.quantite), 0)
       const numItems = items.reduce((sum, item) => sum + item.quantite, 0)
-      
+
       trackInitiateCheckout({
         value: total,
         currency: 'MAD',
@@ -94,7 +94,7 @@ export default function CheckoutPage() {
           async (payload) => {
             const updated = payload.new as any
             const cartItem = items.find(item => item.id === updated.id)
-            
+
             if (!cartItem) return
 
             // Validate stock for this item
@@ -184,8 +184,7 @@ export default function CheckoutPage() {
 
           if (stockDisponible <= 0) {
             toast.error(
-              `Le produit "${item.nom}"${
-                item.couleur ? ` (${item.couleur})` : ''
+              `Le produit "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''
               } est en rupture de stock`
             )
             continue
@@ -193,8 +192,7 @@ export default function CheckoutPage() {
 
           if (stockDisponible < item.quantite) {
             toast.error(
-              `Stock insuffisant pour "${item.nom}"${
-                item.couleur ? ` (${item.couleur})` : ''
+              `Stock insuffisant pour "${item.nom}"${item.couleur ? ` (${item.couleur})` : ''
               }. Stock disponible: ${stockDisponible}`
             )
           }
@@ -250,7 +248,7 @@ export default function CheckoutPage() {
       if (!response.ok || !result.success) {
         // Formater le message d'erreur pour l'utilisateur
         let errorMessage = result.error || 'Erreur lors de la création de la commande'
-        
+
         // Messages d'erreur plus clairs pour l'utilisateur
         if (errorMessage.includes('Stock insuffisant') || errorMessage.includes('stock insuffisant')) {
           errorMessage = 'Stock insuffisant pour certains produits. Veuillez vérifier votre panier.'
@@ -260,7 +258,7 @@ export default function CheckoutPage() {
           // Si c'est une erreur de validation, afficher un message générique
           errorMessage = 'Veuillez vérifier les informations de votre commande.'
         }
-        
+
         throw new Error(errorMessage)
       }
 

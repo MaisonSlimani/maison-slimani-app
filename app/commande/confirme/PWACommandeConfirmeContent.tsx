@@ -5,12 +5,12 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
-import { trackPurchase } from '@/lib/meta-pixel'
+import { trackPurchase } from '@/lib/analytics'
 
 export default function PWACommandeConfirmeContent() {
   useEffect(() => {
     window.scrollTo(0, 0)
-    
+
     // Track Purchase event for Meta Pixel
     try {
       const orderDataStr = localStorage.getItem('lastOrder')
@@ -19,7 +19,7 @@ export default function PWACommandeConfirmeContent() {
         if (orderData.id && orderData.produits) {
           const total = orderData.total || 0
           const numItems = orderData.produits.reduce((sum: number, p: any) => sum + (p.quantite || 0), 0)
-          
+
           trackPurchase({
             value: total,
             currency: 'MAD',
@@ -31,7 +31,7 @@ export default function PWACommandeConfirmeContent() {
             order_id: orderData.id,
             num_items: numItems,
           })
-          
+
           // Clear after tracking
           localStorage.removeItem('lastOrder')
         }
@@ -56,10 +56,10 @@ export default function PWACommandeConfirmeContent() {
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                delay: 0.2, 
-                type: 'spring', 
-                stiffness: 200, 
+              transition={{
+                delay: 0.2,
+                type: 'spring',
+                stiffness: 200,
                 damping: 15,
                 duration: 0.6
               }}
@@ -71,7 +71,7 @@ export default function PWACommandeConfirmeContent() {
                   className="absolute inset-0"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1.3, opacity: 0 }}
-                  transition={{ 
+                  transition={{
                     delay: 0.4,
                     duration: 1.5,
                     repeat: Infinity,
@@ -87,10 +87,10 @@ export default function PWACommandeConfirmeContent() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.4, 
-                duration: 0.8, 
-                ease: [0.22, 1, 0.36, 1] 
+              transition={{
+                delay: 0.4,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
               }}
             >
               <h1 className="text-4xl md:text-5xl font-serif mb-6 text-charbon leading-tight">
@@ -103,10 +103,10 @@ export default function PWACommandeConfirmeContent() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.6, 
-                duration: 0.8, 
-                ease: [0.22, 1, 0.36, 1] 
+              transition={{
+                delay: 0.6,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
               }}
               className="text-lg text-charbon/80 mb-6 max-w-2xl mx-auto leading-relaxed"
             >
@@ -117,10 +117,10 @@ export default function PWACommandeConfirmeContent() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.8, 
-                duration: 0.8, 
-                ease: [0.22, 1, 0.36, 1] 
+              transition={{
+                delay: 0.8,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
               }}
               className="text-base text-charbon/70 mb-8 max-w-2xl mx-auto leading-relaxed"
             >
@@ -136,22 +136,22 @@ export default function PWACommandeConfirmeContent() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              delay: 1.0, 
-              duration: 0.8, 
-              ease: [0.22, 1, 0.36, 1] 
+            transition={{
+              delay: 1.0,
+              duration: 0.8,
+              ease: [0.22, 1, 0.36, 1]
             }}
             className="flex flex-col gap-4 justify-center"
           >
-            <Button 
-              asChild 
-              variant="outline" 
+            <Button
+              asChild
+              variant="outline"
               className="w-full text-base py-6 border-charbon/20 hover:border-charbon/40 transition-all duration-300"
             >
               <Link href="/boutique">Continuer mes achats</Link>
             </Button>
-            <Button 
-              asChild 
+            <Button
+              asChild
               className="w-full text-base py-6 bg-dore text-charbon hover:bg-dore/90 transition-all duration-300"
             >
               <Link href="/pwa">Retour à l'accueil</Link>

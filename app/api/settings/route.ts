@@ -14,7 +14,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('settings')
-      .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code')
+      .select('email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code, google_tag_manager_header, google_tag_manager_body')
       .limit(1)
       .single()
 
@@ -22,14 +22,14 @@ export async function GET() {
       throw error
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      data: data || null 
+      data: data || null
     })
   } catch (error: any) {
     console.error('Erreur lors de la récupération des paramètres:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: error.message || 'Erreur serveur',
         data: null

@@ -2,75 +2,98 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import OptimizedImage from '@/components/OptimizedImage'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingBag, Heart, Check, ShoppingCart } from 'lucide-react'
+import { ShoppingBag, Heart, Check, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
-import { trackAddToWishlist } from '@/lib/meta-pixel'
+import { trackAddToWishlist } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import RatingDisplay from '@/components/RatingDisplay'
-
-interface ImageItem {
-  url: string
-  couleur?: string | null
-  ordre?: number
-}
-
-interface Taille {
-  nom: string
-  stock: number
-}
-
-interface Couleur {
-  nom: string
-  code?: string
-  stock?: number
-  taille?: string // backward compatibility
-  tailles?: Taille[]
-}
-
-interface Produit {
-  id: string
-  nom: string
-  slug?: string
-  prix: number
-  image: string
-  matiere?: string
-  image_url?: string
-  images?: ImageItem[] | string[]
-  stock?: number
-  taille?: string // backward compatibility
-  tailles?: Taille[]
-  has_colors?: boolean
-  couleurs?: Couleur[]
-  categorie?: string // Category name (for hierarchical URLs)
-  categorySlug?: string // Category slug (optional, will slugify category name if not provided)
-  average_rating?: number | null
-  rating_count?: number
-}
+import { Product, Taille } from '@/types'
 
 interface CarteProduitProps {
-  produit: Produit
+  produit: Product
   showActions?: boolean // Nouvelle prop pour afficher les boutons d'action
 }
 
 const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
-  // Obtenir la première image (support pour images multiples)
-  const getFirstImage = () => {
+  const router = useRouter()
+  // Get all color images (first image from each color)
+  const getColorImages = () => {
+    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 1) {
+      return produit.couleurs
+        .filter(c => {
+          // Check if color has images (array or single image)
+          if (c.images) {
+            if (Array.isArray(c.images)) {
+              return c.images.length > 0
+            }
+            // Single image string
+            return typeof c.images === 'string' && c.images.length > 0
+          }
+          return false
+        })
+        .map(c => {
+          // Extract first image from array or use single image
+          let imageUrl = ''
+          if (Array.isArray(c.images)) {
+            imageUrl = c.images[0]
+          } else if (typeof c.images === 'string') {
+            imageUrl = c.images
+          }
+          return {
+            couleur: c.nom,
+            image: imageUrl,
+          }
+        })
+    }
+    return []
+  }
+
+  const colorImages = getColorImages()
+  const [currentColorIndex, setCurrentColorIndex] = useState(0)
+  const hasMultipleColors = colorImages.length > 1
+
+  // Get current image based on color navigation
+  const getCurrentImage = () => {
+    // If product has multiple colors and we're navigating, use color image
+    if (hasMultipleColors && colorImages[currentColorIndex]) {
+      return colorImages[currentColorIndex].image
+    }
+    // Otherwise, use first image from images array or image_url
     if (produit.images && produit.images.length > 0) {
       const firstImg = produit.images[0]
       return typeof firstImg === 'string' ? firstImg : firstImg.url
     }
     return produit.image_url || produit.image
   }
-  
-  const imageUrl = getFirstImage()
+
+  const imageUrl = getCurrentImage() || ''
+
+  // Navigate to previous color
+  const handlePreviousColor = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (hasMultipleColors) {
+      setCurrentColorIndex((prev) => (prev === 0 ? colorImages.length - 1 : prev - 1))
+    }
+  }
+
+  // Navigate to next color
+  const handleNextColor = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (hasMultipleColors) {
+      setCurrentColorIndex((prev) => (prev === colorImages.length - 1 ? 0 : prev + 1))
+    }
+  }
   const slugify = (s: string) =>
     s
       .toLowerCase()
@@ -80,7 +103,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
       .trim()
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-  
+
   // Generate hierarchical URL: /boutique/[categorie]/[slug]
   const productSlug = produit.slug || slugify(produit.nom)
   let categorySlug: string | null = null
@@ -103,10 +126,10 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   const [selectedCouleur, setSelectedCouleur] = useState<string>('')
   const [quantite, setQuantite] = useState(1)
   const inWishlist = isInWishlist(produit.id)
-  
+
   // Vérifier si le produit est dans le panier
   const isInCart = items.some(item => item.id === produit.id)
-  
+
   // Réinitialiser addedToCart si le produit est déjà dans le panier
   useEffect(() => {
     if (isInCart && addedToCart) {
@@ -123,19 +146,9 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
       .channel(`carte-produit-stock-${produit.id}-${Date.now()}`)
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'produits',
-          filter: `id=eq.${produit.id}`,
-        },
-        (payload) => {
-          const updated = payload.new as Produit
-          
-          // Update local product state if needed
-          // Note: We can't directly update the produit prop, but the parent component
-          // should handle this. For now, we'll just log it.
-          // The realtime update will trigger a re-fetch in parent components.
+        { event: 'UPDATE', schema: 'public', table: 'produits', filter: `id=eq.${produit.id}` },
+        () => {
+          router.refresh()
         }
       )
       .subscribe()
@@ -193,9 +206,9 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (isAddingToCart) return
-    
+
     // Si le produit a des couleurs ou des tailles, ouvrir le modal
     if ((produit.has_colors && produit.couleurs && produit.couleurs.length > 0) || taillesDisponibles.length > 0) {
       // Reset selections when opening modal
@@ -237,7 +250,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     } finally {
       setIsAddingToCart(false)
     }
-    
+
     // Ne pas afficher "Ajouté!" si le produit est déjà dans le panier
     // Le bouton changera immédiatement en "Go to cart" car isInCart sera true
     // après que le panier soit mis à jour (via useCart re-render)
@@ -337,15 +350,15 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     // Prevent double clicks
     if (isAddingToWishlist) return
-    
+
     setIsAddingToWishlist(true)
-    
+
     // Store current state before action
     const wasInWishlist = inWishlist
-    
+
     try {
       if (wasInWishlist) {
         removeFromWishlist(produit.id)
@@ -358,7 +371,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
         if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
           stockForWishlist = produit.couleurs.reduce((sum, c) => sum + (c.stock || 0), 0)
         }
-        
+
         addToWishlist({
           id: produit.id,
           nom: produit.nom,
@@ -402,9 +415,10 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     <Card className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 relative flex flex-col h-full">
       <Link href={href} className="block flex-1 flex flex-col">
         <motion.div
-          className="aspect-square overflow-hidden bg-muted relative group"
+          className="aspect-square overflow-hidden bg-muted relative group group/image"
         >
           <OptimizedImage
+            key={imageUrl}
             src={imageUrl}
             alt={produit.nom}
             fill
@@ -412,12 +426,53 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             objectFit="cover"
           />
+
+          {/* Color Navigation Arrows - Only show if product has multiple colors */}
+          {hasMultipleColors && (
+            <>
+              {/* Left Arrow */}
+              <button
+                onClick={handlePreviousColor}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 active:bg-black/80 backdrop-blur-sm rounded-full p-1.5 md:p-2 transition-all duration-200 opacity-0 group-hover/image:opacity-100 touch-manipulation"
+                aria-label="Couleur précédente"
+              >
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              </button>
+
+              {/* Right Arrow */}
+              <button
+                onClick={handleNextColor}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 active:bg-black/80 backdrop-blur-sm rounded-full p-1.5 md:p-2 transition-all duration-200 opacity-0 group-hover/image:opacity-100 touch-manipulation"
+                aria-label="Couleur suivante"
+              >
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              </button>
+
+              {/* Color Indicator Dots */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200">
+                {colorImages.map((_, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all duration-200",
+                      index === currentColorIndex
+                        ? "bg-dore w-4"
+                        : "bg-white/60"
+                    )}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+
           {/* Badge favori en haut à droite */}
           {inWishlist && (
             <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-1.5 md:p-2">
               <Heart className="w-3 h-3 md:w-4 md:h-4 text-charbon fill-current" />
             </div>
           )}
+
           {/* Badge rupture de stock en haut à gauche */}
           {isOutOfStock() && (
             <div className="absolute top-2 left-2 z-20 bg-red-600/95 backdrop-blur-sm rounded-md px-2 py-1 md:px-3 md:py-1.5 border border-red-700/50">
@@ -450,7 +505,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
           </p>
         </div>
       </Link>
-      
+
       {/* Boutons d'action toujours visibles */}
       {showActions && (
         <div className="px-3 md:px-5 pb-3 md:pb-5 flex gap-1.5 md:gap-2">
@@ -475,7 +530,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
               className={cn(
                 "flex-1 relative overflow-hidden text-xs md:text-sm h-8 md:h-9",
                 addedToCart && !isInCart
-                  ? "bg-green-600 text-white hover:bg-green-700" 
+                  ? "bg-green-600 text-white hover:bg-green-700"
                   : "bg-dore text-charbon hover:bg-dore/90"
               )}
             >
@@ -542,7 +597,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
                 : 'Sélectionnez la taille et la quantité souhaitées'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-6 py-4">
             {/* Sélecteur de couleur */}
             {produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && (
@@ -554,7 +609,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
                     const stockCouleur = c.stock || 0
                     const isOutOfStock = stockCouleur === 0
                     const colorCode = c.code || '#000000'
-                    
+
                     return (
                       <button
                         key={c.nom}
@@ -666,8 +721,8 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
                             onClick={() => !isOutOfStock && setSelectedTaille(t.nom)}
                             className={cn(
                               'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
-                              isOutOfStock 
-                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                              isOutOfStock
+                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted'
                                 : isSelected
                                   ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105'
                                   : 'bg-background text-foreground border-border hover:border-dore hover:scale-105'
@@ -753,7 +808,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
             </Button>
             <Button
               onClick={handleConfirmAddToCart}
-              disabled={isAddingToCart || 
+              disabled={isAddingToCart ||
                 (produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && !selectedCouleur) ||
                 (() => {
                   let availableSizes: string[] = []

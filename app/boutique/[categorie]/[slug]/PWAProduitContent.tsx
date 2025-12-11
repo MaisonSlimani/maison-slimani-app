@@ -15,7 +15,7 @@ import { motion } from 'framer-motion'
 import GalerieProduit from '@/components/GalerieProduit'
 import SimilarProducts from '@/components/SimilarProducts'
 import { slugify } from '@/lib/utils/product-urls'
-import { trackViewContent, trackAddToWishlist } from '@/lib/meta-pixel'
+import { trackViewContent, trackAddToWishlist } from '@/lib/analytics'
 import ProductRatingSummary from '@/components/ProductRatingSummary'
 import CommentsList from '@/components/CommentsList'
 import CommentForm from '@/components/CommentForm'
@@ -72,7 +72,7 @@ export default function PWAProduitContent() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    
+
     const chargerProduit = async () => {
       try {
         setLoading(true)
@@ -133,12 +133,12 @@ export default function PWAProduitContent() {
 
     // Get tailles and check stock per size
     const currentTaillesData = getTaillesData()
-    
+
     if (currentTaillesData.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
-    
+
     if (currentTaillesData.length > 0 && taille) {
       const selectedTaille = currentTaillesData.find(t => t.nom === taille)
       if (!selectedTaille) {
@@ -170,9 +170,9 @@ export default function PWAProduitContent() {
         quantite,
         image_url: produit.image_url,
         image: produit.image_url,
-        stock: currentTaillesData.length > 0 && taille 
+        stock: currentTaillesData.length > 0 && taille
           ? (currentTaillesData.find(t => t.nom === taille)?.stock || 0)
-          : (produit.has_colors && couleur && produit.couleurs 
+          : (produit.has_colors && couleur && produit.couleurs
             ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
             : produit.stock),
         couleur: couleur || undefined,
@@ -193,7 +193,7 @@ export default function PWAProduitContent() {
 
   const handleBuyNow = async () => {
     if (!produit) return
-    
+
     // Validate product selection (same as handleAddToCart)
     if (produit.has_colors && !couleur) {
       toast.error('Veuillez sélectionner une couleur')
@@ -209,12 +209,12 @@ export default function PWAProduitContent() {
     }
     // Get tailles and check stock per size
     const currentTaillesData = getTaillesData()
-    
+
     if (currentTaillesData.length > 0 && !taille) {
       toast.error('Veuillez sélectionner une taille')
       return
     }
-    
+
     if (currentTaillesData.length > 0 && taille) {
       const selectedTaille = currentTaillesData.find(t => t.nom === taille)
       if (!selectedTaille) {
@@ -234,10 +234,10 @@ export default function PWAProduitContent() {
     try {
       // Clear existing cart first
       clearCart()
-      
+
       // Small delay to ensure cart is cleared before adding new item
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Add the current product to cart (without opening drawer)
       await addItem({
         id: produit.id,
@@ -248,19 +248,19 @@ export default function PWAProduitContent() {
         image: produit.image_url,
         taille: taille || undefined,
         couleur: produit.has_colors && couleur ? couleur : undefined,
-        stock: currentTaillesData.length > 0 && taille 
+        stock: currentTaillesData.length > 0 && taille
           ? (currentTaillesData.find(t => t.nom === taille)?.stock || 0)
-          : (produit.has_colors && couleur && produit.couleurs 
+          : (produit.has_colors && couleur && produit.couleurs
             ? (produit.couleurs.find(c => c.nom === couleur)?.stock || 0)
             : produit.stock),
         categorie: produit.categorie,
         slug: produit.slug || slug,
         categorySlug: categorie,
       }, false) // Don't open cart drawer for "Buy Now"
-      
+
       // Small delay before redirect to ensure cart is updated
       await new Promise(resolve => setTimeout(resolve, 200))
-      
+
       // Redirect to checkout
       router.push('/checkout')
     } catch (error) {
@@ -281,7 +281,7 @@ export default function PWAProduitContent() {
       if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
         stockForWishlist = produit.couleurs.reduce((sum: number, c: any) => sum + (c.stock || 0), 0)
       }
-      
+
       addToWishlist({
         id: produit.id,
         nom: produit.nom,
@@ -519,14 +519,14 @@ export default function PWAProduitContent() {
           {/* Stock */}
           {(() => {
             // Only show stock if it's below 10 or is 0 (out of stock)
-            const stockToShow = produit.has_colors 
+            const stockToShow = produit.has_colors
               ? (couleur ? stockDisponible : null)
               : produit.stock
-            
+
             if (stockToShow === null || stockToShow >= 10) {
               return null
             }
-            
+
             return (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -541,8 +541,8 @@ export default function PWAProduitContent() {
                         {stockDisponible === 0
                           ? 'Rupture de stock pour cette couleur'
                           : stockDisponible === 1
-                          ? `Il ne reste qu'un seul article pour ${couleur}`
-                          : `Il ne reste que ${stockDisponible} articles pour ${couleur}`}
+                            ? `Il ne reste qu'un seul article pour ${couleur}`
+                            : `Il ne reste que ${stockDisponible} articles pour ${couleur}`}
                       </span>
                     ) : null
                   ) : (
@@ -550,8 +550,8 @@ export default function PWAProduitContent() {
                       {produit.stock === 0
                         ? 'Rupture de stock'
                         : produit.stock === 1
-                        ? "Il ne reste qu'un seul article"
-                        : `Il ne reste que ${produit.stock} articles`}
+                          ? "Il ne reste qu'un seul article"
+                          : `Il ne reste que ${produit.stock} articles`}
                     </span>
                   )}
                 </div>
@@ -576,7 +576,7 @@ export default function PWAProduitContent() {
                   const stockCouleur = c.stock || 0
                   const isOutOfStock = stockCouleur === 0
                   const colorCode = c.code || '#000000'
-                  
+
                   return (
                     <button
                       key={c.nom}
@@ -667,8 +667,8 @@ export default function PWAProduitContent() {
                       onClick={() => !isOutOfStock && setTaille(t.nom)}
                       className={cn(
                         'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
-                        isOutOfStock 
-                          ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                        isOutOfStock
+                          ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted'
                           : isSelected
                             ? 'bg-dore text-charbon border-dore shadow-lg scale-105'
                             : 'bg-background text-foreground border-border hover:border-dore'
@@ -752,7 +752,7 @@ export default function PWAProduitContent() {
                   onClick={handleAddToCart}
                   disabled={
                     addedToCart ||
-                    (produit.has_colors 
+                    (produit.has_colors
                       ? (!couleur || stockDisponible === 0)
                       : produit.stock === 0
                     )
@@ -766,7 +766,7 @@ export default function PWAProduitContent() {
                   ) : (
                     <>
                       <ShoppingBag className="w-5 h-5 mr-2" />
-                      {produit.has_colors 
+                      {produit.has_colors
                         ? (couleur && stockDisponible > 0)
                           ? 'Ajouter au panier'
                           : (!couleur ? 'Sélectionnez une couleur' : 'Rupture de stock')
@@ -880,7 +880,7 @@ export default function PWAProduitContent() {
 
           {/* Comments List */}
           <div className="border-t border-border pt-6">
-            <CommentsList 
+            <CommentsList
               produitId={produit.id}
               onCommentUpdate={() => {
                 // Refresh product data to update ratings
@@ -888,7 +888,7 @@ export default function PWAProduitContent() {
               }}
             />
           </div>
-          
+
           {/* Comment Form */}
           <div className="border-t border-border pt-6">
             <h3 className="text-xl font-serif font-semibold mb-4">Laisser un commentaire</h3>

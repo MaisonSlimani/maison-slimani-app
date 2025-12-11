@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Script from 'next/script'
-import { trackPageView, initMetaPixel } from '@/lib/meta-pixel'
+import { trackPageView, initMetaPixel } from '@/lib/analytics'
 
 export default function MetaPixel() {
   const [pixelCode, setPixelCode] = useState<string | null>(null)
@@ -18,7 +18,7 @@ export default function MetaPixel() {
           const result = await response.json()
           if (result.success && result.data?.meta_pixel_code) {
             const code = result.data.meta_pixel_code
-            
+
             // Try to extract Pixel ID from the snippet
             const idMatch = code.match(/fbq\s*\(\s*['"]init['"]\s*,\s*['"](\d+)['"]/i)
             if (idMatch && idMatch[1]) {

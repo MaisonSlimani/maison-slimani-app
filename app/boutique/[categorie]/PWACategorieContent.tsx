@@ -13,13 +13,13 @@ import { ArrowUp, Search, ShoppingCart } from 'lucide-react'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { useCart } from '@/lib/hooks/useCart'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
-import { trackViewCategory } from '@/lib/meta-pixel'
+import { trackViewCategory } from '@/lib/analytics'
 
 export default function PWACategorieContent() {
   const params = useParams()
   const categorieSlug = params.categorie as string
   const [showScrollTop, setShowScrollTop] = useState(false)
-  const [triPrix, setTriPrix] = useState<string>('pertinence')
+  const [triPrix, setTriPrix] = useState<string>('')
   const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string } | null>(null)
   const [categorieNom, setCategorieNom] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -29,7 +29,7 @@ export default function PWACategorieContent() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
-    
+
     const chargerCategorie = async () => {
       try {
         if (!categorieSlug || categorieSlug === 'tous') {
@@ -46,11 +46,11 @@ export default function PWACategorieContent() {
           throw new Error(errorData.error || `Erreur API catégories: ${response.status}`)
         }
         const payload = await response.json()
-        
+
         if (!payload.success) {
           throw new Error(payload.error || 'Catégorie introuvable')
         }
-        
+
         const data = payload?.data?.[0]
         if (data) {
           const categoryInfo = {
@@ -94,9 +94,12 @@ export default function PWACategorieContent() {
       if (categorieNom && categorieSlug !== 'tous') {
         params.set('categorie', categorieNom)
       }
-      if (triPrix !== 'pertinence') {
-        params.set('sort', triPrix)
+      if (triPrix === 'prix-asc') {
+        params.set('sort', 'prix_asc')
+      } else if (triPrix === 'prix-desc') {
+        params.set('sort', 'prix_desc')
       }
+
       // Add search query
       if (searchQuery.trim()) {
         params.set('search', searchQuery.trim())
@@ -140,7 +143,7 @@ export default function PWACategorieContent() {
       if (!payload.success) {
         throw new Error(payload.error || 'Erreur lors du chargement des produits')
       }
-      
+
       return payload?.data || []
     },
   })
@@ -189,7 +192,7 @@ export default function PWACategorieContent() {
               className="pl-10 h-10 bg-muted border-0"
             />
           </div>
-          
+
           {/* Cart Button */}
           <button
             onClick={() => openDrawer()}
@@ -204,7 +207,7 @@ export default function PWACategorieContent() {
             )}
           </button>
         </div>
-        
+
         {/* Filter and Sort Buttons */}
         <div className="flex items-center justify-start gap-2">
           <Select value={triPrix} onValueChange={setTriPrix}>
@@ -212,10 +215,8 @@ export default function PWACategorieContent() {
               <SelectValue placeholder="Trier" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pertinence">Pertinence</SelectItem>
               <SelectItem value="prix-asc">Prix croissant</SelectItem>
               <SelectItem value="prix-desc">Prix décroissant</SelectItem>
-              <SelectItem value="nouveaute">Nouveautés</SelectItem>
             </SelectContent>
           </Select>
           <ProductFilter
@@ -234,12 +235,12 @@ export default function PWACategorieContent() {
       ) : produits.length === 0 ? (
         <div className="px-4 py-16 text-center">
           <p className="text-muted-foreground text-lg mb-4">
-            {categorieInfo 
+            {categorieInfo
               ? `Aucun produit disponible dans la catégorie "${categorieInfo.nom}"`
               : 'Aucun produit disponible pour le moment'}
           </p>
-          <Button 
-            asChild 
+          <Button
+            asChild
             variant="outline"
             className="mt-4"
           >

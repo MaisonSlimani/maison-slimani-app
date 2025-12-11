@@ -11,6 +11,7 @@ import { useCart } from '@/lib/hooks/useCart'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { getProductUrlSync, slugify } from '@/lib/utils/product-urls'
+import { trackInitiateCheckout } from '@/lib/analytics'
 import { createClient } from '@/lib/supabase/client'
 
 interface CartDrawerProps {
@@ -23,7 +24,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const pathname = usePathname()
   const { items, removeItem, updateQuantity, total, isLoaded } = useCart()
   const [stockErrors, setStockErrors] = useState<Record<string, string>>({})
-  
+
   const isPWA = pathname?.startsWith('/pwa') || false
 
   // Realtime stock validation for cart items
@@ -32,7 +33,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
     const supabase = createClient()
     const productIds = items.map(item => item.id)
-    
+
     // Subscribe to stock updates for all products in cart
     const channel = supabase
       .channel(`cart-stock-validation-${Date.now()}`)
@@ -47,7 +48,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         async (payload) => {
           const updated = payload.new as any
           const cartItem = items.find(item => item.id === updated.id)
-          
+
           if (!cartItem) return
 
           // Validate stock for this item
@@ -65,7 +66,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               ...prev,
               [errorKey]: `Stock insuffisant. Disponible: ${stockDisponible}`,
             }))
-            
+
             setTimeout(() => {
               toast.error(
                 `Stock insuffisant pour "${cartItem.nom}"${cartItem.couleur ? ` (${cartItem.couleur})` : ''}. Disponible: ${stockDisponible}`,
@@ -121,8 +122,8 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             Mon Panier
           </SheetTitle>
           <SheetDescription>
-            {items.length === 0 
-              ? 'Votre panier est vide' 
+            {items.length === 0
+              ? 'Votre panier est vide'
               : `${items.length} article${items.length > 1 ? 's' : ''} dans votre panier`
             }
           </SheetDescription>
@@ -160,10 +161,10 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   const productUrl = categorySlug && productSlug
                     ? `${isPWA ? '/pwa' : ''}/boutique/${categorySlug}/${productSlug}`
                     : `${isPWA ? '/pwa' : ''}/produit/${item.id}` // Fallback to redirect route for old cart items
-                  
+
                   const errorKey = `${item.id}-${item.couleur || ''}-${item.taille || ''}`
                   const hasStockError = stockErrors[errorKey]
-                  
+
                   return (
                     <div key={errorKey} className={cn(
                       "flex gap-4 p-4 border border-border rounded-lg hover:border-dore/50 transition-colors relative",
@@ -182,7 +183,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                           sizes="80px"
                         />
                       </Link>
-                      
+
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
                           {hasStockError && (
@@ -211,7 +212,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                             {item.prix.toLocaleString('fr-MA')} DH
                           </p>
                         </div>
-                        
+
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 border border-border rounded-lg">
                             <Button
@@ -242,7 +243,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                               <Plus className="w-4 h-4" />
                             </Button>
                           </div>
-                          
+
                           <Button
                             variant="outline"
                             size="icon"
@@ -271,8 +272,8 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   {total.toLocaleString('fr-MA')} DH
                 </span>
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={handleCheckout}
                 className="w-full bg-dore text-charbon hover:bg-dore/90 h-12 text-base font-medium"
                 size="lg"
@@ -280,9 +281,9 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Passer la commande
               </Button>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 asChild
                 className="w-full"
                 onClick={() => onOpenChange(false)}

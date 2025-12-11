@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import OptimizedImage from '@/components/OptimizedImage'
 import { slugify } from '@/lib/utils/product-urls'
 import { cn } from '@/lib/utils'
+import { trackAddToWishlist } from '@/lib/analytics'
 
 export default function PWAFavorisPage() {
   const router = useRouter()
@@ -49,12 +50,12 @@ export default function PWAFavorisPage() {
           `/api/produits/by-category-slug/${encodeURIComponent(item.categorySlug)}/${encodeURIComponent(item.slug)}`
         )
       }
-      
+
       // Fallback to ID if category/slug fetch fails
       if (!response || !response.ok) {
         response = await fetch(`/api/produits/${item.id}`)
       }
-      
+
       if (response && response.ok) {
         const payload = await response.json()
         const data = payload?.data
@@ -231,7 +232,7 @@ export default function PWAFavorisPage() {
             <div className="space-y-4">
               {items.map((item) => {
                 const inCart = isInCart(item.id)
-                
+
                 return (
                   <Card key={item.id} className="p-4">
                     <div className="flex gap-4">
@@ -249,7 +250,7 @@ export default function PWAFavorisPage() {
                           />
                         </div>
                       </Link>
-                      
+
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
                           <Link
@@ -264,7 +265,7 @@ export default function PWAFavorisPage() {
                             {item.prix.toLocaleString('fr-MA')} MAD
                           </p>
                         </div>
-                        
+
                         <div className="flex gap-2 mt-2">
                           {inCart ? (
                             <Button
@@ -345,7 +346,7 @@ export default function PWAFavorisPage() {
                   : 'Sélectionnez la taille et la quantité souhaitées'}
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-6 py-4">
               {/* Sélecteur de couleur */}
               {productData.has_colors && productData.couleurs && productData.couleurs.length > 0 && (
@@ -357,7 +358,7 @@ export default function PWAFavorisPage() {
                       const stockCouleur = c.stock || 0
                       const isOutOfStock = stockCouleur === 0
                       const colorCode = c.code || '#000000'
-                      
+
                       return (
                         <button
                           key={c.nom}
@@ -469,8 +470,8 @@ export default function PWAFavorisPage() {
                               onClick={() => !isOutOfStock && setSelectedTaille(t.nom)}
                               className={cn(
                                 'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
-                                isOutOfStock 
-                                  ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                                isOutOfStock
+                                  ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted'
                                   : isSelected
                                     ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105'
                                     : 'bg-background text-foreground border-border hover:border-dore hover:scale-105'

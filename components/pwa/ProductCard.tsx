@@ -6,46 +6,67 @@ import OptimizedImage from '@/components/OptimizedImage'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { ShoppingBag, Heart, Check, Sparkles } from 'lucide-react'
+import { ShoppingBag, Heart, Check, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
-import { trackAddToWishlist } from '@/lib/meta-pixel'
+import { trackAddToWishlist } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { hapticFeedback } from '@/lib/haptics'
 import { slugify } from '@/lib/utils/product-urls'
 import RatingDisplay from '@/components/RatingDisplay'
-
-interface Taille {
-  nom: string
-  stock: number
-}
+import { Product, Taille } from '@/types'
 
 interface ProductCardProps {
-  produit: {
-    id: string
-    nom: string
-    slug?: string
-    categorie?: string
-    prix: number
-    image_url?: string
-    images?: any[]
-    stock?: number
-    taille?: string // backward compatibility
-    tailles?: Taille[]
-    has_colors?: boolean
-    couleurs?: any[]
-    vedette?: boolean
-    created_at?: string
-    average_rating?: number | null
-    rating_count?: number
-  }
+  produit: Product
   priority?: boolean
 }
 
 export default function ProductCard({ produit, priority = false }: ProductCardProps) {
-  const getFirstImage = () => {
+  // Get all color images (first image from each color)
+  const getColorImages = () => {
+    if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 1) {
+      return produit.couleurs
+        .filter(c => {
+          // Check if color has images (array or single image)
+          if (c.images) {
+            if (Array.isArray(c.images)) {
+              return c.images.length > 0
+            }
+            // Single image string
+            return typeof c.images === 'string' && c.images.length > 0
+          }
+          return false
+        })
+        .map(c => {
+          // Extract first image from array or use single image
+          let imageUrl = ''
+          if (Array.isArray(c.images)) {
+            imageUrl = c.images[0]
+          } else if (typeof c.images === 'string') {
+            imageUrl = c.images
+          }
+          return {
+            couleur: c.nom,
+            image: imageUrl,
+          }
+        })
+    }
+    return []
+  }
+
+  const colorImages = getColorImages()
+  const [currentColorIndex, setCurrentColorIndex] = useState(0)
+  const hasMultipleColors = colorImages.length > 1
+
+  // Get current image based on color navigation
+  const getCurrentImage = () => {
+    // If product has multiple colors and we're navigating, use color image
+    if (hasMultipleColors && colorImages[currentColorIndex]) {
+      return colorImages[currentColorIndex].image
+    }
+    // Otherwise, use first image from images array or image_url
     if (produit.images && produit.images.length > 0) {
       const firstImg = produit.images[0]
       return typeof firstImg === 'string' ? firstImg : firstImg.url
@@ -53,7 +74,27 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
     return produit.image_url || '/assets/placeholder.jpg'
   }
 
-  const imageUrl = getFirstImage()
+  const imageUrl = getCurrentImage()
+
+  // Navigate to previous color
+  const handlePreviousColor = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (hasMultipleColors) {
+      setCurrentColorIndex((prev) => (prev === 0 ? colorImages.length - 1 : prev - 1))
+      hapticFeedback('light')
+    }
+  }
+
+  // Navigate to next color
+  const handleNextColor = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (hasMultipleColors) {
+      setCurrentColorIndex((prev) => (prev === colorImages.length - 1 ? 0 : prev + 1))
+      hapticFeedback('light')
+    }
+  }
   const productSlug = produit.slug || slugify(produit.nom || '')
   const categorySlug = produit.categorie ? slugify(produit.categorie) : null
   const href = categorySlug
@@ -100,9 +141,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
     return []
   })()
 
-  // Check if product is new (created within last 30 days)
-  const isNew = produit.created_at && 
-    new Date().getTime() - new Date(produit.created_at).getTime() < 30 * 24 * 60 * 60 * 1000
+
 
   const isOutOfStock = () => {
     // For products with colors, check if any color has stock
@@ -285,7 +324,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
         if (produit.has_colors && produit.couleurs && Array.isArray(produit.couleurs) && produit.couleurs.length > 0) {
           stockForWishlist = produit.couleurs.reduce((sum, c) => sum + (c.stock || 0), 0)
         }
-        
+
         addToWishlist({
           id: produit.id,
           nom: produit.nom,
@@ -326,8 +365,9 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
   return (
     <Card className="group overflow-hidden border border-border/50 shadow-sm hover:shadow-lg transition-all duration-300 relative flex flex-col h-full bg-card">
       <Link href={href} className="block flex-1 flex flex-col">
-        <div className="aspect-square overflow-hidden bg-muted relative">
+        <div className="aspect-square overflow-hidden bg-muted relative group/image">
           <OptimizedImage
+            key={imageUrl}
             src={imageUrl}
             alt={produit.nom}
             fill
@@ -336,14 +376,48 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
             sizes="(max-width: 768px) 50vw, 33vw"
             objectFit="cover"
           />
-          
+
+          {/* Color Navigation Arrows - Only show if product has multiple colors */}
+          {hasMultipleColors && (
+            <>
+              {/* Left Arrow */}
+              <button
+                onClick={handlePreviousColor}
+                className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 active:bg-black/80 backdrop-blur-sm rounded-full p-1.5 md:p-2 transition-all duration-200 opacity-0 group-hover/image:opacity-100 touch-manipulation items-center justify-center"
+                aria-label="Couleur précédente"
+              >
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              </button>
+
+              {/* Right Arrow */}
+              <button
+                onClick={handleNextColor}
+                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 active:bg-black/80 backdrop-blur-sm rounded-full p-1.5 md:p-2 transition-all duration-200 opacity-0 group-hover/image:opacity-100 touch-manipulation items-center justify-center"
+                aria-label="Couleur suivante"
+              >
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white" />
+              </button>
+
+              {/* Color Indicator Dots */}
+              <div className="hidden md:flex absolute bottom-2 left-1/2 -translate-x-1/2 z-30 gap-1.5 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200">
+                {colorImages.map((_, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all duration-200",
+                      index === currentColorIndex
+                        ? "bg-dore w-4"
+                        : "bg-white/60"
+                    )}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Badges */}
           <div className="absolute top-2 left-2 z-20 flex flex-col gap-2">
-            {isNew && (
-              <div className="bg-dore/95 backdrop-blur-sm rounded-md px-2 py-1 border border-dore/50">
-                <span className="text-charbon text-[10px] font-bold uppercase tracking-wide">Nouveau</span>
-              </div>
-            )}
+
           </div>
 
           {inWishlist && (
@@ -449,7 +523,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
                 : 'Sélectionnez la taille et la quantité souhaitées'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-6 py-4">
             {/* Sélecteur de couleur */}
             {produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && (
@@ -461,7 +535,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
                     const stockCouleur = c.stock || 0
                     const isOutOfStock = stockCouleur === 0
                     const colorCode = c.code || '#000000'
-                    
+
                     return (
                       <button
                         key={c.nom}
@@ -573,8 +647,8 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
                             onClick={() => !isOutOfStock && setSelectedTaille(t.nom)}
                             className={cn(
                               'w-12 h-12 rounded-lg border-2 font-medium transition-all relative',
-                              isOutOfStock 
-                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted' 
+                              isOutOfStock
+                                ? 'opacity-30 cursor-not-allowed bg-muted text-muted-foreground border-muted'
                                 : isSelected
                                   ? 'bg-dore text-charbon border-dore shadow-lg scale-105 hover:scale-105'
                                   : 'bg-background text-foreground border-border hover:border-dore hover:scale-105'
@@ -660,7 +734,7 @@ export default function ProductCard({ produit, priority = false }: ProductCardPr
             </Button>
             <Button
               onClick={handleConfirmAddToCart}
-              disabled={isAddingToCart || 
+              disabled={isAddingToCart ||
                 (produit.has_colors && produit.couleurs && produit.couleurs.length > 0 && !selectedCouleur) ||
                 (() => {
                   let availableSizes: string[] = []

@@ -24,19 +24,19 @@ export async function GET() {
         .select('email_entreprise, telephone, adresse, description')
         .limit(1)
         .single()
-      
+
       if (fallbackResult.error && fallbackResult.error.code !== 'PGRST116') {
         throw fallbackResult.error
       }
-      
+
       // Return with null values for new fields
-      return NextResponse.json({ 
+      return NextResponse.json({
         data: fallbackResult.data ? {
           ...fallbackResult.data,
           facebook: null,
           instagram: null,
           meta_pixel_code: null,
-        } : null 
+        } : null
       })
     }
 
@@ -62,7 +62,18 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email_entreprise, telephone, adresse, description, facebook, instagram, meta_pixel_code } = body
+
+    const {
+      email_entreprise,
+      telephone,
+      adresse,
+      description,
+      facebook,
+      instagram,
+      meta_pixel_code,
+      google_tag_manager_header,
+      google_tag_manager_body
+    } = body
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -86,6 +97,8 @@ export async function PUT(request: NextRequest) {
     if (facebook !== undefined) updateData.facebook = facebook || null
     if (instagram !== undefined) updateData.instagram = instagram || null
     if (meta_pixel_code !== undefined) updateData.meta_pixel_code = meta_pixel_code || null
+    if (google_tag_manager_header !== undefined) updateData.google_tag_manager_header = google_tag_manager_header || null
+    if (google_tag_manager_body !== undefined) updateData.google_tag_manager_body = google_tag_manager_body || null
 
     let result
     if (existingSettings) {
@@ -106,7 +119,7 @@ export async function PUT(request: NextRequest) {
           .eq('id', existingSettings.id)
           .select()
           .single()
-        
+
         if (fallbackResult.error) throw fallbackResult.error
         result = fallbackResult.data
       } else {
@@ -129,7 +142,7 @@ export async function PUT(request: NextRequest) {
           .insert(basicUpdateData)
           .select()
           .single()
-        
+
         if (fallbackResult.error) throw fallbackResult.error
         result = fallbackResult.data
       } else {
