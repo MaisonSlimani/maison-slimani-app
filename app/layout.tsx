@@ -9,7 +9,7 @@ import { Providers } from '@/components/Providers'
 import PWARedirect from '@/components/PWARedirect'
 import NavigationWrapper from '@/components/NavigationWrapper'
 import MetaPixel from '@/components/MetaPixel'
-import GoogleTagManager from '@/components/GoogleTagManager'
+import { GoogleTagManagerHead, GoogleTagManagerBody } from '@/components/GoogleTagManager'
 import { AnalyticsProvider } from '@/components/analytics-provider'
 
 const inter = Inter({
@@ -100,9 +100,10 @@ export default function RootLayout({
         {/* Facebook Domain Verification */}
         <meta name="facebook-domain-verification" content="ln1wiizsft23o3ned6y6lyafkjm5or" />
         <MetaPixel />
-        <GoogleTagManager />
+        <GoogleTagManagerHead />
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
+        <GoogleTagManagerBody />
         <Providers>
           <Suspense fallback={null}>
             <AnalyticsProvider>

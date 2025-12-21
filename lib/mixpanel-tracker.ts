@@ -99,16 +99,15 @@ class MixpanelTracker {
         }
 
         mixpanel.init(token, {
-            debug: process.env.NODE_ENV === 'development',
+            debug: false, // Disable to suppress ad blocker errors in dev console
             track_pageview: false, // Manual control
             persistence: 'localStorage',
             ignore_dnt: false, // Respect Do Not Track
             ip: false, // Don't track IP (privacy)
             api_host: 'https://api-eu.mixpanel.com', // EU data residency
-            record_sessions_percent: 100,
+            record_sessions_percent: 40, // Record 40% of user sessions
             record_mask_text_class: "mask-text",
             record_block_class: "block-recording",
-            // Only mask/block elements with these specific classes (unmasks everything else by default)
             record_mask_text_selector: ".mask-text",
             record_block_selector: ".block-recording",
             loaded: (mixpanel) => {
