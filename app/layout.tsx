@@ -41,6 +41,12 @@ export const metadata: Metadata = {
     siteName: 'Maison Slimani',
     images: [
       {
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/logo-search.png`,
+        width: 512,
+        height: 512,
+        alt: 'Maison Slimani Logo',
+      },
+      {
         url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/assets/hero-chaussures.jpg`,
         width: 1200,
         height: 630,
@@ -52,7 +58,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Maison Slimani - Chaussures Homme Luxe',
     description: 'Maison Slimani : chaussures homme haut de gamme en cuir marocain. Qualité artisanale et savoir-faire d\'excellence.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/assets/hero-chaussures.jpg`],
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/logo-search.png`],
   },
   robots: {
     index: true,

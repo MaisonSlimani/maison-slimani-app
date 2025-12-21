@@ -147,7 +147,7 @@ export default function AccueilPage() {
           '@id': `${window.location.origin}/#organization`,
           name: 'Maison Slimani',
           url: window.location.origin,
-          logo: `${window.location.origin}/assets/logos/logo_nobg.png`,
+          logo: `${window.location.origin}/logo-search.png`,
           description: 'Maison Slimani : chaussures homme haut de gamme en cuir marocain. Qualité artisanale et savoir-faire d\'excellence.',
           sameAs: [],
           contactPoint: {

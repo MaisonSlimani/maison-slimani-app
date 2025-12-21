@@ -98,7 +98,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     s
       .toLowerCase()
       .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9\s-]/g, '')
       .trim()
       .replace(/\s+/g, '-')
