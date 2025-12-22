@@ -14,6 +14,7 @@ import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
 import { useCart } from '@/lib/hooks/useCart'
 import ProductFilter, { FilterState } from '@/components/filters/ProductFilter'
 import { trackViewCategory } from '@/lib/analytics'
+import ProductCardSkeleton from '@/components/skeletons/ProductCardSkeleton'
 
 export default function PWACategorieContent() {
   const params = useParams()
@@ -229,8 +230,10 @@ export default function PWACategorieContent() {
 
       {/* Products Grid */}
       {loading ? (
-        <div className="px-4 py-8 text-center text-muted-foreground">
-          Chargement...
+        <div className="px-4 py-4">
+          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+            <ProductCardSkeleton count={6} />
+          </div>
         </div>
       ) : produits.length === 0 ? (
         <div className="px-4 py-16 text-center">

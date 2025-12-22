@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
+import CategoryCardSkeleton from '@/components/skeletons/CategoryCardSkeleton'
+import ProductCardSkeleton from '@/components/skeletons/ProductCardSkeleton'
 import Link from 'next/link'
 import ProductCard from '@/components/pwa/ProductCard'
 import CarteCategorie from '@/components/CarteCategorie'
@@ -95,13 +97,13 @@ export default function PWABoutiqueContent() {
         if (!response.ok) throw new Error(`Erreur API catégories: ${response.status}`)
         const payload = await response.json()
         const categoriesData = payload?.data || []
-        
+
         // Set categories for pills
         setCategories(categoriesData.map((cat: any) => ({
           nom: cat.nom,
           slug: cat.slug,
         })))
-        
+
         // Set categories with images for cards (like desktop)
         const categoriesMapped = categoriesData
           .filter((cat: any) => cat.image_url && cat.image_url.trim() !== '')
@@ -112,7 +114,7 @@ export default function PWABoutiqueContent() {
             lien: `/boutique/${cat.slug}`,
           }))
         setCategoriesWithImages(categoriesMapped)
-        
+
         // Find category name from slug
         if (categorie && categorie !== 'tous') {
           const foundCat = categoriesData.find((cat: any) => cat.slug === categorie)
@@ -174,7 +176,7 @@ export default function PWABoutiqueContent() {
               className="pl-10 h-10 bg-muted border-0"
             />
           </div>
-          
+
           {/* Cart Button */}
           <Button
             variant="ghost"
@@ -191,7 +193,7 @@ export default function PWABoutiqueContent() {
             )}
           </Button>
         </div>
-        
+
         {/* Categories Row - Only show when viewing products (not on categories view) */}
         {!showCategoriesView && !loadingCategories && categories.length > 0 && (
           <div className="px-4 py-2 border-b border-border/50">
@@ -228,7 +230,7 @@ export default function PWABoutiqueContent() {
             </div>
           </div>
         )}
-        
+
         {/* Title Bar */}
         {search && (
           <div className="px-4 pb-2">
@@ -240,8 +242,8 @@ export default function PWABoutiqueContent() {
       </header>
 
       {/* Search Overlay */}
-      <SearchOverlay 
-        isOpen={isSearchOverlayOpen} 
+      <SearchOverlay
+        isOpen={isSearchOverlayOpen}
         onClose={() => setIsSearchOverlayOpen(false)}
         basePath="/boutique"
       />
@@ -296,9 +298,8 @@ export default function PWABoutiqueContent() {
           {loadingCategories && (
             <section className="py-12 px-4 bg-ecru">
               <div className="max-w-6xl mx-auto">
-                <div className="text-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dore mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Chargement des collections...</p>
+                <div className="grid grid-cols-1 gap-6">
+                  <CategoryCardSkeleton count={4} />
                 </div>
               </div>
             </section>
@@ -326,9 +327,9 @@ export default function PWABoutiqueContent() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3, duration: 0.6 }}
                 >
-                  <Button 
-                    asChild 
-                    size="lg" 
+                  <Button
+                    asChild
+                    size="lg"
                     className="bg-dore text-charbon hover:bg-dore/90 font-medium px-8 py-6 transition-all duration-300 hover:scale-105"
                   >
                     <Link href="/boutique/tous">Découvrir toute la collection</Link>
@@ -344,17 +345,19 @@ export default function PWABoutiqueContent() {
       {!showCategoriesView && (
         <>
           {loading ? (
-            <div className="px-4 py-8 text-center text-muted-foreground">
-              Chargement...
+            <div className="px-4 py-4">
+              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                <ProductCardSkeleton count={6} />
+              </div>
             </div>
           ) : produits.length === 0 ? (
             <div className="px-4 py-16 text-center">
               <p className="text-muted-foreground text-lg mb-4">
-                {search 
+                {search
                   ? `Aucun produit trouvé pour "${search}"`
                   : selectedCategoryName
-                  ? `Aucun produit dans la catégorie "${selectedCategoryName}"`
-                  : 'Aucun produit disponible pour le moment'}
+                    ? `Aucun produit dans la catégorie "${selectedCategoryName}"`
+                    : 'Aucun produit disponible pour le moment'}
               </p>
               {search && (
                 <Button

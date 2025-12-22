@@ -15,6 +15,8 @@ import { useIsPWA } from '@/lib/hooks/useIsPWA'
 import PWAHomeContent from './PWAHomeContent'
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { Product } from '@/types'
+import ProductCardSkeleton from '@/components/skeletons/ProductCardSkeleton'
+
 
 // Chemins des images (Next.js Image nécessite des chemins relatifs depuis public/)
 const heroImage = '/assets/hero-chaussures.jpg'
@@ -35,7 +37,7 @@ export default function AccueilPage() {
   // Fetch categories to map names to slugs
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories-slug-map'],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour - categories are static  
     queryFn: async ({ signal }) => {
       const response = await fetch('/api/categories?active=true', { signal })
       if (!response.ok) return []
@@ -62,8 +64,8 @@ export default function AccueilPage() {
     isPending: loadingVedette,
   } = useQuery({
     queryKey: ['produits', 'vedette'],
-    staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutes - products semi-static
+    gcTime: 30 * 60 * 1000,
     queryFn: async ({ signal }) => {
       const response = await fetch('/api/produits?vedette=true&limit=6', {
         signal,
@@ -416,80 +418,65 @@ export default function AccueilPage() {
       )}
 
       {/* Produits en Vedette */}
-      {!loadingVedette && (
-        <section className="py-12 md:py-20 px-3 md:px-6 bg-ecru">
-          <div className="container max-w-6xl mx-auto">
-            <motion.div
-              className="text-center mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-4xl md:text-5xl font-serif mb-4">
-                Produits en Vedette
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Découvrez nos créations les plus emblématiques, sélectionnées pour leur excellence
-              </p>
-            </motion.div>
+      <section className="py-12 md:py-20 px-3 md:px-6 bg-ecru">
+        <div className="container max-w-6xl mx-auto">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-serif mb-4">
+              Produits en Vedette
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Découvrez nos créations les plus emblématiques, sélectionnées pour leur excellence
+            </p>
+          </motion.div>
 
-            {produitsVedette.length > 0 ? (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
-                  {produitsVedette.map((produit, index) => (
-                    <motion.div
-                      key={produit.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{
-                        delay: index * 0.1,
-                        duration: 0.6,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      whileHover={{ y: -8 }}
-                      className="transition-transform duration-500 h-full"
-                    >
-                      <CarteProduit
-                        produit={{
-                          id: produit.id,
-                          nom: produit.nom,
-                          prix: produit.prix,
-                          image_url: produit.image_url,
-                          image: produit.image_url,
-                          stock: produit.stock,
-                          has_colors: produit.has_colors,
-                          couleurs: produit.couleurs,
-                          taille: produit.taille,
-                          tailles: produit.tailles,
-                          matiere: produit.matiere,
-                          images: produit.images,
-                          slug: produit.slug,
-                          categorie: produit.categorie,
-                          categorySlug: produit.categorie ? categorySlugMap[produit.categorie] : undefined,
-                        }}
-                        showActions={true}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="text-center mt-12">
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="border-dore text-dore hover:bg-dore hover:text-charbon"
-                    onClick={handleButtonClick}
+          {produitsVedette.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
+                {produitsVedette.map((produit, index) => (
+                  <motion.div
+                    key={produit.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      delay: index * 0.1,
+                      duration: 0.6,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    whileHover={{ y: -8 }}
+                    className="transition-transform duration-500 h-full"
                   >
-                    <Link href="/boutique">Voir toute la collection</Link>
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg mb-4">Aucun produit disponible pour le moment</p>
+                    <CarteProduit
+                      produit={{
+                        id: produit.id,
+                        nom: produit.nom,
+                        prix: produit.prix,
+                        image_url: produit.image_url,
+                        image: produit.image_url,
+                        stock: produit.stock,
+                        has_colors: produit.has_colors,
+                        couleurs: produit.couleurs,
+                        taille: produit.taille,
+                        tailles: produit.tailles,
+                        matiere: produit.matiere,
+                        images: produit.images,
+                        slug: produit.slug,
+                        categorie: produit.categorie,
+                        categorySlug: produit.categorie ? categorySlugMap[produit.categorie] : undefined,
+                      }}
+                      showActions={true}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="text-center mt-12">
                 <Button
                   asChild
                   size="lg"
@@ -497,13 +484,30 @@ export default function AccueilPage() {
                   className="border-dore text-dore hover:bg-dore hover:text-charbon"
                   onClick={handleButtonClick}
                 >
-                  <Link href="/boutique">Découvrir la boutique</Link>
+                  <Link href="/boutique">Voir toute la collection</Link>
                 </Button>
               </div>
-            )}
-          </div>
-        </section>
-      )}
+            </>
+          ) : loadingVedette ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8">
+              <ProductCardSkeleton count={6} />
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground text-lg mb-4">Aucun produit disponible pour le moment</p>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-dore text-dore hover:bg-dore hover:text-charbon"
+                onClick={handleButtonClick}
+              >
+                <Link href="/boutique">Découvrir la boutique</Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Notre Savoir-Faire */}
       <section className="py-20 px-6 bg-ecru">
