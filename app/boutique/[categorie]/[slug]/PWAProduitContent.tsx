@@ -855,7 +855,8 @@ export default function PWAProduitContent() {
           )}
         </motion.div>
 
-        {/* Avis et Commentaires Section */}
+        {/* Avis et Commentaires Section - COMMENTED OUT AS REQUESTED */}
+        {/*
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -867,7 +868,6 @@ export default function PWAProduitContent() {
             <p className="text-muted-foreground text-sm">Découvrez ce que nos clients pensent de ce produit</p>
           </div>
 
-          {/* Rating Summary */}
           {produit.rating_count !== undefined && produit.rating_count !== null && produit.rating_count > 0 && produit.average_rating !== null && produit.average_rating !== undefined && produit.average_rating > 0 && (
             <div className="mb-6">
               <ProductRatingSummary
@@ -878,7 +878,6 @@ export default function PWAProduitContent() {
             </div>
           )}
 
-          {/* Comments List */}
           <div className="border-t border-border pt-6">
             <CommentsList
               produitId={produit.id}
@@ -889,7 +888,6 @@ export default function PWAProduitContent() {
             />
           </div>
 
-          {/* Comment Form */}
           <div className="border-t border-border pt-6">
             <h3 className="text-xl font-serif font-semibold mb-4">Laisser un commentaire</h3>
             <CommentForm
@@ -901,6 +899,7 @@ export default function PWAProduitContent() {
             />
           </div>
         </motion.div>
+        */}
 
         {/* Produits similaires */}
         {produit && produit.categorie && (

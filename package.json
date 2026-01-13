@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf .next && echo 'Cleaned .next directory'",
     "fix-permissions": "bash scripts/fix-permissions.sh",
-    "dev": "next dev -p 3001",
+    "dev": "next dev -p 3005",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

@@ -489,6 +489,8 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
             {produit.matiere && (
               <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3 line-clamp-1">{produit.matiere}</p>
             )}
+            {/* Rating Display - COMMENTED OUT AS REQUESTED */}
+            {/*
             {produit.rating_count !== undefined && produit.rating_count !== null && produit.rating_count > 0 && produit.average_rating !== null && produit.average_rating !== undefined && produit.average_rating > 0 && (
               <div className="mb-2 md:mb-3">
                 <RatingDisplay
@@ -499,6 +501,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
                 />
               </div>
             )}
+            */}
           </div>
           <p className="text-base md:text-xl font-serif text-primary mt-auto">
             {produit.prix.toLocaleString('fr-MA')} DH
