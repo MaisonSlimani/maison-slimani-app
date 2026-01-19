@@ -41,13 +41,13 @@ export const metadata: Metadata = {
     siteName: 'Maison Slimani',
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/logo-search.png`,
+        url: 'https://www.maison-slimani.com/logo-search.png',
         width: 512,
         height: 512,
         alt: 'Maison Slimani Logo',
       },
       {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/assets/hero-chaussures.jpg`,
+        url: 'https://www.maison-slimani.com/assets/hero-chaussures.jpg',
         width: 1200,
         height: 630,
         alt: 'Maison Slimani - Chaussures homme luxe',
@@ -58,13 +58,13 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Maison Slimani - Chaussures Homme Luxe',
     description: 'Maison Slimani : chaussures homme haut de gamme en cuir marocain. Qualité artisanale et savoir-faire d\'excellence.',
-    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'}/logo-search.png`],
+    images: ['https://www.maison-slimani.com/logo-search.png'],
   },
   robots: {
     index: true,
     follow: true,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://maisonslimani.com'),
+  metadataBase: new URL('https://www.maison-slimani.com'),
   icons: {
     icon: '/favicon.ico',
     apple: '/icons/android-launchericon-192-192.png',
@@ -72,11 +72,47 @@ export const metadata: Metadata = {
   },
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Maison Slimani',
+  url: 'https://www.maison-slimani.com',
+  logo: 'https://www.maison-slimani.com/logo-search.png',
+}
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const navigationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    'itemListElement': [
+      {
+        '@type': 'SiteNavigationElement',
+        'position': 1,
+        'name': 'Boutique',
+        'description': 'Tous nos produits',
+        'url': 'https://www.maison-slimani.com/boutique'
+      },
+      {
+        '@type': 'SiteNavigationElement',
+        'position': 2,
+        'name': 'La Maison',
+        'description': 'Notre histoire et savoir-faire',
+        'url': 'https://www.maison-slimani.com/maison'
+      },
+      {
+        '@type': 'SiteNavigationElement',
+        'position': 3,
+        'name': 'Contact',
+        'description': 'Contactez-nous',
+        'url': 'https://www.maison-slimani.com/contact'
+      }
+    ]
+  }
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
@@ -103,6 +139,14 @@ export default function RootLayout({
         <GoogleTagManagerHead />
       </head>
       <body className={`${inter.variable} ${playfair.variable} overflow-x-hidden max-w-full`} suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }}
+        />
         <GoogleTagManagerBody />
         <Providers>
           <Suspense fallback={null}>

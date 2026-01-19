@@ -9,15 +9,18 @@ import { Card } from '@/components/ui/card'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { Skeleton } from '@/components/ui/skeleton'
+
 interface ContactFormProps {
   settings: {
     email_entreprise: string
     telephone: string
     adresse: string
   }
+  loading?: boolean
 }
 
-export default function ContactForm({ settings }: ContactFormProps) {
+export default function ContactForm({ settings, loading = false }: ContactFormProps) {
   const [envoiEnCours, setEnvoiEnCours] = useState(false)
   const [formData, setFormData] = useState({
     nom: '',
@@ -52,47 +55,89 @@ export default function ContactForm({ settings }: ContactFormProps) {
     }
   }
 
+  if (loading) {
+    return (
+      <>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-6 text-center space-y-4">
+              <Skeleton className="w-8 h-8 mx-auto rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20 mx-auto" />
+                <Skeleton className="h-3 w-32 mx-auto" />
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="p-8 bg-secondary/40 mt-12 relative overflow-hidden">
+          {/* Form Skeleton */}
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-64 mb-6" /> {/* Title */}
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </Card>
+      </>
+    )
+  }
+
   return (
     <>
-      {((settings.email_entreprise && settings.email_entreprise.trim()) || 
-        (settings.telephone && settings.telephone.trim()) || 
+      {((settings.email_entreprise && settings.email_entreprise.trim()) ||
+        (settings.telephone && settings.telephone.trim()) ||
         (settings.adresse && settings.adresse.trim())) && (
-        <div className="grid md:grid-cols-3 gap-6">
-          {settings.email_entreprise && settings.email_entreprise.trim() && (
-            <Card className="p-6 text-center">
-              <Mail className="w-8 h-8 mx-auto mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Email</h3>
-              <a 
-                href={`mailto:${settings.email_entreprise}`}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {settings.email_entreprise}
-              </a>
-            </Card>
-          )}
+          <div className="grid md:grid-cols-3 gap-6">
+            {settings.email_entreprise && settings.email_entreprise.trim() && (
+              <Card className="p-6 text-center">
+                <Mail className="w-8 h-8 mx-auto mb-4 text-primary" />
+                <h3 className="font-medium mb-2">Email</h3>
+                <a
+                  href={`mailto:${settings.email_entreprise}`}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {settings.email_entreprise}
+                </a>
+              </Card>
+            )}
 
-          {settings.telephone && settings.telephone.trim() && (
-            <Card className="p-6 text-center">
-              <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Téléphone</h3>
-              <a 
-                href={`tel:${settings.telephone.replace(/\s/g, '')}`}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {settings.telephone}
-              </a>
-            </Card>
-          )}
+            {settings.telephone && settings.telephone.trim() && (
+              <Card className="p-6 text-center">
+                <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
+                <h3 className="font-medium mb-2">Téléphone</h3>
+                <a
+                  href={`tel:${settings.telephone.replace(/\s/g, '')}`}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {settings.telephone}
+                </a>
+              </Card>
+            )}
 
-          {settings.adresse && settings.adresse.trim() && (
-            <Card className="p-6 text-center">
-              <MapPin className="w-8 h-8 mx-auto mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Adresse</h3>
-              <p className="text-sm text-muted-foreground">{settings.adresse}</p>
-            </Card>
-          )}
-        </div>
-      )}
+            {settings.adresse && settings.adresse.trim() && (
+              <Card className="p-6 text-center">
+                <MapPin className="w-8 h-8 mx-auto mb-4 text-primary" />
+                <h3 className="font-medium mb-2">Adresse</h3>
+                <p className="text-sm text-muted-foreground">{settings.adresse}</p>
+              </Card>
+            )}
+          </div>
+        )}
 
       <Card className="p-8 bg-secondary/40">
         <h2 className="text-2xl font-serif mb-6">Envoyez-nous un message</h2>

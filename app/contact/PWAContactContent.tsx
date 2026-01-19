@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
 export default function PWAContactContent() {
+  const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState({
     email_entreprise: '',
     telephone: '',
@@ -20,7 +21,7 @@ export default function PWAContactContent() {
           console.error('Settings API error:', response.status, response.statusText)
           return
         }
-        
+
         const result = await response.json()
         if (result.success && result.data) {
           const data = result.data
@@ -34,6 +35,8 @@ export default function PWAContactContent() {
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des paramètres:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -50,7 +53,7 @@ export default function PWAContactContent() {
       </div>
 
       <div className="px-4 py-6 space-y-6 max-w-md mx-auto">
-        <ContactForm settings={settings} />
+        <ContactForm settings={settings} loading={loading} />
       </div>
     </div>
   )
