@@ -36,14 +36,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const { createClient } = await import('@supabase/supabase-js')
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       console.warn('Supabase credentials missing, returning base static pages only')
       return baseStaticPages
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    
+
     // Fetch categories dynamically
     const { data: categories, error: categoriesError } = await supabase
       .from('categories')
@@ -103,9 +103,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const productPages: MetadataRoute.Sitemap = (produits || []).flatMap((produit) => {
       const productSlug = produit.slug || generateSlug(produit.nom || '')
       const categorySlug = produit.categorie ? categoryMap.get(produit.categorie) : null
-      
+
       const pages: MetadataRoute.Sitemap = []
-      
+
       // Add hierarchical URL (primary)
       if (categorySlug) {
         pages.push({
@@ -115,23 +115,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.9,
         })
       }
-      
-      // Keep old URLs for backwards compatibility (lower priority)
-      pages.push(
-        {
-          url: `${baseUrl}/produits/${productSlug}`,
-          lastModified: new Date(produit.date_ajout),
-          changeFrequency: 'weekly' as const,
-          priority: 0.7, // Lower priority than hierarchical
-        },
-        {
-          url: `${baseUrl}/produit/${produit.id}`,
-          lastModified: new Date(produit.date_ajout),
-          changeFrequency: 'weekly' as const,
-          priority: 0.7, // Lower priority than hierarchical
-        }
-      )
-      
+
+      // Legacy URLs are handled by redirects in route.ts, so we don't include them in sitemap anymore
+      // to avoid duplicate content punishment from Google.
+
       return pages
     })
 
