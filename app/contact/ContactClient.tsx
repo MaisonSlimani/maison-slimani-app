@@ -12,7 +12,7 @@ async function getSettings() {
       console.error('Settings API error:', response.status, response.statusText)
       return { email_entreprise: '', telephone: '', adresse: '' }
     }
-    
+
     const result = await response.json()
     if (result.success && result.data) {
       const data = result.data
@@ -22,7 +22,7 @@ async function getSettings() {
         adresse: (data.adresse && data.adresse.trim()) || '',
       }
     }
-    
+
     console.warn('Settings API returned no data:', result)
     return { email_entreprise: '', telephone: '', adresse: '' }
   } catch (error) {
@@ -33,6 +33,7 @@ async function getSettings() {
 
 export default function ContactPage() {
   const { isPWA, isLoading } = useIsPWA()
+  const [loadingSettings, setLoadingSettings] = useState(true)
   const [settings, setSettings] = useState({
     email_entreprise: '',
     telephone: '',
@@ -40,23 +41,14 @@ export default function ContactPage() {
   })
 
   useEffect(() => {
-    getSettings().then(setSettings)
+    getSettings().then((data) => {
+      setSettings(data)
+      setLoadingSettings(false)
+    })
   }, [])
 
-  // Show loading state while detecting device
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dore mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
-
   // Render PWA version
-  if (isPWA) {
+  if (!isLoading && isPWA) {
     return <PWAContactContent />
   }
 
@@ -64,7 +56,7 @@ export default function ContactPage() {
   return (
     <div className="pb-24 md:pb-0 pt-0 md:pt-20">
       <div className="container px-6 py-12 max-w-4xl mx-auto">
-        <ContactContent settings={settings} />
+        <ContactContent settings={settings} loading={loadingSettings} />
       </div>
     </div>
   )

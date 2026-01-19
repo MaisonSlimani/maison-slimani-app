@@ -9,9 +9,10 @@ interface ContactContentProps {
     telephone: string
     adresse: string
   }
+  loading?: boolean
 }
 
-export default function ContactContent({ settings }: ContactContentProps) {
+export default function ContactContent({ settings, loading = false }: ContactContentProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -25,7 +26,7 @@ export default function ContactContent({ settings }: ContactContentProps) {
         </p>
       </header>
 
-      <ContactForm settings={settings} />
+      <ContactForm settings={settings} loading={loading} />
     </motion.div>
   )
 }

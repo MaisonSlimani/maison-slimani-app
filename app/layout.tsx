@@ -85,6 +85,34 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const navigationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    'itemListElement': [
+      {
+        '@type': 'SiteNavigationElement',
+        'position': 1,
+        'name': 'Boutique',
+        'description': 'Tous nos produits',
+        'url': 'https://www.maison-slimani.com/boutique'
+      },
+      {
+        '@type': 'SiteNavigationElement',
+        'position': 2,
+        'name': 'La Maison',
+        'description': 'Notre histoire et savoir-faire',
+        'url': 'https://www.maison-slimani.com/maison'
+      },
+      {
+        '@type': 'SiteNavigationElement',
+        'position': 3,
+        'name': 'Contact',
+        'description': 'Contactez-nous',
+        'url': 'https://www.maison-slimani.com/contact'
+      }
+    ]
+  }
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
@@ -114,6 +142,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }}
         />
         <GoogleTagManagerBody />
         <Providers>
