@@ -81,7 +81,7 @@ export const produitQuerySchema = z.object({
 });
 
 export const commandeProduitSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   nom: z.string(),
   prix: z.number().positive(),
   quantite: z.number().int().positive(),
@@ -93,10 +93,11 @@ export const commandeProduitSchema = z.object({
 export const commandeSchema = z.object({
   nom_client: z.string().min(1, 'Le nom est requis'),
   telephone: z.string().min(1, 'Le téléphone est requis'),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  email: z.string().email('Email invalide').optional().or(z.literal('')).or(z.null()),
   adresse: z.string().min(1, "L'adresse est requise"),
   ville: z.string().min(1, 'La ville est requise'),
   produits: z.array(commandeProduitSchema).min(1, 'Au moins un produit est requis'),
+  total: z.number().nonnegative('Le total est invalide'),
 });
 
 export const statutCommandeSchema = z.object({

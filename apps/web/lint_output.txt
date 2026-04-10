@@ -1,0 +1,50 @@
+
+> maison-slimani-web@1.0.0 lint /home/maison/maison-slimani-app-main/apps/web
+> eslint .
+
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/produits/[id]/similar/route.ts
+  6:7  error  'PRODUCT_FIELDS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/app/checkout/useCheckout.ts
+  92:14  error  '_error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/app/faq/FAQContent.tsx
+  44:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/app/favoris/useFavorisData.ts
+  48:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/CarteProduit.tsx
+  23:76   error  Arrow function has a complexity of 18. Maximum allowed is 15  complexity
+  99:116  error  Unexpected any. Specify a different type                      @typescript-eslint/no-explicit-any
+  99:142  error  Unexpected any. Specify a different type                      @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/MetaPixel.tsx
+  42:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/maison/maison-slimani-app-main/apps/web/components/OptimizedImage.tsx
+  17:107  error  Expected a `const` instead of a literal type assertion  @typescript-eslint/prefer-as-const
+
+/home/maison/maison-slimani-app-main/apps/web/components/checkout/DesktopCheckoutView.tsx
+  30:106  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:128  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:60   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:29   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/checkout/MobileCheckoutView.tsx
+  25:49   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:27   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:99   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:121  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/contact/DesktopContactView.tsx
+  42:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/favoris/DesktopFavorisView.tsx
+  54:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 19 problems (18 errors, 1 warning)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.

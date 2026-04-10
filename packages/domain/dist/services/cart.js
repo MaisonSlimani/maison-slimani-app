@@ -9,7 +9,7 @@ export const validateQuantityUpdate = (item, newQuantity) => {
     if (newQuantity <= 0) {
         return { success: true, data: 0 };
     }
-    if (item.stock !== undefined && item.stock < newQuantity) {
+    if (item.stock !== undefined && item.stock !== null && item.stock < newQuantity) {
         return {
             success: false,
             error: `Stock insuffisant pour "${item.nom}". Stock disponible: ${item.stock}`,
@@ -28,7 +28,7 @@ export const validateAddToCart = (item, currentItems) => {
         ? currentItems.find((i) => i.id === item.id && i.couleur === item.couleur && i.taille === item.taille)
         : currentItems.find((i) => i.id === item.id && !i.couleur && i.taille === item.taille);
     const totalQuantity = existing ? existing.quantite + item.quantite : item.quantite;
-    if (item.stock < totalQuantity) {
+    if (item.stock !== undefined && item.stock !== null && item.stock < totalQuantity) {
         return {
             success: false,
             error: `Stock insuffisant pour "${item.nom}". Stock disponible: ${item.stock}`,

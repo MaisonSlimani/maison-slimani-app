@@ -1,0 +1,18 @@
+{
+  "name": "@maison/db",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/ssr": "^0.5.2",
+    "@maison/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.5"
+  }
+}

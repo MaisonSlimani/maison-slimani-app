@@ -1,0 +1,46 @@
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '../database.types';
+
+export class StorageRepository {
+  private bucket = 'produits-images';
+  private supabase: SupabaseClient<Database> | null = null;
+
+  constructor(supabase?: SupabaseClient<Database>) {
+    if (supabase) {
+      this.supabase = supabase;
+    }
+  }
+
+  /**
+   * Upload an image. Works both on server (with service key) and client (with anon key + auth).
+   */
+  async uploadImage(path: string, file: File | Buffer, contentType: string) {
+    let client = this.supabase;
+
+    if (!client) {
+      // Fallback for server-side where service key is needed and no client was provided
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      
+      const { createClient: createServiceClient } = await import('@supabase/supabase-js');
+      client = createServiceClient<Database>(supabaseUrl, supabaseServiceKey);
+    }
+
+    const { data, error } = await client.storage
+      .from(this.bucket)
+      .upload(path, file, { contentType, upsert: true });
+
+    if (error) throw error;
+    return data;
+  }
+
+  getPublicUrl(path: string) {
+    // We can use a simple URL construction if we know the structure
+    // or use the client if available
+    const supabaseUrl = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_URL : null) || 
+                        (import.meta as any).env?.VITE_SUPABASE_URL ||
+                        (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_URL;
+
+    return `${supabaseUrl}/storage/v1/object/public/${this.bucket}/${path}`;
+  }
+}

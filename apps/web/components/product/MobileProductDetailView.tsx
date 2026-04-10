@@ -1,0 +1,57 @@
+'use client'
+
+import React from 'react'
+import { Heart } from 'lucide-react'
+import GalerieProduit from '@/components/GalerieProduit'
+import SimilarProducts from '@/components/SimilarProducts'
+import { cn } from '@maison/shared'
+import { ProductDetailViewData } from './DesktopProductDetailView'
+import { ProductVariation } from '@maison/domain'
+import { MobileProductSelection } from './MobileProductSelection'
+
+export default function MobileProductDetailView({ data }: { data: ProductDetailViewData }) {
+  const { 
+    produit, couleur, setCouleur, taille, setTaille, 
+    addedToCart, inWishlist, handleAddToCart, handleToggleWishlist, 
+    taillesData, allImages 
+  } = data
+
+  return (
+    <div className="w-full min-h-screen pb-40 bg-ecru/20">
+      <div className="relative aspect-square">
+        <GalerieProduit 
+          images={allImages} 
+          enableZoom={false} 
+          showThumbnails={true} 
+          selectedColor={couleur ?? undefined} 
+        />
+        <button onClick={handleToggleWishlist} className="absolute top-4 left-4 z-10 w-11 h-11 rounded-full bg-white/90 shadow-lg flex items-center justify-center">
+          <Heart className={cn("w-6 h-6", inWishlist && "fill-dore text-dore")} />
+        </button>
+      </div>
+
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-serif mb-2">{produit.nom}</h1>
+          <p className="text-2xl font-serif text-dore">{produit.prix.toLocaleString('fr-MA')} DH</p>
+        </div>
+
+        <div className="prose prose-sm max-w-none text-charbon/80" dangerouslySetInnerHTML={{ __html: produit.description }} />
+
+        <MobileProductSelection 
+          hasColors={!!produit.has_colors} 
+          couleurs={(produit.couleurs as ProductVariation[]) ?? []} 
+          selectedColor={couleur} 
+          setSelectedColor={setCouleur}
+          taillesData={taillesData} 
+          selectedTaille={taille} 
+          setSelectedTaille={setTaille}
+          addedToCart={addedToCart} 
+          onAddToCart={handleAddToCart}
+        />
+      </div>
+      
+      <SimilarProducts productCategory={produit.categorie ?? ''} productId={produit.id} />
+    </div>
+  )
+}

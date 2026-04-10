@@ -1,0 +1,353 @@
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/categories/route.ts
+  17:8  warning  Async function 'GET' has too many lines (103). Maximum allowed is 80  max-lines-per-function
+  17:8  error    Async function 'GET' has a complexity of 21. Maximum allowed is 15    complexity
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/commandes/route.ts
+   5:10  error  'CommandeEmailPayload' is defined but never used  @typescript-eslint/no-unused-vars
+  44:42  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  58:12  error  'error' is defined but never used                 @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/produits/[id]/similar/route.ts
+  13:8  warning  Async function 'GET' has too many lines (110). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/produits/filter-options/route.ts
+    6:8   warning  Async function 'GET' has too many lines (136). Maximum allowed is 80  max-lines-per-function
+   40:37  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+   46:26  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+   49:31  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+   70:34  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+   73:39  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  108:26  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  113:34  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  144:28  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/produits/route.ts
+  28:8  warning  Async function 'GET' has too many lines (85). Maximum allowed is 80  max-lines-per-function
+  28:8  error    Async function 'GET' has a complexity of 19. Maximum allowed is 15   complexity
+
+/home/maison/maison-slimani-app-main/apps/web/app/api/search/suggestions/route.ts
+   17:8   warning  Async function 'GET' has too many lines (185). Maximum allowed is 80  max-lines-per-function
+   17:8   error    Async function 'GET' has a complexity of 33. Maximum allowed is 15    complexity
+   63:55  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+   82:43  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  126:50  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  132:11  error    Blocks are nested too deeply (5). Maximum allowed is 4                max-depth
+  144:11  error    Blocks are nested too deeply (5). Maximum allowed is 4                max-depth
+  173:57  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  188:11  error    Blocks are nested too deeply (5). Maximum allowed is 4                max-depth
+  190:13  error    Blocks are nested too deeply (6). Maximum allowed is 4                max-depth
+  215:63  error    Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/app/boutique/[categorie]/useCategoryData.ts
+  71:5  error  Async method 'queryFn' has a complexity of 16. Maximum allowed is 15  complexity
+
+/home/maison/maison-slimani-app-main/apps/web/app/checkout/useCheckout.ts
+   3:31  error  'useMemo' is defined but never used       @typescript-eslint/no-unused-vars
+  92:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/app/commande/confirme/useOrderConfirmation.ts
+  17:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/app/faq/FAQContent.tsx
+  17:16  warning  Function 'FAQContent' has too many lines (134). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/app/favoris/useFavorisData.ts
+  10:9   error  'router' is assigned a value but never used             @typescript-eslint/no-unused-vars
+  16:50  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  30:41  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  40:59  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  41:13  error  Blocks are nested too deeply (5). Maximum allowed is 4  max-depth
+  46:14  error  'error' is defined but never used                       @typescript-eslint/no-unused-vars
+  53:40  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  76:21  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/app/layout.tsx
+  82:16  warning  Function 'RootLayout' has too many lines (83). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/app/useHomeData.ts
+  65:15  error  Blocks are nested too deeply (5). Maximum allowed is 4  max-depth
+
+/home/maison/maison-slimani-app-main/apps/web/app/useProductDetail.ts
+   9:28  error    'trackAddToWishlist' is defined but never used                              @typescript-eslint/no-unused-vars
+  17:8   warning  Function 'useProductDetail' has too many lines (83). Maximum allowed is 80  max-lines-per-function
+  36:70  error    Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  83:19  error    Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/CartDrawer.tsx
+  4:8  error  'Link' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/CarteCategorie.tsx
+   6:10  error  'Button' is defined but never used                                         @typescript-eslint/no-unused-vars
+  16:34  error  'tagline' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/CarteProduit.tsx
+   7:30  error    'Check' is defined but never used                               @typescript-eslint/no-unused-vars
+  24:22  warning  Arrow function has too many lines (121). Maximum allowed is 80  max-lines-per-function
+  24:76  error    Arrow function has a complexity of 22. Maximum allowed is 15    complexity
+  30:10  error    'addedToCart' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/CommentForm.tsx
+  42:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/CommentsList.tsx
+   4:10  error    'Button' is defined but never used                                       @typescript-eslint/no-unused-vars
+  18:16  warning  Function 'CommentsList' has too many lines (95). Maximum allowed is 80   max-lines-per-function
+  19:44  error    Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  25:44  error    Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  26:27  error    'setUploadingImages' is assigned a value but never used                  @typescript-eslint/no-unused-vars
+  34:14  error    'error' is defined but never used                                        @typescript-eslint/no-unused-vars
+  56:14  error    'err' is defined but never used                                          @typescript-eslint/no-unused-vars
+  68:14  error    'err' is defined but never used                                          @typescript-eslint/no-unused-vars
+  77:49  error    Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  93:37  error    'files' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  94:31  error    'i' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/EnteteMobile.tsx
+  13:22  warning  Arrow function has too many lines (109). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/components/GalerieProduit.tsx
+  11:11  error  'ImageItem' is defined but never used                                                @typescript-eslint/no-unused-vars
+  13:12  error  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+  14:14  error  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+  23:3   error  'couleurs' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  32:59  error  'i' is defined but never used. Allowed unused args must match /^_/u                  @typescript-eslint/no-unused-vars
+  33:60  error  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/MenuBasNavigation.tsx
+  10:27  warning  Arrow function has too many lines (103). Maximum allowed is 80  max-lines-per-function
+  64:15  error    This assigned value is not used in subsequent statements        no-useless-assignment
+
+/home/maison/maison-slimani-app-main/apps/web/components/MetaPixel.tsx
+  75:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/maison/maison-slimani-app-main/apps/web/components/OptimizedImage.tsx
+   4:10  error    'isSupabaseImage' is defined but never used                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  26:16  error    Function 'OptimizedImage' has a complexity of 25. Maximum allowed is 15                                                                                                                                                                                                                  complexity
+  84:9   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  89:10  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/maison/maison-slimani-app-main/apps/web/components/ProduitDetailClient.tsx
+  9:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/SimilarProducts.tsx
+  18:16  warning  Function 'SimilarProducts' has too many lines (137). Maximum allowed is 80  max-lines-per-function
+  26:10  error    'error' is assigned a value but never used                                  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/SoundPlayer.tsx
+  34:14  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  75:16  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  84:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/WishlistDrawer.tsx
+    4:8   error    'Link' is defined but never used                                          @typescript-eslint/no-unused-vars
+   20:16  warning  Function 'WishlistDrawer' has too many lines (84). Maximum allowed is 80  max-lines-per-function
+   25:50  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+   33:45  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+   42:14  error    'err' is defined but never used                                           @typescript-eslint/no-unused-vars
+   54:19  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+  104:60  error    Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/boutique/BoutiqueHeader.tsx
+   8:10   error  'useRouter' is defined but never used     @typescript-eslint/no-unused-vars
+  10:105  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:35   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/boutique/DesktopBoutiqueView.tsx
+  10:16  warning  Function 'DesktopBoutiqueView' has too many lines (133). Maximum allowed is 80  max-lines-per-function
+  36:25  error    Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  37:22  error    Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/cart/CartItem.tsx
+  11:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/category/DesktopCategoryView.tsx
+   4:10  error    'motion' is defined but never used                                             @typescript-eslint/no-unused-vars
+   7:52  error    'X' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  17:16  warning  Function 'DesktopCategoryView' has too many lines (86). Maximum allowed is 80  max-lines-per-function
+  17:63  error    Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  94:33  error    Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/category/MobileCategoryView.tsx
+   4:10  error    'motion' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   5:8   error    'Link' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  16:16  warning  Function 'MobileCategoryView' has too many lines (85). Maximum allowed is 80                                                                                                                                                                                                             max-lines-per-function
+  16:62  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  43:9   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  92:31  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/checkout/DesktopCheckoutView.tsx
+  13:16  warning  Function 'DesktopCheckoutView' has too many lines (145). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/components/checkout/MobileCheckoutView.tsx
+  12:16  warning  Function 'MobileCheckoutView' has too many lines (126). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/components/comment-form/CommentImageUpload.tsx
+  17:7   error  'MAX_FILE_SIZE' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  37:19  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/comments/CommentCard.tsx
+  11:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/comments/CommentEditForm.tsx
+  11:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  12:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/contact/ContactCards.tsx
+  6:8   error  Function 'ContactCards' has a complexity of 16. Maximum allowed is 15  complexity
+  6:56  error  Unexpected any. Specify a different type                               @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/contact/DesktopContactView.tsx
+  8:16  warning  Function 'DesktopContactView' has too many lines (86). Maximum allowed is 80  max-lines-per-function
+  8:62  error    Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/contact/MobileContactView.tsx
+  4:10  error  'motion' is defined but never used        @typescript-eslint/no-unused-vars
+  5:31  error  'ArrowLeft' is defined but never used     @typescript-eslint/no-unused-vars
+  8:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/faq/DesktopFAQView.tsx
+   5:43  error  'Facebook' is defined but never used      @typescript-eslint/no-unused-vars
+   5:53  error  'Instagram' is defined but never used     @typescript-eslint/no-unused-vars
+   7:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/faq/MobileFAQView.tsx
+   5:8   error  'Link' is defined but never used          @typescript-eslint/no-unused-vars
+   6:43  error  'Facebook' is defined but never used      @typescript-eslint/no-unused-vars
+   6:53  error  'Instagram' is defined but never used     @typescript-eslint/no-unused-vars
+   6:64  error  'ArrowLeft' is defined but never used     @typescript-eslint/no-unused-vars
+   8:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/favoris/DesktopFavorisView.tsx
+  11:16  warning  Function 'DesktopFavorisView' has too many lines (81). Maximum allowed is 80  max-lines-per-function
+  11:62  error    Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  12:30  error    'isInCart' is assigned a value but never used                                 @typescript-eslint/no-unused-vars
+  40:29  error    Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/favoris/MobileFavorisView.tsx
+   4:10  error  'motion' is defined but never used        @typescript-eslint/no-unused-vars
+  11:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  33:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/filters/ColorFilter.tsx
+   9:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/filters/ProductFilter.tsx
+  3:20  error  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/footer/FooterBrand.tsx
+   5:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/footer/FooterContact.tsx
+  3:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/gallery/MobileGalleryDialog.tsx
+  13:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/gallery/ThumbnailList.tsx
+   8:11  error  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  14:65  error  'colorContext' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/home/DesktopHomeView.tsx
+  15:16  warning  Function 'DesktopHomeView' has too many lines (97). Maximum allowed is 80  max-lines-per-function
+  16:91  error    'categorySlugMap' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/home/MobileHomeView.tsx
+  15:16  warning  Function 'MobileHomeView' has too many lines (88). Maximum allowed is 80  max-lines-per-function
+  16:23  error    'loadingCategories' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  16:59  error    'loadingVedette' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+  19:9   error    'lifestyleImage1' is assigned a value but never used                      @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/menu/MobileMenuView.tsx
+  8:16  warning  Function 'MobileMenuView' has too many lines (138). Maximum allowed is 80  max-lines-per-function
+  8:58  error    Unexpected any. Specify a different type                                   @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/navigation/NavActions.tsx
+  15:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/order/DesktopOrderSuccessView.tsx
+  7:35  error  'Home' is defined but never used         @typescript-eslint/no-unused-vars
+  7:41  error  'ShoppingBag' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/panier/DesktopPanierView.tsx
+   15:16  warning  Function 'DesktopPanierView' has too many lines (145). Maximum allowed is 80  max-lines-per-function
+  107:47  error    Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  122:47  error    Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/panier/MobilePanierView.tsx
+  13:16  warning  Function 'MobilePanierView' has too many lines (122). Maximum allowed is 80  max-lines-per-function
+  86:41  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  98:41  error    Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/politiques/DesktopPolitiquesView.tsx
+  4:10   error  'motion' is defined but never used        @typescript-eslint/no-unused-vars
+  5:33   error  'XCircle' is defined but never used       @typescript-eslint/no-unused-vars
+  5:42   error  'ArrowRight' is defined but never used    @typescript-eslint/no-unused-vars
+  5:66   error  'CreditCard' is defined but never used    @typescript-eslint/no-unused-vars
+  5:78   error  'RefreshCw' is defined but never used     @typescript-eslint/no-unused-vars
+  5:89   error  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  5:108  error  'Phone' is defined but never used         @typescript-eslint/no-unused-vars
+  7:65   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/politiques/MobilePolitiquesView.tsx
+  5:33  error  'XCircle' is defined but never used       @typescript-eslint/no-unused-vars
+  5:66  error  'CreditCard' is defined but never used    @typescript-eslint/no-unused-vars
+  5:78  error  'RefreshCw' is defined but never used     @typescript-eslint/no-unused-vars
+  5:89  error  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  7:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/product/DesktopProductDetailView.tsx
+   6:23  error    'ArrowLeft' is defined but never used                                                @typescript-eslint/no-unused-vars
+  12:16  warning  Function 'DesktopProductDetailView' has too many lines (138). Maximum allowed is 80  max-lines-per-function
+  12:68  error    Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+  13:20  error    'quantite' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+  13:30  error    'setQuantite' is assigned a value but never used                                     @typescript-eslint/no-unused-vars
+  13:96  error    'isInCart' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+  55:47  error    Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+  80:42  error    Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/product/MobileProductDetailView.tsx
+   4:10  error    'motion' is defined but never used                                                 @typescript-eslint/no-unused-vars
+   5:8   error    'Link' is defined but never used                                                   @typescript-eslint/no-unused-vars
+   6:30  error    'Share2' is defined but never used                                                 @typescript-eslint/no-unused-vars
+  12:16  warning  Function 'MobileProductDetailView' has too many lines (97). Maximum allowed is 80  max-lines-per-function
+  12:67  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  13:20  error    'quantite' is assigned a value but never used                                      @typescript-eslint/no-unused-vars
+  13:30  error    'setQuantite' is assigned a value but never used                                   @typescript-eslint/no-unused-vars
+  13:96  error    'isInCart' is assigned a value but never used                                      @typescript-eslint/no-unused-vars
+  54:41  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  75:36  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/product/ProductCardImage.tsx
+  13:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/components/product/ProductPurchaseDialog.tsx
+  24:31  warning  Arrow function has too many lines (93). Maximum allowed is 80  max-lines-per-function
+
+/home/maison/maison-slimani-app-main/apps/web/components/pwa/ProductCard.tsx
+  9:19  error  'CartItem' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/components/pwa/SearchModal.tsx
+  34:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/hooks/use-toast.ts
+  17:7  error  '_actionTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/home/maison/maison-slimani-app-main/apps/web/hooks/usePWAInstall.ts
+  18:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/maison/maison-slimani-app-main/apps/web/lib/resend/client.ts
+  16:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 212 problems (179 errors, 33 warnings)
+
