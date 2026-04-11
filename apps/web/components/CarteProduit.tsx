@@ -33,16 +33,21 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   useRealtimeStock(produit.id)
   const inWishlist = isInWishlist(produit.id)
   const isInCart = items.some(item => item.id === produit.id)
-  
+
   const { colorImages, imageUrl, isOutOfStock } = useMemo(() => {
     const vars = produit.couleurs as ProductVariation[] | null
-    const cImgs = (produit.has_colors && vars) ? vars.map(c => ({ 
+    
+    const resolveImages = () => (produit.has_colors && vars) ? vars.map(c => ({ 
       couleur: c.nom, 
       image: Array.isArray(c.images) ? c.images[0] : (c.images || produit.image_url) 
-    })).filter(ci => ci.image) : []
-    const img = (cImgs.length > 0 && cImgs[currentColorIndex]?.image) || produit.image_url || ''
-    const outOfStock = produit.stock !== null && produit.stock <= 0 && (!produit.has_colors || !vars?.some(c => (c.stock || 0) > 0))
-    return { colorImages: cImgs, imageUrl: img, isOutOfStock: outOfStock }
+    })).filter(ci => !!ci.image) : []
+    
+    const cImgs = resolveImages()
+    const img = (cImgs[currentColorIndex]?.image) || produit.image_url || ''
+    
+    const hasStock = (produit.stock || 0) > 0 || vars?.some(c => (c.stock || 0) > 0)
+    
+    return { colorImages: cImgs, imageUrl: img, isOutOfStock: !hasStock }
   }, [produit, currentColorIndex])
 
   const href = `/boutique/${produit.categorie ? slugify(produit.categorie) : 'cat'}/${produit.slug || slugify(produit.nom || '')}`
@@ -69,7 +74,7 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
   return (
     <Card className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all relative flex flex-col h-full">
       <Link href={href} className="flex-1 flex flex-col">
-        <ProductCardImage 
+        <ProductCardImage
           imageUrl={imageUrl} nom={produit.nom} hasMultipleColors={colorImages.length > 1}
           colorImages={colorImages} currentColorIndex={currentColorIndex}
           onPreviousColor={(e) => { e.preventDefault(); setCurrentColorIndex(i => i === 0 ? colorImages.length - 1 : i - 1) }}
@@ -82,14 +87,19 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
         </div>
       </Link>
       {showActions && <CardActions isInCart={isInCart} inWishlist={inWishlist} onAdd={onAddToCart} onWish={onToggleWishlist} />}
-      <ProductPurchaseDialog 
+      <ProductPurchaseDialog
         showModal={showModal} setShowModal={setShowModal} produit={produit} selectedCouleur={selectedCouleur} setSelectedCouleur={setSelectedCouleur}
         selectedTaille={selectedTaille} setSelectedTaille={setSelectedTaille} quantite={quantite} setQuantite={setQuantite}
-        taillesDisponibles={produit.tailles?.map((t) => t.nom) || []} onConfirm={async () => {
+        taillesDisponibles={produit.tailles?.map((t) => t.nom) || []} onConfirm={async (buyNow) => {
           setIsAddingToCart(true)
           try {
-            await addToCart({ ...produit, quantite, taille: selectedTaille, couleur: selectedCouleur, image_url: imageUrl }, false)
-            setShowModal(false); toast.success('Ajouté au panier')
+            await addToCart({ ...produit, quantite, taille: selectedTaille, couleur: selectedCouleur, image_url: imageUrl }, !buyNow)
+            setShowModal(false)
+            if (buyNow) {
+              window.location.href = '/checkout'
+            } else {
+              toast.success('Ajouté au panier')
+            }
           } catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur') }
           finally { setIsAddingToCart(false) }
         }} isAddingToCart={isAddingToCart}

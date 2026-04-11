@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Script from 'next/script'
 import { trackPageView, initMetaPixel } from '@/lib/analytics'
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
+import { SiteSettings } from '@maison/domain'
 
 export default function MetaPixel() {
   const { pixelId, pixelCode } = usePixelSettings()
@@ -24,7 +26,7 @@ export default function MetaPixel() {
 function usePixelSettings() {
   const [settings, setSettings] = useState<{ pixelId: string | null; pixelCode: string | null }>({ pixelId: null, pixelCode: null })
   useEffect(() => {
-    fetch('/api/settings').then(res => res.json()).then(result => {
+    apiFetch<SiteSettings>(ENDPOINTS.SETTINGS).then(result => {
       if (result.success && result.data?.meta_pixel_code) {
         const code = result.data.meta_pixel_code as string
         const idMatch = code.match(/fbq\s*\(\s*['"]init['"]\s*,\s*['"](\d+)['"]/i)

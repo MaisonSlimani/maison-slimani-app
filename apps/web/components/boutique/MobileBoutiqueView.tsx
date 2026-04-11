@@ -13,17 +13,26 @@ import SearchOverlay from '@/components/search/SearchOverlay'
 import { useBoutiqueData } from '@/hooks/useBoutiqueData'
 import { useBoutiqueUI } from '@/hooks/useBoutiqueUI'
 import { BoutiqueHeader } from './BoutiqueHeader'
+import { Category } from '@maison/domain'
 
-export interface MobileBoutiqueViewProps { initialCategorie?: string; initialSearch?: string }
+export interface MobileBoutiqueViewProps { 
+  initialCategorie?: string; 
+  initialSearch?: string;
+  initialCategories?: Category[];
+}
 
 import { BoutiqueViewData } from '@/types/views'
 
-export default function MobileBoutiqueView({ initialCategorie = 'tous', initialSearch = '' }: MobileBoutiqueViewProps) {
+export default function MobileBoutiqueView({ 
+  initialCategorie = 'tous', 
+  initialSearch = '',
+  initialCategories
+}: MobileBoutiqueViewProps) {
   const searchParams = useSearchParams(); const router = useRouter()
   const categorie = searchParams.get('categorie') || initialCategorie
   const search = searchParams.get('search') || initialSearch
   const { showScrollTop, searchQuery, setSearchQuery, isSearchOverlayOpen, setIsSearchOverlayOpen, scrollToTop, clearSearch } = useBoutiqueUI(search)
-  const { produits, loadingProducts, categories, categoriesWithImages, loadingCategories }: BoutiqueViewData = useBoutiqueData(categorie, search)
+  const { produits, loadingProducts, categories, categoriesWithImages, loadingCategories }: BoutiqueViewData = useBoutiqueData(categorie, search, initialCategories)
   const showCategoriesView = categorie === 'tous' && !search
 
   return (

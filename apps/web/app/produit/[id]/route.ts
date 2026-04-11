@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { ProductRepository, CategoryRepository } from '@maison/db'
 import { slugify } from '@/lib/utils/product-urls'
-import { Product, Category } from '@maison/domain'
 
 export async function GET(
   request: NextRequest,
@@ -12,31 +12,23 @@ export async function GET(
     if (!id) return NextResponse.redirect(new URL('/boutique', request.url), 302)
 
     const supabase = await createClient()
+    const productRepo = new ProductRepository(supabase)
+    const categoryRepo = new CategoryRepository(supabase)
 
-    const { data: produit } = await supabase
-      .from('produits')
-      .select('nom, categorie, slug')
-      .eq('id', id)
-      .maybeSingle()
+    const produit = await productRepo.findById(id)
+    if (!produit || !produit.categorie) {
+      return NextResponse.redirect(new URL('/boutique', request.url), 302)
+    }
 
-    if (!produit) return NextResponse.redirect(new URL('/boutique', request.url), 302)
-    const p = produit as unknown as Product
-
-    if (!p.categorie) return NextResponse.redirect(new URL('/boutique', request.url), 302)
-
-    const { data: category } = await supabase
-      .from('categories')
-      .select('slug')
-      .eq('nom', p.categorie)
-      .eq('active', true)
-      .maybeSingle()
-
+    const allCategories = await categoryRepo.findAllActive()
+    const category = allCategories.find(c => c.nom === produit.categorie)
+    
     if (!category) return NextResponse.redirect(new URL('/boutique', request.url), 302)
-    const cat = category as unknown as Category
 
-    const productSlug = p.slug || slugify(p.nom || '')
-    return NextResponse.redirect(new URL(`/boutique/${cat.slug}/${productSlug}`, request.url), 301)
-  } catch {
+    const productSlug = produit.slug || slugify(produit.nom || '')
+    return NextResponse.redirect(new URL(`/boutique/${category.slug}/${productSlug}`, request.url), 301)
+  } catch (error) {
+    console.error('Redirect route error:', error)
     return NextResponse.redirect(new URL('/boutique', request.url), 302)
   }
 }

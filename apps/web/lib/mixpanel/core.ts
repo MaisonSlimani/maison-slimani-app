@@ -21,7 +21,7 @@ export class MixpanelCore {
             track_pageview: false,
             persistence: 'localStorage',
             api_host: 'https://api-eu.mixpanel.com',
-            loaded: () => console.log('✅ Mixpanel initialized'),
+            loaded: () => {},
         })
 
         this.initialized = true

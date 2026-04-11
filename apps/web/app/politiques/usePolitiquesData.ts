@@ -12,7 +12,7 @@ export function usePolitiquesData() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings')
+        const response = await fetch('/api/v1/settings')
         if (response.ok) {
           const result = await response.json()
           if (result.success && result.data) {

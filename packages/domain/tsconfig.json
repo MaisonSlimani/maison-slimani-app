@@ -16,7 +16,7 @@
       "@maison/shared": ["../shared/src/index.ts"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "test"],
   "exclude": ["node_modules"],
   "references": [
     { "path": "../shared" }

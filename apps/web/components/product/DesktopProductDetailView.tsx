@@ -32,7 +32,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
     setCouleur, 
     taille, 
     setTaille, 
-    addedToCart, 
+    isInCart,
     inWishlist, 
     handleAddToCart, 
     handleToggleWishlist, 
@@ -65,7 +65,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
               taillesData={taillesData} 
               selectedTaille={taille} 
               setSelectedTaille={setTaille} 
-              addedToCart={addedToCart} 
+              isInCart={isInCart}
               inWishlist={inWishlist} 
               onAddToCart={handleAddToCart} 
               onToggleWishlist={handleToggleWishlist} 

@@ -16,10 +16,29 @@ export function ProductFormBasicFields({ formData, setFormData, categories }: Pr
           <Input 
             id="nom" 
             value={formData.nom} 
-            onChange={e => setFormData({ ...formData, nom: e.target.value })} 
+            onChange={e => {
+              const newName = e.target.value;
+              const updates: any = { nom: newName };
+              // Auto-generate slug if it was empty or matches old name's slug
+              if (!formData.slug) {
+                updates.slug = newName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              }
+              setFormData({ ...formData, ...updates });
+            }} 
             required 
             placeholder="ex: Beldi Mixte Premium"
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="slug">Slug (URL) *</Label>
+          <Input 
+            id="slug" 
+            value={formData.slug || ''} 
+            onChange={e => setFormData({ ...formData, slug: e.target.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })} 
+            required 
+            placeholder="ex: beldi-mixte-premium"
+          />
+          <p className="text-[10px] text-muted-foreground">Identifiant unique pour l'URL du produit</p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">

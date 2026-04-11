@@ -1,11 +1,11 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { AppSupabaseClient } from '../client.types';
 import { Database } from '../database.types';
 
 export class StorageRepository {
   private bucket = 'produits-images';
-  private supabase: SupabaseClient<Database> | null = null;
+  private supabase: AppSupabaseClient | null = null;
 
-  constructor(supabase?: SupabaseClient<Database>) {
+  constructor(supabase?: AppSupabaseClient) {
     if (supabase) {
       this.supabase = supabase;
     }
@@ -38,8 +38,10 @@ export class StorageRepository {
     // We can use a simple URL construction if we know the structure
     // or use the client if available
     const supabaseUrl = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_URL : null) || 
-                        (import.meta as any).env?.VITE_SUPABASE_URL ||
-                        (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_URL;
+                        // @ts-expect-error - Vite env access
+                        (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : null) ||
+                        // @ts-expect-error - Vite env access
+                        (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.NEXT_PUBLIC_SUPABASE_URL : null);
 
     return `${supabaseUrl}/storage/v1/object/public/${this.bucket}/${path}`;
   }

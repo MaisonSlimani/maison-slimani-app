@@ -5,7 +5,7 @@ export type ApiResult<T> =
 export interface ApiErrorDetail {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export class DomainError extends Error {

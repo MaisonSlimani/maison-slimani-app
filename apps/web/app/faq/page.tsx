@@ -1,30 +1,18 @@
-'use client'
+import type { Metadata } from 'next'
+import FAQClient from './FAQClient'
+import { fetchFAQData } from '../data/fetchFAQ'
 
-import React from 'react'
-import { useFAQData } from './useFAQData'
-import MobileFAQView from '@/components/faq/MobileFAQView'
-import DesktopFAQView from '@/components/faq/DesktopFAQView'
+export const metadata: Metadata = {
+    title: 'FAQ - Maison Slimani | Aide et Questions Fréquentes',
+    description: 'Trouvez les réponses à vos questions sur Maison Slimani : commandes, livraisons, retours et entretien de vos chaussures de luxe au Maroc.',
+    openGraph: {
+        title: 'FAQ - Maison Slimani | Aide et Questions Fréquentes',
+        description: 'Trouvez les réponses à vos questions sur Maison Slimani : commandes, livraisons, retours et entretien.',
+        type: 'website',
+    },
+}
 
-/**
- * Unified FAQ Page
- * 
- * Merges mobile PWA help center with premium desktop FAQ.
- * Fixed security vulnerability by moving settings fetching to secure hook.
- */
-export default function FAQPage() {
-  const data = useFAQData()
-
-  return (
-    <main className="min-h-screen">
-      {/* Mobile View - PWA Design preserved */}
-      <div className="block md:hidden">
-        <MobileFAQView data={data} />
-      </div>
-
-      {/* Desktop View - Premium Design */}
-      <div className="hidden md:block">
-        <DesktopFAQView data={data} />
-      </div>
-    </main>
-  )
+export default async function Page() {
+    const settings = await fetchFAQData()
+    return <FAQClient initialSettings={settings} />
 }

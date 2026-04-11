@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -147,13 +147,21 @@ async function createOptimizedVersions() {
   }
 }
 
+interface SupabaseFile {
+  name: string
+  metadata?: {
+    size?: string | number | null
+  } | null
+}
+
 async function optimizeSingleImage(
-  supabase: any,
-  file: any,
+  supabase: SupabaseClient,
+  file: SupabaseFile,
   stats: OptimizationStats
 ) {
   const filePath = `produits/${file.name}`
-  const originalSize = parseInt(file.metadata?.size || '0', 10)
+  const fileMetadataSize = file.metadata?.size
+  const originalSize = typeof fileMetadataSize === 'string' ? parseInt(fileMetadataSize, 10) : (fileMetadataSize || 0)
 
   try {
     // Skip if already WebP

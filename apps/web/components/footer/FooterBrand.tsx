@@ -2,7 +2,7 @@
 
 import { Facebook, Instagram } from 'lucide-react'
 
-export function FooterBrand({ settings }: { settings: { facebook?: string; instagram?: string; description?: string } }) {
+export function FooterBrand({ settings }: { settings: { facebook?: string | null; instagram?: string | null; description?: string | null } }) {
   return (
     <div>
       <h3 className="text-2xl font-serif mb-4">Maison <span className="text-dore">Slimani</span></h3>

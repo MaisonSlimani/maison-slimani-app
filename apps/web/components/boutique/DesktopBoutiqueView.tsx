@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import CarteCategorie from '@/components/CarteCategorie'
@@ -9,6 +9,8 @@ import CategoryCardSkeleton from '@/components/skeletons/CategoryCardSkeleton'
 
 import { Category } from '@maison/domain'
 
+import { useBoutiqueData } from '@/hooks/useBoutiqueData'
+
 interface BoutiqueCategory {
   titre: string;
   tagline: string;
@@ -16,10 +18,10 @@ interface BoutiqueCategory {
   lien: string;
 }
 
-export default function DesktopBoutiqueView() {
-  const { categories, loadingCategories } = useBoutiqueData()
+export default function DesktopBoutiqueView({ initialCategories }: { initialCategories?: Category[] }) {
+  const { categoriesWithImages, loadingCategories } = useBoutiqueData('tous', '', initialCategories)
 
-  useBoutiqueSEO(categories, loadingCategories)
+  useBoutiqueSEO(categoriesWithImages, loadingCategories)
 
   if (loadingCategories) return <BoutiqueSkeleton />
 
@@ -28,7 +30,7 @@ export default function DesktopBoutiqueView() {
       <section className="py-20 px-6 bg-ecru">
         <div className="container max-w-6xl mx-auto">
           <BoutiqueHero />
-          <CategoryGrid categories={categories} />
+          <CategoryGrid categories={categoriesWithImages} />
         </div>
       </section>
 
@@ -39,28 +41,6 @@ export default function DesktopBoutiqueView() {
       </section>
     </div>
   )
-}
-
-function useBoutiqueData() {
-  const [categories, setCategories] = useState<BoutiqueCategory[]>([])
-  const [loadingCategories, setLoadingCategories] = useState(true)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    fetch('/api/categories?active=true', { signal: controller.signal })
-      .then(res => res.json())
-      .then(payload => {
-        const data = (payload?.data as Category[]) || []
-        setCategories(data.filter(cat => cat.image_url?.trim()).map(cat => ({
-          titre: cat.nom, tagline: cat.description || '', image: cat.image_url!, lien: `/boutique/${cat.slug}`
-        })))
-      })
-      .catch(err => { if (err.name !== 'AbortError') console.error(err) })
-      .finally(() => setLoadingCategories(false))
-    return () => controller.abort()
-  }, [])
-
-  return { categories, loadingCategories }
 }
 
 function useBoutiqueSEO(categories: BoutiqueCategory[], loading: boolean) {

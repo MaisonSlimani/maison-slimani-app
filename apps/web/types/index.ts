@@ -84,15 +84,8 @@ export interface Commentaire {
   updated_at?: string;
 }
 
-export interface SiteSettings {
-    email_entreprise: string;
-    telephone: string;
-    whatsapp: string;
-    facebook?: string;
-    instagram?: string;
-    adresse?: string;
-    description?: string;
-}
+import { SiteSettings } from '@maison/domain'
+export type { SiteSettings }
 
 export interface ApiResponse<T> {
     success: boolean;

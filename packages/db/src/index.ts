@@ -9,3 +9,4 @@ export * from './repositories/CategoryRepository';
 export * from './repositories/SearchRepository';
 export * from './realtime';
 export * from './database.types';
+export * from './client.types';

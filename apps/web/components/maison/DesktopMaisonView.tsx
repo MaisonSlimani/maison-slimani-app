@@ -21,7 +21,7 @@ export default function DesktopMaisonView() {
               L'excellence du <span className="text-dore">Savoir-faire</span>
             </h1>
             <p className="text-2xl text-charbon/70 font-light leading-relaxed">
-              Maison Slimani est le fruit d'une passion familiale pour l'art de la chaussure en cuir, née entre les remparts de Fès et l'énergie de Casablanca.
+              Maison Slimani est le fruit d'une passion familiale pour l'art de la chaussure en cuir, née d'un savoir-faire ancestral et d'une vision contemporaine de l'élégance.
             </p>
           </div>
           <div className="relative aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
@@ -33,7 +33,7 @@ export default function DesktopMaisonView() {
           <div className="space-y-4">
             <h3 className="text-2xl font-serif text-dore tracking-wider uppercase text-sm">Héritage</h3>
             <p className="text-lg text-charbon/80 leading-relaxed">
-              Inspirés par la tradition fassie, nos modèles allient classicisme et modernité pour l'homme contemporain.
+              Inspirés par la tradition marocaine, nos modèles allient classicisme et modernité pour l'homme contemporain.
             </p>
           </div>
           <div className="space-y-4 border-x border-charbon/5 px-12">

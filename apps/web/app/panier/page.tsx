@@ -1,41 +1,20 @@
-'use client'
+import type { Metadata } from 'next'
+import PanierClient from './PanierClient'
 
-import { useEffect } from 'react'
-import MobilePanierView from '@/components/panier/MobilePanierView'
-import DesktopPanierView from '@/components/panier/DesktopPanierView'
+export const metadata: Metadata = {
+  title: 'Votre Panier - Maison Slimani',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 /**
- * Unified Panier Page
+ * Panier Page (RSC)
  * 
- * Merges PWA mobile design and luxury desktop design into one responsive file.
- * Preserves all tracking, SEO (noindex), and animations.
+ * Server Component that provides declarative noindex metadata
+ * and delegates the interactive cart logic to PanierClient.
  */
-export default function PanierPage() {
-  
-  // SEO: Noindex (user-specific page)
-  useEffect(() => {
-    const robotsMeta = document.querySelector('meta[name="robots"]')
-    if (robotsMeta) {
-      robotsMeta.setAttribute('content', 'noindex, nofollow')
-    } else {
-      const meta = document.createElement('meta')
-      meta.name = 'robots'
-      meta.content = 'noindex, nofollow'
-      document.head.appendChild(meta)
-    }
-  }, [])
-
-  return (
-    <main className="min-h-screen">
-      {/* Mobile View - PWA Design preserved */}
-      <div className="block md:hidden">
-        <MobilePanierView />
-      </div>
-
-      {/* Desktop View - Standard Design */}
-      <div className="hidden md:block">
-        <DesktopPanierView />
-      </div>
-    </main>
-  )
+export default function Page() {
+  return <PanierClient />
 }

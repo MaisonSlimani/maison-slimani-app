@@ -1,5 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../database.types';
+import { AppSupabaseClient } from '../client.types';
 
 export interface TrendingSearch {
   query: string;
@@ -19,11 +18,23 @@ export interface CategorySuggestion {
   count: number;
 }
 
+interface TrendingSearchRpc {
+  query: string;
+  search_count: number;
+}
+
+interface ProductSuggestionRpc {
+  product_id: string;
+}
+
+interface CategorySuggestionRpc {
+  category_name: string;
+  category_slug: string;
+  product_count: number;
+}
+
 export class SearchRepository {
-  private supabase: SupabaseClient<Database, any>;
-  constructor(supabase: SupabaseClient<Database, any>) {
-    this.supabase = supabase;
-  }
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getTrendingSearches(limit: number = 5): Promise<TrendingSearch[]> {
     try {
@@ -31,7 +42,7 @@ export class SearchRepository {
         limit_count: limit
       });
       if (!error && data) {
-        return (data as any[]).map(t => ({
+        return (data as unknown as TrendingSearchRpc[]).map(t => ({
           query: t.query,
           count: Number(t.search_count)
         }));
@@ -49,7 +60,7 @@ export class SearchRepository {
 
     if (!fallback) return [];
     const counts: Record<string, number> = {};
-    fallback.forEach((item: any) => {
+    fallback.forEach((item) => {
       const q = item.query?.trim()?.toLowerCase() || '';
       if (q.length >= 4 && /[a-zA-Z0-9]/.test(q)) {
         counts[q] = (counts[q] || 0) + 1;
@@ -69,13 +80,13 @@ export class SearchRepository {
         search_prefix: query,
         limit_count: limit
       });
-      if (!error && data && data.length > 0) {
-        const productIds = (data as any[]).map(p => p.product_id);
+      if (!error && data && (data as unknown as ProductSuggestionRpc[]).length > 0) {
+        const productIds = (data as unknown as ProductSuggestionRpc[]).map(p => p.product_id);
         const { data: products } = await this.supabase
           .from('produits')
           .select('id, nom, prix, image_url')
           .in('id', productIds);
-        return products || [];
+        return (products as ProductSuggestion[]) || [];
       }
     } catch (_e) { /* fallback */ }
 
@@ -85,7 +96,7 @@ export class SearchRepository {
       .or(`nom.ilike.${query}%,nom.ilike.%${query}%`)
       .order('vedette', { ascending: false })
       .limit(limit);
-    return fallback || [];
+    return (fallback as ProductSuggestion[]) || [];
   }
 
   async getCategorySuggestions(query: string, limit: number = 5): Promise<CategorySuggestion[]> {
@@ -94,8 +105,8 @@ export class SearchRepository {
         search_term: query,
         limit_count: limit
       });
-      if (!error && data && data.length > 0) {
-        return (data as any[]).map(c => ({
+      if (!error && data && (data as unknown as CategorySuggestionRpc[]).length > 0) {
+        return (data as unknown as CategorySuggestionRpc[]).map(c => ({
           nom: c.category_name,
           slug: c.category_slug,
           count: Number(c.product_count)

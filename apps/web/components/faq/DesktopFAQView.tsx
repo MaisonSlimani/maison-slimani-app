@@ -44,9 +44,11 @@ export default function DesktopFAQView({ data }: { data: FAQViewData }) {
         <p className="text-xl text-white/70 mb-10 relative z-10">Notre service client est à votre écoute pour vous guider.</p>
         
         <div className="flex flex-wrap justify-center gap-6 relative z-10">
-          <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g, '')}`} className="flex items-center gap-3 px-8 py-4 bg-[#25D366] rounded-2xl hover:scale-105 transition-transform">
-            <MessageCircle className="w-6 h-6" /> WhatsApp
-          </a>
+          {settings.whatsapp && (
+            <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g, '')}`} className="flex items-center gap-3 px-8 py-4 bg-[#25D366] rounded-2xl hover:scale-105 transition-transform">
+              <MessageCircle className="w-6 h-6" /> WhatsApp
+            </a>
+          )}
           <a href={`mailto:${settings.email_entreprise}`} className="flex items-center gap-3 px-8 py-4 bg-dore text-charbon rounded-2xl font-bold hover:scale-105 transition-transform">
             <Mail className="w-6 h-6" /> Nous écrire
           </a>

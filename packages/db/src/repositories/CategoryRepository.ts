@@ -1,10 +1,10 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { AppSupabaseClient } from '../client.types';
 import { Category, DomainResult } from '@maison/domain';
 import { Database, TablesInsert, TablesUpdate } from '../database.types';
 
 export class CategoryRepository {
-  private supabase: SupabaseClient<Database, any>;
-  constructor(supabase: SupabaseClient<Database, any>) {
+  private supabase: AppSupabaseClient;
+  constructor(supabase: AppSupabaseClient) {
     this.supabase = supabase;
   }
 

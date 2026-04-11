@@ -22,7 +22,11 @@ export function useProductDetail(produitInitial: Product) {
   const [addedToCart, setAddedToCart] = useState(false)
 
   const { items } = useCart()
-  const isInCart = items.some(item => item.id === produit.id)
+  const isInCart = items.some(item => 
+    item.id === produit.id && 
+    (produit.has_colors ? item.couleur === couleur : true) &&
+    ((produit.tailles?.length || 0) > 0 ? item.taille === taille : true)
+  )
 
   // Side Effects: Stock & Analytics
   useProductStock(produit.id, setProduit)

@@ -1,11 +1,7 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../database.types';
+import { AppSupabaseClient } from '../client.types';
 
 export class ContactRepository {
-  private supabase: SupabaseClient<Database>;
-  constructor(supabase: any) {
-    this.supabase = supabase;
-  }
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getSettings() {
     const { data, error } = await this.supabase
@@ -21,8 +17,8 @@ export class ContactRepository {
    * Note: contact_messages table is not currently in the schema.
    * This is a placeholder for future logging if needed.
    */
-  async logContactMessage(payload: any) {
-    console.log('Contact message received (not logged to DB):', payload);
+  async logContactMessage(_payload: Record<string, unknown>) {
+    // console.log('Contact message received (not logged to DB):', payload);
     return { success: true };
   }
 }

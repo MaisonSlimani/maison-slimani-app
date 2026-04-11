@@ -11,6 +11,43 @@ export const metadata: Metadata = {
     },
 }
 
-export default function Page() {
-    return <HomeClient />
+import { fetchHomeData } from './data/fetchHome'
+
+export default async function Page() {
+    const data = await fetchHomeData()
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maison-slimani.com'
+    
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'Organization',
+                '@id': `${siteUrl}/#organization`,
+                name: 'Maison Slimani',
+                url: siteUrl,
+                logo: `${siteUrl}/logo-search.png`,
+                sameAs: [
+                    'https://www.instagram.com/maisonslimani/',
+                    'https://www.facebook.com/maisonslimani/'
+                ]
+            },
+            {
+                '@type': 'WebSite',
+                '@id': `${siteUrl}/#website`,
+                url: siteUrl,
+                name: 'Maison Slimani',
+                description: 'Chaussures homme haut de gamme en cuir marocain. Qualité artisanale.'
+            }
+        ]
+    }
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <HomeClient initialData={data} />
+        </>
+    )
 }

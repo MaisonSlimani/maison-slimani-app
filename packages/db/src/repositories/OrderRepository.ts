@@ -1,12 +1,15 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Order, DomainResult, CommandeProduit } from '@maison/domain';
-import { Database } from '../database.types';
+import { AppSupabaseClient } from '../client.types';
+import { Order, DomainResult, CommandeProduit, OrderPlacementPayload } from '@maison/domain';
+import { Database, Json } from '../database.types';
+
+interface CreateOrderRpcResult {
+  success: boolean;
+  data?: Database["public"]["Tables"]["commandes"]["Row"];
+  error?: string;
+}
 
 export class OrderRepository {
-  private supabase: SupabaseClient<Database>;
-  constructor(supabase: SupabaseClient<Database>) {
-    this.supabase = supabase;
-  }
+  constructor(private supabase: AppSupabaseClient) {}
 
   private mapOrder(data: Database["public"]["Tables"]["commandes"]["Row"]): Order {
     return {
@@ -71,16 +74,7 @@ export class OrderRepository {
    * Atomic Order Placement via Postgres RPC.
    * Consolidates stock decrement and order insertion in one transaction.
    */
-  async placeOrder(payload: {
-    nom_client: string;
-    telephone: string;
-    adresse: string;
-    ville: string;
-    email: string | null;
-    produits: CommandeProduit[];
-    total: number;
-    idempotency_key: string;
-  }): Promise<DomainResult<Order>> {
+  async placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>> {
     // Note: RPC arguments must match the Postgres function signature exactly
     const { data, error } = await this.supabase.rpc('create_order_v2_atomic', {
       p_nom_client: payload.nom_client,
@@ -88,7 +82,7 @@ export class OrderRepository {
       p_adresse: payload.adresse,
       p_ville: payload.ville,
       p_email: payload.email,
-      p_produits: payload.produits as any, // Cast to any for the RPC wire call (Json)
+      p_produits: payload.produits as unknown as Json,
       p_total: payload.total,
       p_idempotency_key: payload.idempotency_key
     });
@@ -97,8 +91,7 @@ export class OrderRepository {
       return { success: false, error: error.message };
     }
 
-    // data here is the return of the RPC function: { success: boolean, data?: any, error?: string }
-    const rpcResult = data as any;
+    const rpcResult = data as unknown as CreateOrderRpcResult;
 
     if (rpcResult && !rpcResult.success) {
       return { success: false, error: rpcResult.error };

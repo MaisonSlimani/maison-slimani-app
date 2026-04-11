@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Script from 'next/script'
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
+import { SiteSettings } from '@maison/domain'
 
 // Header GTM script (goes in <head>)
 export function GoogleTagManagerHead() {
@@ -10,12 +12,9 @@ export function GoogleTagManagerHead() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await fetch('/api/settings')
-                if (response.ok) {
-                    const result = await response.json()
-                    if (result.success && result.data) {
-                        setHeaderCode(result.data.google_tag_manager_header)
-                    }
+                const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
+                if (result.success && result.data) {
+                    setHeaderCode(result.data.google_tag_manager_header || null)
                 }
             } catch (error) {
                 console.error('Error fetching GTM settings:', error)
@@ -64,12 +63,9 @@ export function GoogleTagManagerBody() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await fetch('/api/settings')
-                if (response.ok) {
-                    const result = await response.json()
-                    if (result.success && result.data) {
-                        setBodyCode(result.data.google_tag_manager_body)
-                    }
+                const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
+                if (result.success && result.data) {
+                    setBodyCode(result.data.google_tag_manager_body || null)
                 }
             } catch (error) {
                 console.error('Error fetching GTM settings:', error)

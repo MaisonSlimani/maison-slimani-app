@@ -6,6 +6,8 @@ type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
+import { fetchCategoryData } from '../../data/fetchCategory'
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { categorie: categorySlug } = await params
 
@@ -23,18 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     try {
-        // Fetch category info from API
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005'
-        const res = await fetch(`${baseUrl}/api/categories?slug=${categorySlug}&active=true`, {
-            next: { revalidate: 3600 } // Cache for 1 hour
-        })
-
-        if (!res.ok) {
-            throw new Error('Category not found')
-        }
-
-        const data = await res.json()
-        const category = data?.data?.[0]
+        const data = await fetchCategoryData(categorySlug)
+        const category = data?.category
 
         if (!category) {
             // Fallback if category not found
@@ -78,6 +70,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 }
 
-export default function Page() {
-    return <CategoriePage />
+export default async function Page({ params }: Props) {
+    const { categorie: categorySlug } = await params
+    const initialData = await fetchCategoryData(categorySlug)
+    return <CategoriePage initialData={initialData} />
 }

@@ -1,8 +1,8 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../database.types';
+import { AppSupabaseClient } from '../client.types';
 
 export interface SiteSettings {
   id?: string;
+  admin_email?: string | null;
   email_entreprise: string | null;
   telephone: string | null;
   adresse: string | null;
@@ -18,9 +18,9 @@ export interface SiteSettings {
 export type EnterpriseSettings = Pick<SiteSettings, 'email_entreprise'>;
 
 export class SettingsRepository {
-  private supabase: SupabaseClient<Database>;
+  private supabase: AppSupabaseClient;
 
-  constructor(supabase: SupabaseClient<Database>) {
+  constructor(supabase: AppSupabaseClient) {
     this.supabase = supabase;
   }
 

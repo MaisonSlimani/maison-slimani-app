@@ -16,7 +16,7 @@ export default function MobileMaisonView() {
       <div className="px-4 py-8 space-y-12">
         <header>
           <h2 className="text-4xl font-serif mb-4 leading-tight">Notre Histoire</h2>
-          <p className="text-lg text-charbon/70 font-light italic">"L'art de la chaussure, un héritage de Fès à Casablanca."</p>
+          <p className="text-lg text-charbon/70 font-light italic">"L'art de la chaussure, un héritage d'excellence marocaine."</p>
         </header>
 
         <motion.div 
@@ -36,7 +36,7 @@ export default function MobileMaisonView() {
           <section className="space-y-4">
             <h3 className="text-2xl font-serif border-l-4 border-dore pl-4">Héritage Artisanal</h3>
             <p className="text-charbon/80 leading-relaxed">
-              Depuis des décennies, notre famille cultive l'amour du beau soulier. Originaires de Fès, nous avons importé à Casablanca l'exigence du cuir parfait.
+              Depuis des décennies, notre famille cultive l'amour du beau soulier. Nous avons su préserver l'exigence du cuir parfait et du montage à la main.
             </p>
           </section>
 

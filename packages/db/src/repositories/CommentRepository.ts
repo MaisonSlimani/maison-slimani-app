@@ -1,12 +1,9 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../database.types';
+import { AppSupabaseClient } from '../client.types';
+import { Json } from '../database.types';
 import { CommentairePayload } from '@maison/domain';
 
 export class CommentRepository {
-  private supabase: SupabaseClient<Database>;
-  constructor(supabase: any) {
-    this.supabase = supabase;
-  }
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getComments(produitId: string, options: { limit: number; offset: number; sort: string }) {
     let query = this.supabase
@@ -37,7 +34,7 @@ export class CommentRepository {
         email: payload.email,
         rating: payload.rating,
         commentaire: payload.commentaire,
-        images: payload.images as any, // Json cast
+        images: payload.images as Json,
         produit_id: payload.produit_id,
         session_token: payload.session_token,
         approved: false // Default

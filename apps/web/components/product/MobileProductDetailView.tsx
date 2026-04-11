@@ -12,7 +12,7 @@ import { MobileProductSelection } from './MobileProductSelection'
 export default function MobileProductDetailView({ data }: { data: ProductDetailViewData }) {
   const { 
     produit, couleur, setCouleur, taille, setTaille, 
-    addedToCart, inWishlist, handleAddToCart, handleToggleWishlist, 
+    isInCart, inWishlist, handleAddToCart, handleToggleWishlist, 
     taillesData, allImages 
   } = data
 
@@ -46,7 +46,7 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
           taillesData={taillesData} 
           selectedTaille={taille} 
           setSelectedTaille={setTaille}
-          addedToCart={addedToCart} 
+          isInCart={isInCart}
           onAddToCart={handleAddToCart}
         />
       </div>

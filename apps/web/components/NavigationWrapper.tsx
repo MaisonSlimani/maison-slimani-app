@@ -7,10 +7,20 @@ import EnteteMobile from '@/components/EnteteMobile'
 import Footer from '@/components/Footer'
 import MenuBasNavigation from '@/components/MenuBasNavigation'
 import BottomNav from '@/components/pwa/BottomNav'
-import { cn } from '@maison/shared'
-
 interface NavigationWrapperProps {
   children: React.ReactNode
+}
+
+function isSpecialRoute(pathname: string) {
+  const matches = [
+    '/', '/boutique', '/menu', '/panier', '/favoris', 
+    '/contact', '/faq', '/maison', '/politiques', '/checkout'
+  ]
+  if (matches.includes(pathname)) return true
+  if (pathname.startsWith('/commande/')) return true
+  // Category page check: /boutique/[slug]
+  if (pathname.startsWith('/boutique/') && pathname.split('/').length === 3) return true
+  return false
 }
 
 /**
@@ -29,34 +39,7 @@ export default function NavigationWrapper({ children }: NavigationWrapperProps) 
   }, [])
 
   // Routes that provide their own custom mobile header (Legacy PWA Views)
-  const isHome = pathname === '/'
-  const isBoutiqueRoot = pathname === '/boutique'
-  const isCategoryPage = pathname.startsWith('/boutique/') && pathname.split('/').length === 3
-  const isMenu = pathname === '/menu'
-  const isPanier = pathname === '/panier'
-  const isFavoris = pathname === '/favoris'
-  const isContact = pathname === '/contact'
-  const isFAQ = pathname === '/faq'
-  const isMaison = pathname === '/maison'
-  const isPolitiques = pathname === '/politiques'
-  const isCheckout = pathname === '/checkout'
-  const isOrderSuccess = pathname.startsWith('/commande/')
-
-  const hideMobileHeader = isHome || isBoutiqueRoot || isCategoryPage || isMenu || isPanier || isFavoris || isContact || isFAQ || isMaison || isPolitiques || isCheckout || isOrderSuccess
-  const isProductDetail = pathname.startsWith('/boutique/') && pathname.split('/').length > 3
-
-  useEffect(() => {
-    setIsMounted(false)
-    const handleLoad = () => setIsMounted(true)
-    
-    if (document.readyState === 'complete') {
-      const timer = setTimeout(() => setIsMounted(true), 100)
-      return () => clearTimeout(timer)
-    } else {
-      window.addEventListener('load', handleLoad)
-      return () => window.removeEventListener('load', handleLoad)
-    }
-  }, [pathname])
+  const hideMobileHeader = isSpecialRoute(pathname)
 
   if (!isMounted) return <>{children}</>
 

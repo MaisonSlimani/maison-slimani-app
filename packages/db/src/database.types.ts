@@ -6,12 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
+export type Database = { __InternalSupabase: { Relationships: { [_ in never]: never } };
   public: {
     Tables: {
       admins: {
@@ -226,6 +221,27 @@ export type Database = {
           total_stock?: number | null
           upsell_products?: Json | null
           vedette?: boolean | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          expires_at: number
+          key: string
+          last_updated: string
+        }
+        Insert: {
+          count?: number
+          expires_at: number
+          key: string
+          last_updated?: string
+        }
+        Update: {
+          count?: number
+          expires_at?: number
+          key?: string
+          last_updated?: string
         }
         Relationships: []
       }

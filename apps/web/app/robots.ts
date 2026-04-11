@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
           '/panier',
           '/favoris',
           '/checkout',
-          '/api/',
+          '/api/v1/',
           '/commande/',
         ],
       },

@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     },
 }
 
-export default function Page() {
-    return <ContactClient />
+import { fetchSettingsData } from '../data/fetchSettings'
+
+export default async function Page() {
+    const settings = await fetchSettingsData()
+    return <ContactClient initialSettings={settings} />
 }

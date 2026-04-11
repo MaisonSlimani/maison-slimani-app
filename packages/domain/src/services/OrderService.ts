@@ -1,33 +1,34 @@
-import { Order, DomainResult } from '../models';
-
+import { Order, DomainResult, OrderPlacementPayload } from '../models';
+ 
 export interface IOrderRepository {
-  placeOrder(payload: any): Promise<DomainResult<Order>>;
+  placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>>;
 }
-
+ 
 export class OrderService {
   constructor(
     private orderRepository: IOrderRepository,
-    private emailService?: any,
-    private analyticsService?: any
   ) {}
-
+ 
   /**
    * Orchestrates the order placement process.
    * Handles validation, persistence (via RPC), and post-order side effects.
    */
-  async placeOrder(payload: {
-    nom_client: string;
-    telephone: string;
-    adresse: string;
-    ville: string;
-    email: string | null;
-    produits: any[];
-    total: number;
-    idempotency_key: string;
-  }): Promise<DomainResult<Order>> {
-    // 1. Basic Validation
+  async placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>> {
+    // 1. Domain Invariants & business rule validation
+    if (!payload.nom_client?.trim()) {
+      return { success: false, error: 'Le nom du client est requis' };
+    }
+
+    if (!payload.adresse?.trim()) {
+      return { success: false, error: 'L\'adresse est requise' };
+    }
+
     if (payload.produits.length === 0) {
       return { success: false, error: 'Le panier est vide' };
+    }
+
+    if (payload.total <= 0) {
+      return { success: false, error: 'Le montant total est invalide' };
     }
 
     // 2. Call Repo (which calls the Atomic RPC)

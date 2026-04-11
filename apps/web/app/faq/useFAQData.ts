@@ -2,42 +2,61 @@
 
 import { useState, useEffect } from 'react'
 
-export function useFAQData() {
-  const [settings, setSettings] = useState({
-    email_entreprise: 'Maisondeslimani@gmail.com',
-    telephone: '',
-    whatsapp: '',
-    facebook: '',
-    instagram: '',
-  })
-  const [loading, setLoading] = useState(true)
+import { SiteSettings } from '@maison/domain'
+
+export function useFAQData(initialSettings?: SiteSettings | null) {
+  const [settings, setSettings] = useState(() => mapFaqSettings(initialSettings))
+  const [loading, setLoading] = useState(!initialSettings)
 
   useEffect(() => {
+    if (initialSettings) return
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings')
+        const response = await fetch('/api/v1/settings')
         if (response.ok) {
           const result = await response.json()
           if (result.success && result.data) {
-            setSettings({
-              email_entreprise: result.data.email_entreprise || 'Maisondeslimani@gmail.com',
-              telephone: result.data.telephone || '',
-              whatsapp: result.data.whatsapp || '',
-              facebook: result.data.facebook || '',
-              instagram: result.data.instagram || '',
-            })
+            setSettings(mapFaqSettings(result.data))
           }
         }
-      } catch (err) {
-        console.error(err)
-      } finally {
+      } catch (err) { console.error(err) } finally {
         setLoading(false)
       }
     }
     fetchSettings()
-  }, [])
+  }, [initialSettings])
 
-  const faqs = [
+  return { settings, loading, faqs: getFaqs() }
+}
+
+function mapFaqSettings(data: SiteSettings | null | undefined): SiteSettings {
+  const defaultEmail = 'Maisondeslimani@gmail.com'
+  if (!data) return { 
+    email_entreprise: defaultEmail, 
+    telephone: null, 
+    facebook: null, 
+    instagram: null,
+    adresse: null,
+    description: null,
+    meta_pixel_code: null,
+    google_tag_manager_header: null,
+    google_tag_manager_body: null
+  }
+  return {
+    email_entreprise: data.email_entreprise || defaultEmail,
+    telephone: data.telephone || null,
+    facebook: data.facebook || null,
+    instagram: data.instagram || null,
+    adresse: data.adresse || null,
+    description: data.description || null,
+    meta_pixel_code: data.meta_pixel_code || null,
+    google_tag_manager_header: data.google_tag_manager_header || null,
+    google_tag_manager_body: data.google_tag_manager_body || null
+  }
+}
+
+function getFaqs() {
+  return [
     {
       question: 'Quels types de produits propose Maison Slimani ?',
       answer: 'Maison Slimani propose des chaussures en cuir haut de gamme pour hommes : derbies, richelieu, bottes, mocassins, sneakers, mules & sabots. Chaque pièce est fabriquée artisanalement à Casablanca.'
@@ -79,6 +98,4 @@ export function useFAQData() {
       answer: 'Vous pouvez nous contacter via email, WhatsApp, Facebook ou Instagram.'
     }
   ]
-
-  return { settings, loading, faqs }
 }

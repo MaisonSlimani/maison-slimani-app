@@ -17,7 +17,7 @@ interface ProductPurchaseDialogProps {
   quantite: number
   setQuantite: (val: number) => void
   taillesDisponibles: string[]
-  onConfirm: () => void
+  onConfirm: (buyNow: boolean) => void
   isAddingToCart: boolean
 }
 
@@ -29,6 +29,9 @@ const ProductPurchaseDialog = ({
   taillesDisponibles, onConfirm, isAddingToCart
 }: ProductPurchaseDialogProps) => {
   const variations = produit.couleurs as ProductVariation[] | null;
+  const hasColorsSelected = !produit.has_colors || !!selectedCouleur;
+  const hasSizeSelected = (produit.tailles?.length || 0) <= 0 || !!selectedTaille;
+  const canPurchase = !isAddingToCart && hasColorsSelected && hasSizeSelected;
 
   return (
     <Dialog open={!!showModal} onOpenChange={setShowModal}>
@@ -45,15 +48,24 @@ const ProductPurchaseDialog = ({
           selectedCouleur={selectedCouleur} setSelectedCouleur={setSelectedCouleur}
           taillesDisponibles={taillesDisponibles} selectedTaille={selectedTaille} setSelectedTaille={setSelectedTaille}
           quantite={quantite} setQuantite={setQuantite}
+          _produit={produit}
         />
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
           <Button 
-            className="w-full h-12 bg-dore text-charbon hover:bg-dore/90 text-lg font-serif" 
-            onClick={onConfirm}
-            disabled={isAddingToCart}
+            variant="outline"
+            className="flex-1 h-12 text-lg border-2" 
+            onClick={() => onConfirm(false)}
+            disabled={!canPurchase}
           >
-            {isAddingToCart ? "Ajout..." : "Confirmer l'ajout"}
+            {isAddingToCart ? "..." : "Panier"}
+          </Button>
+          <Button 
+            className="flex-[2] h-12 bg-dore text-charbon hover:bg-dore/90 text-lg font-serif" 
+            onClick={() => onConfirm(true)}
+            disabled={!canPurchase}
+          >
+            {isAddingToCart ? "..." : "Achat Immédiat"}
           </Button>
         </DialogFooter>
       </DialogContent>

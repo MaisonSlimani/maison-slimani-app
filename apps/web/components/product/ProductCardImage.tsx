@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import OptimizedImage from '@/components/OptimizedImage'
 import { cn } from '@maison/shared'
 
@@ -81,7 +81,7 @@ const ProductCardImage = ({
 
       {inWishlist && (
         <div className="absolute top-2 right-2 z-20 bg-dore/90 backdrop-blur-sm rounded-full p-1.5">
-          <div className="w-3 h-3 text-charbon fill-current" />
+          <Heart className="w-3 h-3 text-charbon fill-current" />
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { slugify } from '@/lib/utils/product-urls'
 import { trackSearch } from '@/lib/analytics'
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
 
 export interface SearchProduct {
   id: string
@@ -35,9 +36,12 @@ export function useSearchModal(isOpen: boolean, onClose: () => void) {
     queryKey: ['search', debouncedQuery],
     queryFn: async ({ signal }) => {
       if (!debouncedQuery.trim()) return []
-      const res = await fetch(`/api/produits?search=${encodeURIComponent(debouncedQuery)}&limit=10`, { signal })
-      if (!res.ok) throw new Error(`Erreur API: ${res.status}`)
-      return (await res.json())?.data || []
+      const result = await apiFetch<SearchProduct[]>(
+        `${ENDPOINTS.PRODUITS}?search=${encodeURIComponent(debouncedQuery)}&limit=10`,
+        { signal }
+      )
+      if (!result.success) throw new Error(result.error || 'Erreur recherche')
+      return result.data || []
     },
     enabled: debouncedQuery.trim().length > 0,
     staleTime: 30 * 1000,

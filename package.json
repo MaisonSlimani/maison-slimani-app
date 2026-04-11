@@ -10,15 +10,22 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "eslint \"{apps,packages}/**/*.{ts,tsx,js,json}\" --max-warnings 0",
     "clean": "turbo clean && rm -rf node_modules",
     "admin:dev": "turbo dev --filter maison-slimani-admin",
-    "web:dev": "turbo dev --filter maison-slimani-web"
+    "web:dev": "turbo dev --filter maison-slimani-web",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e"
   },
   "devDependencies": {
+    "@types/node": "~20.19.39",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
+    "dotenv": "^17.4.1",
+    "eslint": "~9.39.4",
+    "tsx": "^4.20.6",
     "turbo": "latest",
-    "typescript": "^5.8.3",
-    "tsx": "^4.20.6"
+    "typescript": "^5.8.3"
   },
   "packageManager": "pnpm@10.30.3"
 }

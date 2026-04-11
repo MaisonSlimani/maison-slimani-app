@@ -5,7 +5,7 @@
  * Special focus on mobile performance
  */
 
-import { chromium, Browser, Page, BrowserContext } from 'playwright'
+import { chromium, Browser, Page, BrowserContext, ConsoleMessage, Request, Response } from 'playwright'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
@@ -14,7 +14,7 @@ interface ErrorReport {
   severity: 'critical' | 'high' | 'medium' | 'low'
   message: string
   url: string
-  details?: any
+  details?: Record<string, unknown>
   stack?: string
 }
 
@@ -162,7 +162,7 @@ class QATestSuite {
     let failedRequests = 0
     
     // Track console errors
-    page.on('console', msg => {
+    page.on('console', (msg: ConsoleMessage) => {
       const type = msg.type()
       if (type === 'error' || type === 'warning') {
         errors.push({
@@ -176,7 +176,7 @@ class QATestSuite {
     })
     
     // Track page errors
-    page.on('pageerror', error => {
+    page.on('pageerror', (error: Error) => {
       errors.push({
         type: 'runtime',
         severity: 'critical',
@@ -187,7 +187,7 @@ class QATestSuite {
     })
     
     // Track network requests
-    page.on('request', request => {
+    page.on('request', (request: Request) => {
       networkRequests++
       const resourceType = request.resourceType()
       const url = request.url()
@@ -198,7 +198,7 @@ class QATestSuite {
       }
     })
     
-    page.on('requestfailed', request => {
+    page.on('requestfailed', (request: Request) => {
       failedRequests++
       networkErrors.push(request.url())
       errors.push({
@@ -213,7 +213,7 @@ class QATestSuite {
       })
     })
     
-    page.on('response', response => {
+    page.on('response', (response: Response) => {
       const headers = response.headers()
       const contentLength = parseInt(headers['content-length'] || '0', 10)
       totalSize += contentLength
@@ -280,13 +280,14 @@ class QATestSuite {
       
       // Calculate Core Web Vitals
       const metrics = await page.evaluate(() => {
-        return new Promise((resolve) => {
+        return new Promise<{ cls: number }>((resolve) => {
           // Measure CLS
           let clsValue = 0
           const observer = new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
-              if (!(entry as any).hadRecentInput) {
-                clsValue += (entry as any).value
+              const layoutShift = entry as PerformanceEntry & { hadRecentInput: boolean; value: number };
+              if (!layoutShift.hadRecentInput) {
+                clsValue += layoutShift.value
               }
             }
             resolve({ cls: clsValue })
@@ -320,7 +321,7 @@ class QATestSuite {
         largestContentfulPaint: performanceTiming.largestContentfulPaint || 0,
         timeToInteractive: performanceTiming.domContentLoaded,
         totalBlockingTime: tbt as number,
-        cumulativeLayoutShift: (metrics as any).cls || 0,
+        cumulativeLayoutShift: metrics.cls || 0,
         speedIndex: speedIndex,
         totalSize: Math.round(totalSize / 1024), // KB
         imageSize: Math.round(imageSize / 1024), // KB
@@ -504,15 +505,16 @@ class QATestSuite {
       try {
         const result = await this.testPage(fullUrl)
         this.results.push(result)
-      } catch (error: any) {
-        console.error(`   ❌ Failed to test ${fullUrl}:`, error.message)
+      } catch (error) {
+        const errorObject = error as Error
+        console.error(`   ❌ Failed to test ${fullUrl}:`, errorObject.message)
         this.results.push({
           url: fullUrl,
           status: 'failed',
           errors: [{
             type: 'runtime',
             severity: 'critical',
-            message: `Test failed: ${error.message}`,
+            message: `Test failed: ${errorObject.message}`,
             url: fullUrl
           }],
           performance: { desktop: null, mobile: null },

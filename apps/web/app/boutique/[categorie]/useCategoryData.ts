@@ -7,70 +7,40 @@ import { tracker } from '@/lib/mixpanel-tracker'
 import { trackViewCategory } from '@/lib/analytics'
 import { FilterState } from '@/types'
 
-export function useCategoryData() {
+import { CategoryPageData, Product } from '@maison/domain'
+
+export function useCategoryData(initialData?: CategoryPageData | null) {
   const params = useParams()
   const searchParams = useSearchParams()
   const categorieSlug = params.categorie as string
 
-  const [loadingCategory, setLoadingCategory] = useState(true)
+  const [loadingCategory, setLoadingCategory] = useState(!initialData)
   const [triPrix, setTriPrix] = useState<string>('')
-  const [categorieInfo, setCategorieInfo] = useState<{ nom: string; image: string; description: string } | null>(null)
+  const [categorieInfo, setCategorieInfo] = useState(() => getInitialCategoryInfo(initialData, categorieSlug))
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [filters, setFilters] = useState<FilterState>({})
 
   const categorieNom = categorieInfo?.nom || null
 
-  // Fetch Category Info
   useEffect(() => {
-    const chargerCategorie = async () => {
-      try {
-        setLoadingCategory(true)
-        if (!categorieSlug || categorieSlug === 'tous') {
-          setCategorieInfo({
-            nom: 'Tous nos produits',
-            image: '/assets/hero-chaussures.jpg',
-            description: 'Explorez notre collection complète de chaussures homme haut de gamme.',
-          })
-          setLoadingCategory(false)
-          return
-        }
-
-        const response = await fetch(`/api/categories?slug=${encodeURIComponent(categorieSlug)}&active=true`)
-        if (!response.ok) throw new Error(`Erreur API: ${response.status}`)
-        
-        const payload = await response.json()
-        const data = payload?.data?.[0]
-
-        if (!data) {
-          const defaultInfo = { nom: 'Collection', image: '/assets/hero-chaussures.jpg', description: 'Découvrez notre collection.' }
-          setCategorieInfo(defaultInfo)
-          trackViewCategory(defaultInfo.nom)
-        } else {
-          const info = {
-            nom: data.nom,
-            image: data.image_url || '/assets/hero-chaussures.jpg',
-            description: data.description || '',
-          }
-          setCategorieInfo(info)
-          trackViewCategory(info.nom)
-        }
-      } catch (err) {
-         console.error(err)
-      } finally {
-        setLoadingCategory(false)
-      }
+    if (initialData?.category) return
+    const charger = async () => {
+      setLoadingCategory(true)
+      const info = await fetchCategoryInfo(categorieSlug)
+      setCategorieInfo(info)
+      setLoadingCategory(false)
     }
-    chargerCategorie()
-  }, [categorieSlug])
+    charger()
+  }, [categorieSlug, initialData])
 
-  // Fetch Products
-  const { data: produits = [], isPending: produitsPending, isFetching: produitsFetching } = useQuery({
+  const { data: produits = initialData?.products || [], isPending, isFetching } = useQuery<Product[]>({
     queryKey: ['categorie-produits', categorieSlug, categorieNom, triPrix, searchQuery, filters],
     staleTime: 2 * 60 * 1000,
+    initialData: (!searchQuery && !triPrix && Object.keys(filters).length === 0) ? initialData?.products : undefined,
     enabled: categorieSlug === 'tous' || !!categorieNom,
     queryFn: async () => {
       const qParams = buildProductQueryParams(categorieSlug, categorieNom, triPrix, searchQuery, filters)
-      const response = await fetch(`/api/produits?${qParams.toString()}`)
+      const response = await fetch(`/api/v1/produits?${qParams.toString()}`)
       if (!response.ok) throw new Error(`Erreur: ${response.status}`)
       const payload = await response.json()
       return payload?.data || []
@@ -84,9 +54,51 @@ export function useCategoryData() {
   }, [produits, categorieNom])
 
   return {
-    categorieSlug, categorieInfo, loadingCategory, produits, produitsLoading: produitsPending || produitsFetching,
+    categorieSlug, categorieInfo, loadingCategory, produits, produitsLoading: isPending || isFetching,
     triPrix, setTriPrix, searchQuery, setSearchQuery, filters, setFilters
   }
+}
+
+function getInitialCategoryInfo(initialData: CategoryPageData | null | undefined, slug: string) {
+  if (initialData?.category) {
+    return {
+      nom: initialData.category.nom,
+      image: initialData.category.image_url || '/assets/hero-chaussures.jpg',
+      description: initialData.category.description || '',
+    }
+  }
+  if (slug === 'tous') {
+    return {
+      nom: 'Tous nos produits',
+      image: '/assets/hero-chaussures.jpg',
+      description: 'Explorez notre collection complète de chaussures homme haut de gamme.',
+    }
+  }
+  return null
+}
+
+async function fetchCategoryInfo(slug: string) {
+  if (!slug || slug === 'tous') {
+    return {
+      nom: 'Tous nos produits',
+      image: '/assets/hero-chaussures.jpg',
+      description: 'Explorez notre collection complète de chaussures homme haut de gamme.',
+    }
+  }
+  try {
+    const response = await fetch(`/api/v1/categories?slug=${encodeURIComponent(slug)}&active=true`)
+    if (!response.ok) return null
+    const payload = await response.json()
+    const data = payload?.data?.[0]
+    if (!data) {
+      const info = { nom: 'Collection', image: '/assets/hero-chaussures.jpg', description: 'Découvrez notre collection.' }
+      trackViewCategory(info.nom)
+      return info
+    }
+    const info = { nom: data.nom, image: data.image_url || '/assets/hero-chaussures.jpg', description: data.description || '' }
+    trackViewCategory(info.nom)
+    return info
+  } catch { return null }
 }
 
 function buildProductQueryParams(

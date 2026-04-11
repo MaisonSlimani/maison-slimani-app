@@ -70,7 +70,7 @@ export default function SearchOverlay({ isOpen, onClose, basePath = '' }: Search
                     <div className="flex justify-between items-center mb-3"><h3 className="text-xs font-medium uppercase text-muted-foreground flex items-center gap-2"><Clock className="w-4 h-4" /> Récent</h3><button onClick={clearAll} className="text-xs text-muted-foreground">Effacer</button></div>
                     <div className="flex flex-wrap gap-2">{recentSearches.map(s => <button key={s.query} onClick={() => setSearchQuery(s.query)} className="px-3 py-1 bg-muted rounded-full text-sm">{s.query}</button>)}</div>
                   </section>}
-                  <section><h3 className="text-xs font-medium uppercase text-muted-foreground flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4" /> Populaire</h3><div className="flex flex-wrap gap-2">{['Mocassins', 'Luxe', 'Cuir', 'Fez'].map(s => <button key={s} onClick={() => setSearchQuery(s)} className="px-3 py-1 bg-muted rounded-full text-sm">{s}</button>)}</div></section>
+                  <section><h3 className="text-xs font-medium uppercase text-muted-foreground flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4" /> Populaire</h3><div className="flex flex-wrap gap-2">{['Mocassins', 'Luxe', 'Cuir', 'Nouveautés'].map(s => <button key={s} onClick={() => setSearchQuery(s)} className="px-3 py-1 bg-muted rounded-full text-sm">{s}</button>)}</div></section>
                 </div>
               )}
             </div>

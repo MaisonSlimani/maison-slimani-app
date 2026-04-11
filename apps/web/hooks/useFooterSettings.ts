@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { SiteSettings } from '@/types'
+import { SiteSettings } from '@maison/domain'
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
 
 export function useFooterSettings() {
   const [settings, setSettings] = useState<SiteSettings>({
@@ -11,34 +12,45 @@ export function useFooterSettings() {
     facebook: '',
     instagram: '',
     adresse: '',
-    description: ''
+    description: '',
+    meta_pixel_code: null,
+    google_tag_manager_header: null,
+    google_tag_manager_body: null,
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    (async () => {
+    const fetchSettings = async () => {
       try {
-        const res = await fetch('/api/settings')
-        const result = await res.json()
+        const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
         if (result.success && result.data) {
-          const d = result.data
-          setSettings({
-            email_entreprise: d.email_entreprise?.trim() || '',
-            telephone: d.telephone?.trim() || '',
-            whatsapp: d.whatsapp?.trim() || '',
-            adresse: d.adresse?.trim() || '',
-            facebook: d.facebook?.trim() || '',
-            instagram: d.instagram?.trim() || '',
-            description: d.description?.trim() || ''
-          })
+          setSettings(mapToSiteSettings(result.data))
         }
       } catch (err) {
         console.error(err)
       } finally {
         setLoading(false)
       }
-    })()
+    }
+    fetchSettings()
   }, [])
 
   return { settings, loading }
+}
+
+function mapToSiteSettings(d: unknown): SiteSettings {
+  const data = d as Record<string, string | null | undefined>
+  const trim = (val: string | null | undefined) => val?.trim() || ''
+  return {
+    email_entreprise: trim(data.email_entreprise),
+    telephone: trim(data.telephone),
+    whatsapp: trim(data.whatsapp),
+    adresse: trim(data.adresse),
+    facebook: trim(data.facebook),
+    instagram: trim(data.instagram),
+    description: trim(data.description),
+    meta_pixel_code: (data.meta_pixel_code as string | null) || null,
+    google_tag_manager_header: (data.google_tag_manager_header as string | null) || null,
+    google_tag_manager_body: (data.google_tag_manager_body as string | null) || null,
+  }
 }

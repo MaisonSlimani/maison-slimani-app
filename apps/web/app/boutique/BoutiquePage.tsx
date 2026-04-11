@@ -1,5 +1,4 @@
-'use client'
-
+import { Category } from '@maison/domain'
 import MobileBoutiqueView from '@/components/boutique/MobileBoutiqueView'
 import DesktopBoutiqueView from '@/components/boutique/DesktopBoutiqueView'
 
@@ -9,17 +8,17 @@ import DesktopBoutiqueView from '@/components/boutique/DesktopBoutiqueView'
  * This component preserves the "worked hard on" PWA design for mobile
  * while keeping the luxury desktop design, merged into a single responsive flow.
  */
-export default function BoutiquePage() {
+export default function BoutiquePage({ initialCategories }: { initialCategories?: Category[] }) {
   return (
     <main className="min-h-screen">
       {/* Mobile View - PWA Design preserved */}
       <div className="block md:hidden">
-        <MobileBoutiqueView />
+        <MobileBoutiqueView initialCategories={initialCategories} />
       </div>
 
       {/* Desktop View - Standard Design */}
       <div className="hidden md:block">
-        <DesktopBoutiqueView />
+        <DesktopBoutiqueView initialCategories={initialCategories} />
       </div>
     </main>
   )

@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWishlist } from '@/lib/hooks/useWishlist'
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
+import { SiteSettings } from '@maison/domain'
 
 export function useMenuData() {
   const [socials, setSocials] = useState<{ facebook?: string; instagram?: string }>({})
@@ -10,15 +12,12 @@ export function useMenuData() {
   useEffect(() => {
     const fetchSocials = async () => {
       try {
-        const response = await fetch('/api/settings')
-        if (response.ok) {
-          const result = await response.json()
-          if (result.success && result.data) {
-            setSocials({
-              facebook: result.data.facebook,
-              instagram: result.data.instagram,
-            })
-          }
+        const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
+        if (result.success && result.data) {
+          setSocials({
+            facebook: result.data.facebook || undefined,
+            instagram: result.data.instagram || undefined,
+          })
         }
       } catch (error) {
         console.error('Error fetching socials:', error)

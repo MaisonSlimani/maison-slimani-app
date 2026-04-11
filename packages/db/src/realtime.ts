@@ -34,7 +34,7 @@ export const subscribeToStockUpdate = (productId: string, onUpdate: StockUpdateC
         couleurs: ProductVariation[] | null; 
         has_colors: boolean | null; 
       }>) => {
-        onUpdate(payload.new as any);
+        onUpdate(payload.new);
       }
     )
     .subscribe();
@@ -69,7 +69,7 @@ export const subscribeToBulkStockUpdates = (productIds: string[], onUpdate: Stoc
         couleurs: ProductVariation[] | null; 
         has_colors: boolean | null; 
       }>) => {
-        onUpdate(payload.new as any);
+        onUpdate(payload.new);
       }
     )
     .subscribe();

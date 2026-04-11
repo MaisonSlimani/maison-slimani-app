@@ -15,14 +15,14 @@ interface ProductSelectionProps {
   taillesData: ProductVariation[]
   selectedTaille: string | null
   setSelectedTaille: (t: string) => void
-  addedToCart: boolean
+  isInCart: boolean
   onAddToCart: (checkout: boolean) => void
 }
 
 export function MobileProductSelection({
   hasColors, couleurs, selectedColor, setSelectedColor,
   taillesData, selectedTaille, setSelectedTaille,
-  addedToCart, onAddToCart
+  isInCart, onAddToCart
 }: ProductSelectionProps) {
   return (
     <div className="space-y-6">
@@ -51,11 +51,34 @@ export function MobileProductSelection({
       )}
 
       <div className="flex gap-3 pt-4">
-        <Button className="flex-1 h-14 bg-dore text-charbon hover:bg-dore/90 text-lg rounded-2xl" onClick={() => onAddToCart(false)} disabled={addedToCart}>
-          {addedToCart ? <CheckCircle className="mr-2" /> : <ShoppingBag className="mr-2" />}
-          {addedToCart ? "Ajouté" : "Ajouter au panier"}
+        <Button 
+          className={cn(
+            "flex-1 h-14 text-lg rounded-2xl transition-all duration-300", 
+            isInCart 
+              ? "bg-charbon text-white" 
+              : "bg-dore text-charbon hover:bg-dore/90"
+          )} 
+          onClick={() => {
+            if (isInCart) {
+              window.dispatchEvent(new CustomEvent('openCartDrawer'));
+            } else {
+              onAddToCart(false);
+            }
+          }}
+        >
+          {isInCart ? (
+            <div className="flex items-center">
+              <CheckCircle className="mr-2 w-5 h-5" />
+              <span>Voir le panier</span>
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <ShoppingBag className="mr-2 w-5 h-5" />
+              <span>Ajouter au panier</span>
+            </div>
+          )}
         </Button>
-        <Button variant="outline" className="h-14 aspect-square rounded-2xl border-charbon/10" onClick={() => onAddToCart(true)}>
+        <Button variant="outline" className="h-14 aspect-square rounded-2xl border-charbon/10 bg-white" onClick={() => onAddToCart(true)}>
           <ShoppingCart className="w-6 h-6" />
         </Button>
       </div>

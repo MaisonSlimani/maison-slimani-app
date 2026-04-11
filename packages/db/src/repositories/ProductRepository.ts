@@ -1,12 +1,30 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { AppSupabaseClient } from '../client.types';
 import { Product, DomainResult, ProductVariation } from '@maison/domain';
 import { Database, TablesInsert, TablesUpdate } from '../database.types';
 
+export interface ProductSearchParams {
+  search?: string;
+  categorie?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  couleur?: string | string[];
+  taille?: string | string[];
+  sort?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FilterOptions {
+  minPrice: number;
+  maxPrice: number;
+  tailles: string[];
+  couleurs: { nom: string; code: string }[];
+  categories: string[];
+}
+
 export class ProductRepository {
-  private supabase: SupabaseClient<Database, any>;
-  constructor(supabase: SupabaseClient<Database, any>) {
-    this.supabase = supabase;
-  }
+  constructor(private supabase: AppSupabaseClient) {}
 
   private mapProduct(data: Database["public"]["Tables"]["produits"]["Row"]): Product {
     return {
@@ -54,13 +72,18 @@ export class ProductRepository {
     return (data || []).map(p => this.mapProduct(p));
   }
 
-  async findFeatured(): Promise<Product[]> {
-    const { data, error } = await this.supabase
+  async findFeatured(limit?: number): Promise<Product[]> {
+    let query = this.supabase
       .from('produits')
       .select('*')
       .eq('vedette', true)
       .order('date_ajout', { ascending: false });
       
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return (data || []).map(p => this.mapProduct(p));
   }
@@ -120,26 +143,27 @@ export class ProductRepository {
     };
   }
 
-  async search(params: any): Promise<{ data: Product[]; count: number }> {
+  async search(params: ProductSearchParams): Promise<{ data: Product[]; count: number }> {
     const { data, error } = await this.supabase.rpc('search_products', {
       search_query: params.search || '',
-      category_filter: params.categorie || null,
-      min_price: params.minPrice || null,
-      max_price: params.maxPrice || null,
-      in_stock: params.inStock ?? null,
-      couleur_filter: Array.isArray(params.couleur) ? params.couleur : params.couleur ? [params.couleur] : null,
-      taille_filter: Array.isArray(params.taille) ? params.taille : params.taille ? [params.taille] : null,
+      category_filter: params.categorie ?? undefined,
+      min_price: params.minPrice ?? undefined,
+      max_price: params.maxPrice ?? undefined,
+      in_stock: params.inStock ?? undefined,
+      couleur_filter: Array.isArray(params.couleur) ? params.couleur : params.couleur ? [params.couleur] : undefined,
+      taille_filter: Array.isArray(params.taille) ? params.taille : params.taille ? [params.taille] : undefined,
       sort_by: params.sort || 'date_ajout_desc',
       limit_count: params.limit || 50,
       offset_count: params.offset || 0
     });
 
     if (error) throw error;
-    const products = (data as any[] || []).map(p => this.mapProduct(p));
+    const rawData = (data as unknown as Database["public"]["Tables"]["produits"]["Row"][] || []);
+    const products = rawData.map(p => this.mapProduct(p));
     return { data: products, count: products.length };
   }
 
-  async getFilterOptions(categorie?: string): Promise<any> {
+  async getFilterOptions(categorie?: string): Promise<FilterOptions> {
     let query = this.supabase.from('produits').select('prix, stock, taille, tailles, couleurs, has_colors, categorie');
     if (categorie) query = query.eq('categorie', categorie);
 
@@ -150,34 +174,39 @@ export class ProductRepository {
       return { minPrice: 0, maxPrice: 0, tailles: [], couleurs: [], categories: [] };
     }
 
-    const prices = productos.map(p => p.prix).filter(p => p != null);
+    const prices = productos.map(p => p.prix).filter((p): p is number => p != null);
     
     return {
       minPrice: Math.min(...prices),
       maxPrice: Math.max(...prices),
       tailles: this.extractUniqueTailles(productos),
       couleurs: this.extractUniqueCouleurs(productos),
-      categories: categorie ? [] : Array.from(new Set(productos.map(p => p.categorie).filter(Boolean))).sort()
+      categories: categorie ? [] : Array.from(new Set(productos.map(p => p.categorie).filter((c): c is string => !!c))).sort()
     };
   }
 
-  private extractUniqueTailles(productos: any[]): string[] {
+  private extractUniqueTailles(productos: Partial<Database["public"]["Tables"]["produits"]["Row"]>[]): string[] {
     const taillesSet = new Set<string>();
     productos.forEach(p => {
       if (p.tailles && Array.isArray(p.tailles)) {
-        p.tailles.forEach((t: any) => { if (t.nom && t.stock > 0) taillesSet.add(t.nom); });
+        (p.tailles as unknown as { nom: string; stock: number }[]).forEach(t => { if (t.nom && t.stock > 0) taillesSet.add(t.nom); });
       } else if (p.taille) {
         p.taille.split(',').map((t: string) => t.trim()).filter(Boolean).forEach((t: string) => {
-          if (p.stock > 0) taillesSet.add(t);
+          if ((p.stock || 0) > 0) taillesSet.add(t);
         });
       }
       
       if (p.has_colors && p.couleurs) {
-        const colors = typeof p.couleurs === 'string' ? JSON.parse(p.couleurs) : p.couleurs;
+        const colors = (p.couleurs as unknown as ProductVariation[]);
         if (Array.isArray(colors)) {
           colors.forEach(c => {
-            if (c.tailles) c.tailles.forEach((t: any) => { if (t.stock > 0) taillesSet.add(t.nom); });
-            else if (c.taille && c.stock > 0) c.taille.split(',').forEach((t: string) => taillesSet.add(t.trim()));
+            if (c.tailles) c.tailles.forEach(t => { if (t.stock > 0) taillesSet.add(t.nom); });
+            else {
+               const legacy = c as unknown as { taille?: string; stock?: number };
+               if (legacy.taille && (legacy.stock || 0) > 0) {
+                 legacy.taille.split(',').forEach((t: string) => taillesSet.add(t.trim()));
+               }
+            }
           });
         }
       }
@@ -188,11 +217,11 @@ export class ProductRepository {
     });
   }
 
-  private extractUniqueCouleurs(productos: any[]): { nom: string; code: string }[] {
+  private extractUniqueCouleurs(productos: Partial<Database["public"]["Tables"]["produits"]["Row"]>[]): { nom: string; code: string }[] {
     const map = new Map<string, { nom: string; code: string }>();
     productos.forEach(p => {
       if (p.has_colors && p.couleurs) {
-        const colors = typeof p.couleurs === 'string' ? JSON.parse(p.couleurs) : p.couleurs;
+        const colors = (p.couleurs as unknown as ProductVariation[]);
         if (Array.isArray(colors)) {
           colors.forEach(c => {
             if (!c.nom) return;
@@ -211,6 +240,66 @@ export class ProductRepository {
       limit_count: limit
     });
     if (error) throw error;
-    return (data as any[] || []).map(p => this.mapProduct(p));
+    const rawData = (data as unknown as Database["public"]["Tables"]["produits"]["Row"][] || []);
+    return rawData.map(p => this.mapProduct(p));
+  }
+
+  async getUpsellProducts(id: string, limit: number = 4): Promise<Product[]> {
+    const { data: product, error: fetchError } = await this.supabase
+      .from('produits')
+      .select('upsell_products')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !product?.upsell_products) return [];
+
+    const upsellIds = Array.isArray(product.upsell_products) ? product.upsell_products : [];
+    if (upsellIds.length === 0) return [];
+
+    const { data, error } = await this.supabase
+      .from('produits')
+      .select('*')
+      .in('id', (upsellIds as string[]).slice(0, limit));
+
+    if (error) throw error;
+    return (data || []).map(p => this.mapProduct(p));
+  }
+
+  async findBySlug(slug: string): Promise<Product | null> {
+    const { data, error } = await this.supabase
+      .from('produits')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? this.mapProduct(data) : null;
+  }
+
+  async findByCategoryAndSlug(categorySlug: string, productSlug: string): Promise<Product | null> {
+    // 1. Handle "tous" case - skip category filter
+    if (categorySlug === 'tous') {
+      return this.findBySlug(productSlug);
+    }
+
+    // 2. Find category first to get its display name
+    const { data: cat, error: catErr } = await this.supabase
+      .from('categories')
+      .select('nom')
+      .eq('slug', categorySlug)
+      .maybeSingle();
+
+    if (catErr || !cat) return null;
+
+    // 3. Find product by category name and slug
+    const { data, error } = await this.supabase
+      .from('produits')
+      .select('*')
+      .eq('categorie', cat.nom)
+      .eq('slug', productSlug)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? this.mapProduct(data) : null;
   }
 }

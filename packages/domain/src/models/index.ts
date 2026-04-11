@@ -116,6 +116,56 @@ export interface Category {
   couleur: string | null;
 }
 
+/**
+ * Site-wide configuration and metadata
+ */
+export interface SiteSettings {
+  id?: string;
+  email_entreprise: string | null;
+  telephone: string | null;
+  whatsapp?: string | null;
+  adresse: string | null;
+  description?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  meta_pixel_code?: string | null;
+  google_tag_manager_header?: string | null;
+  google_tag_manager_body?: string | null;
+}
+
+/**
+ * Aggregated data needed for the Home page
+ */
+export interface HomeData {
+  categories: Category[];
+  produitsVedette: Product[];
+  settings: SiteSettings | null;
+  whatsappNumber: string | null;
+}
+
+/**
+ * Aggregated data needed for a Category page
+ */
+export interface CategoryPageData {
+  category: Category;
+  products: Product[];
+  allCategories: Category[];
+}
+
+/**
+ * Payload for creating a new order
+ */
+export interface OrderPlacementPayload {
+  nom_client: string;
+  telephone: string;
+  adresse: string;
+  ville: string;
+  email: string | null;
+  produits: CommandeProduit[];
+  total: number;
+  idempotency_key: string;
+}
+
 export interface DomainResult<T> {
   success: boolean;
   data?: T;

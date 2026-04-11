@@ -37,7 +37,7 @@ export async function getProductUrl(
   if (categoryName) {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/categories?slug=${encodeURIComponent(
+        `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/v1/categories?slug=${encodeURIComponent(
           slugify(categoryName)
         )}`
       )
@@ -79,7 +79,7 @@ export function getProductUrlSync(
 export async function getCategorySlug(categoryName: string): Promise<string | null> {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/api/categories?active=true`
+      `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/api/v1/categories?active=true`
     )
     if (response.ok) {
       const data = await response.json()

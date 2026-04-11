@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 
 // Try to load from .env.local or .env
@@ -92,9 +92,9 @@ async function optimizeTestImages() {
     .filter((file) => !file.name.endsWith('.webp'))
     .map((file) => ({
       ...file,
-      size: parseInt(file.metadata?.size || '0', 10),
+      size: typeof file.metadata?.size === 'string' ? parseInt(file.metadata.size, 10) : (file.metadata?.size || 0),
     }))
-    .sort((a, b) => b.size - a.size) // Sort by size descending
+    .sort((a, b) => (b.size as number) - (a.size as number)) // Sort by size descending
     .slice(0, 5) // Take top 5 largest
 
   stats.total = filesToOptimize.length
@@ -177,13 +177,21 @@ ORDER BY (metadata->>'size')::bigint DESC;
   }
 }
 
+interface ProductRow {
+  id: string
+  nom: string
+  image_url: string | null
+  images: unknown // JSON field
+}
+
 async function optimizeSingleImage(
-  supabase: any,
-  file: any,
+  supabase: SupabaseClient,
+  file: { name: string; size?: number; metadata?: { size?: string | number | null } | null },
   stats: OptimizationStats
 ) {
   const filePath = `produits/${file.name}`
-  const originalSize = file.size || parseInt(file.metadata?.size || '0', 10)
+  const fileMetadataSize = file.metadata?.size
+  const originalSize = file.size || (typeof fileMetadataSize === 'string' ? parseInt(fileMetadataSize, 10) : (fileMetadataSize || 0))
 
   try {
     console.log(
@@ -273,13 +281,13 @@ async function optimizeSingleImage(
     const { data: products, error: findError } = await supabase
       .from('produits')
       .select('id, nom, image_url, images')
-      .or(`image_url.ilike.%${file.name}%,images.cs.{${file.name}}`)
+      .or(`image_url.ilike.%${file.name}%,images.cs.{${file.name}}`) as { data: ProductRow[] | null, error: any }
 
     if (!findError && products && products.length > 0) {
       console.log(`   Found ${products.length} product(s) referencing this image`)
       
       for (const product of products) {
-        const updates: any = {}
+        const updates: { image_url?: string; images?: (string | { url: string })[] } = {}
 
         // Update image_url if it contains the old filename
         if (product.image_url && product.image_url.includes(file.name)) {
@@ -290,7 +298,7 @@ async function optimizeSingleImage(
         // Update images array if it contains the old filename
         if (product.images && Array.isArray(product.images)) {
           let updated = false
-          updates.images = product.images.map((img: any) => {
+          updates.images = (product.images as (string | { url: string })[]).map((img) => {
             if (typeof img === 'string' && img.includes(file.name)) {
               updated = true
               return img.replace(file.name, newFileName)

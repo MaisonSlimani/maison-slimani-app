@@ -3,8 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Suspense } from 'react'
 import './globals.css'
-import { Toaster } from '@maison/ui'
-import { Toaster as Sonner } from '@maison/ui'
+import { Toaster, SonnerToaster } from '@maison/ui'
 import { Providers } from '@/components/Providers'
 import NavigationWrapper from '@/components/NavigationWrapper'
 import MetaPixel from '@/components/MetaPixel'
@@ -116,7 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense fallback={null}>
             <AnalyticsProvider>
               <NavigationWrapper>{children}</NavigationWrapper>
-              <Toaster /><Sonner /><SpeedInsights />
+              <Toaster /><SonnerToaster /><SpeedInsights />
             </AnalyticsProvider>
           </Suspense>
         </Providers>

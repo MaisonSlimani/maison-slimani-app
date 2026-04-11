@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useState } from 'react'
@@ -22,7 +23,6 @@ export default function OptimizedImage({ src, alt, width, height, priority = fal
 
   return (
     <div className={cn(fill && "relative w-full h-full")}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img {...imageProps} />
     </div>
   )

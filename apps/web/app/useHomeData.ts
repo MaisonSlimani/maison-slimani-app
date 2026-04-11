@@ -2,76 +2,86 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Category } from '@maison/domain'
+import { Category, HomeData, Product, SiteSettings } from '@maison/domain'
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
 
-export function useHomeData() {
-  const [categories, setCategories] = useState<Array<{ titre: string; tagline: string; image: string; lien: string }>>([])  
-  const [loadingCategories, setLoadingCategories] = useState(true)
-  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null)
-  const [categorySlugMap, setCategorySlugMap] = useState<Record<string, string>>({})
+export function useHomeData(initialData?: HomeData) {
+  const [categories, setCategories] = useState(() => mapCategories(initialData?.categories))
+  const [loadingCategories, setLoadingCategories] = useState(!initialData?.categories)
+  const [whatsappNumber, setWhatsappNumber] = useState(initialData?.whatsappNumber || null)
+  const [categorySlugMap, setCategorySlugMap] = useState<Record<string, string>>(() => getSlugMap(initialData?.categories))
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories-slug-map'],
     staleTime: 60 * 60 * 1000,
+    initialData: initialData?.categories,
     queryFn: async ({ signal }) => {
-      const response = await fetch('/api/categories?active=true', { signal })
-      if (!response.ok) return []
-      const payload = await response.json()
-      return payload?.data || []
+      const result = await apiFetch<Category[]>(`${ENDPOINTS.CATEGORIES}?active=true`, { signal })
+      return result.data || []
     },
   })
 
   useEffect(() => {
-    if (categoriesData.length > 0) {
-      const map: Record<string, string> = {}
-      categoriesData.forEach((cat: Category) => {
-        if (cat.nom && cat.slug) map[cat.nom] = cat.slug
-      })
-      setCategorySlugMap(map)
-      
-      const mapped = categoriesData
-        .filter((cat: Category) => cat.image_url?.trim())
-        .map((cat: Category) => ({
-          titre: cat.nom,
-          tagline: cat.description || '',
-          image: cat.image_url!,
-          lien: `/boutique/${cat.slug}`,
-        }))
-      setCategories(mapped)
+    if (categoriesData.length > 0 && !initialData?.categories) {
+      setCategorySlugMap(getSlugMap(categoriesData))
+      setCategories(mapCategories(categoriesData))
       setLoadingCategories(false)
     }
-  }, [categoriesData])
+  }, [categoriesData, initialData])
 
-  const { data: produitsVedette = [], isPending: loadingVedette } = useQuery({
+  const { data: produitsVedette = initialData?.produitsVedette || [], isPending: loadingVedette } = useQuery({
     queryKey: ['produits', 'vedette'],
     staleTime: 15 * 60 * 1000,
+    initialData: initialData?.produitsVedette,
     queryFn: async ({ signal }) => {
-      const response = await fetch('/api/produits?vedette=true&limit=6', { signal })
-      if (!response.ok) throw new Error(`Erreur API: ${response.status}`)
-      const payload = await response.json()
-      return payload?.data || []
+      const result = await apiFetch<Product[]>(`${ENDPOINTS.PRODUITS}?vedette=true&limit=6`, { signal })
+      if (!result.success) throw new Error(result.error || 'Erreur API')
+      return result.data || []
     },
   })
 
   useEffect(() => {
+    if (initialData?.whatsappNumber) return
     const chargerSettings = async () => {
       try {
-        const response = await fetch('/api/settings')
-        if (!response.ok) return
-        
-        const result = await response.json()
-        if (!result.success || !result.data?.telephone) return
-
-        let phone = result.data.telephone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')
-        if (!phone.startsWith('212')) {
-          const processedPhone = phone.startsWith('0') ? phone.substring(1) : phone
-          phone = '212' + processedPhone
+        const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
+        if (result.success && result.data?.telephone) {
+          setWhatsappNumber(formatWhatsApp(result.data.telephone))
         }
-        setWhatsappNumber(phone)
       } catch (err) { console.error(err) }
     }
     chargerSettings()
-  }, [])
+  }, [initialData])
 
   return { categories, loadingCategories, produitsVedette, loadingVedette, whatsappNumber, categorySlugMap }
+}
+
+function mapCategories(data: Category[] | undefined) {
+  if (!data) return []
+  return data
+    .filter((cat) => cat.image_url?.trim())
+    .map((cat) => ({
+      titre: cat.nom,
+      tagline: cat.description || '',
+      image: cat.image_url!,
+      lien: `/boutique/${cat.slug}`,
+    }))
+}
+
+function getSlugMap(data: Category[] | undefined) {
+  const map: Record<string, string> = {}
+  if (!data) return map
+  data.forEach((cat) => {
+    if (cat.nom && cat.slug) map[cat.nom] = cat.slug
+  })
+  return map
+}
+
+function formatWhatsApp(phone: string) {
+  let processed = phone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')
+  if (!processed.startsWith('212')) {
+    processed = processed.startsWith('0') ? processed.substring(1) : processed
+    processed = '212' + processed
+  }
+  return processed
 }

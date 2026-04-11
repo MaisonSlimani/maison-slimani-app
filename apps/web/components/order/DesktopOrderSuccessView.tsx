@@ -48,7 +48,7 @@ export default function DesktopOrderSuccessView() {
           </div>
           <div className="flex flex-col items-center gap-3">
             <CheckCircle className="w-8 h-8 text-dore" />
-            <h4 className="font-bold uppercase tracking-widest text-xs">Artisanat de Fès</h4>
+            <h4 className="font-bold uppercase tracking-widest text-xs">Excellence Artisanale</h4>
             <p className="text-xs text-muted-foreground">100% Cuir Véritable</p>
           </div>
         </div>

@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   }
 }
 
-export default function Page() {
-  return <BoutiquePage />
+import { fetchBoutiqueData } from '../data/fetchBoutique'
+
+export default async function Page() {
+  const { categories } = await fetchBoutiqueData()
+  return <BoutiquePage initialCategories={categories} />
 }

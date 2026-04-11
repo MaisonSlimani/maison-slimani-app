@@ -9,9 +9,9 @@ let supabaseInstance: SupabaseClient<Database> | null = null
 export const getSupabaseConfig = () => {
   // Try Vite prefixes first, then Next.js
   // Vite strictly requires the exact string 'import.meta.env.VITE_xxx' to be present for static replacement.
-  // @ts-ignore
+  // @ts-expect-error - Vite env access
   const viteUrl = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : null;
-  // @ts-ignore
+  // @ts-expect-error - Vite env access
   const viteAnonKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_ANON_KEY : null;
 
   const url = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_URL : null) || viteUrl
@@ -31,7 +31,13 @@ export const createClient = (): SupabaseClient<Database> => {
   if (supabaseInstance) return supabaseInstance
 
   const { url, anonKey } = getSupabaseConfig()
-  supabaseInstance = createSupabaseClient<Database>(url, anonKey)
+  supabaseInstance = createSupabaseClient<Database>(url, anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  })
   
   return supabaseInstance
 }

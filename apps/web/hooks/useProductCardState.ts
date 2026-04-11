@@ -24,11 +24,30 @@ export function useProductCardState(produit: Product) {
   const inWishlist = isInWishlist(produit.id)
   const isInCart = items.some(item => item.id === produit.id)
 
-  const colorImages = produit.has_colors && produit.couleurs ? (produit.couleurs as ProductVariation[]).map((c) => ({ 
-    couleur: c.nom, image: Array.isArray(c.images) ? c.images[0] : (c.images || produit.image_url) 
-  })).filter(ci => ci.image) : []
+  const variations = (produit.couleurs as ProductVariation[]) || []
+  
+  const colorImages = variations.map((c) => ({ 
+    couleur: c.nom, 
+    image: Array.isArray(c.images) ? c.images[0] : (c.images || produit.image_url) 
+  })).filter(ci => ci.image) as { couleur: string; image: string }[]
   
   const imageUrl = (colorImages.length > 0 && colorImages[currentColorIndex]?.image) || produit.image_url || ''
+
+  // Auto-select first available options when modal opens
+  const openModal = () => {
+    if (!selectedCouleur && variations.length > 0) {
+      const firstColor = variations[0].nom
+      setSelectedCouleur(firstColor)
+      
+      const firstColorVariation = variations[0]
+      if (firstColorVariation.tailles && firstColorVariation.tailles.length > 0) {
+        setSelectedTaille(firstColorVariation.tailles[0].nom)
+      }
+    } else if (!selectedTaille && produit.tailles && produit.tailles.length > 0) {
+      setSelectedTaille(produit.tailles[0].nom)
+    }
+    setShowModal(true)
+  }
 
   const toggleWishlist = () => {
     hapticFeedback('light')
@@ -43,7 +62,10 @@ export function useProductCardState(produit: Product) {
 
   const addBasicToCart = async () => {
     hapticFeedback('medium')
-    if (produit.has_colors || (produit.tailles && produit.tailles.length > 0)) { setShowModal(true); return }
+    if (produit.has_colors || (produit.tailles && produit.tailles.length > 0)) { 
+      openModal()
+      return 
+    }
     setIsAddingToCart(true)
     try {
       await addToCart({ ...produit, quantite: 1, image_url: imageUrl, taille: null, couleur: null }, false)

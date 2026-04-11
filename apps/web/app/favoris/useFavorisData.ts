@@ -26,7 +26,7 @@ export function useFavorisData() {
   const fetchProductData = async (item: CartItem) => {
     setLoadingProduct(true)
     try {
-      const resp = await fetch(`/api/produits/${item.id}`)
+      const resp = await fetch(`/api/v1/produits/${item.id}`)
       if (!resp.ok) throw new Error()
       const payload = await resp.json()
       const data = payload?.data as Product

@@ -12,6 +12,8 @@ import { WishlistEmptyState } from './wishlist/WishlistEmptyState'
 import ProductPurchaseDialog from './product/ProductPurchaseDialog'
 import { Product, CartItem } from '@maison/domain'
 
+import { apiFetch, ENDPOINTS } from '@/lib/api/client'
+
 export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { items, removeItem, isLoaded } = useWishlist()
   const { addItem: addToCart, items: cartItems } = useCart()
@@ -25,9 +27,8 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
   const handleAddToCart = async (item: CartItem) => {
     setLoading(true)
     try {
-      const resp = await fetch(`/api/produits/${item.id}`)
-      const payload = await resp.json()
-      if (payload?.data) { setProductData(payload.data); setShowModal(true) }
+      const result = await apiFetch<Product>(`${ENDPOINTS.PRODUITS}/${item.id}`)
+      if (result.success && result.data) { setProductData(result.data); setShowModal(true) }
     } catch { toast.error('Erreur chargement') }
     finally { setLoading(false) }
   }

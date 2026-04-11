@@ -39,7 +39,7 @@ export default function DesktopContactView({ data }: { data: ContactViewData }) 
   )
 }
 
-function InfoCard({ icon: Icon, label, value, isLarge }: { icon: React.ElementType; label: string; value?: string; isLarge?: boolean }) {
+function InfoCard({ icon: Icon, label, value, isLarge }: { icon: React.ElementType; label: string; value?: string | null; isLarge?: boolean }) {
   if (!value) return null
   return (
     <div className="flex gap-6 items-start">
