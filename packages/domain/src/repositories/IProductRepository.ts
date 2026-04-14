@@ -1,4 +1,4 @@
-import { Product, ProductSearchParams, DomainResult } from '../models';
+import { Product, ProductSearchParams, DomainResult, ProductCardDTO } from '../models';
 
 /**
  * Domain contract for Product data access.
@@ -31,9 +31,14 @@ export interface IProductRepository {
   search(params: ProductSearchParams): Promise<{ data: Product[]; count: number }>;
 
   /**
-   * Retrieves featured products.
+   * Retrieves featured products (full model).
    */
   findFeatured(limit?: number): Promise<Product[]>;
+
+  /**
+   * Retrieves featured products as lightweight DTOs.
+   */
+  findFeaturedDTO(limit?: number): Promise<ProductCardDTO[]>;
 
   /**
    * Retrieves products similar to a target product.
@@ -44,6 +49,16 @@ export interface IProductRepository {
    * Retrieves upsell/related products for a specific item.
    */
   getUpsellProducts(id: string, limit?: number): Promise<Product[]>;
+
+  /**
+   * Creates a new product from a domain model.
+   */
+  create(payload: Partial<Product>): Promise<DomainResult<Product>>;
+
+  /**
+   * Updates an existing product from a domain model.
+   */
+  update(id: string, payload: Partial<Product>): Promise<DomainResult<Product>>;
 
   /**
    * Deletes a product.

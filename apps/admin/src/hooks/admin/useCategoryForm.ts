@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { storageRepo } from '@/lib/repositories'
+import { optimizeImage } from '@/lib/utils/image-optimizer'
 
 export function useCategoryForm(
   initialImageUrl: string, 
@@ -25,8 +26,11 @@ export function useCategoryForm(
     e.preventDefault()
     let imageUrl = initialImageUrl
     if (imageFile) {
-      const path = `categories/${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-      await storageRepo.uploadImage(path, imageFile, imageFile.type)
+      const optimizedBlob = await optimizeImage(imageFile);
+      const fileName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const path = `categories/${Date.now()}-${fileName.split('.')[0]}.webp`;
+      
+      await storageRepo.uploadImage(path, optimizedBlob as File, 'image/webp')
       imageUrl = storageRepo.getPublicUrl(path)
     }
     onSubmit(e, imageUrl)

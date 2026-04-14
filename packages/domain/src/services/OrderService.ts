@@ -1,11 +1,11 @@
 import { Order, DomainResult, OrderPlacementPayload } from '../models';
 import { IOrderRepository } from '../repositories/IOrderRepository';
- 
+
 export class OrderService {
   constructor(
     private orderRepository: IOrderRepository,
-  ) {}
- 
+  ) { }
+
   /**
    * Orchestrates the order placement process.
    * Handles validation, persistence (via RPC), and post-order side effects.
@@ -38,7 +38,7 @@ export class OrderService {
     // 3. Post-Order Orchestration (Non-blocking or handled by caller)
     // In our simplified Next.js context, we return the result and the API route handles emails/analytics
     // or we can pass them here via dependency injection.
-    
+
     return result;
   }
 }

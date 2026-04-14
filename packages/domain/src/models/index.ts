@@ -68,10 +68,13 @@ export interface Product {
   sizes: { name: string; stock: number }[] | null;
   size: string | null;
   slug: string | null;
-  averageRating: number | null;
-  ratingCount: number | null;
   createdAt: string | null;
 }
+
+/**
+ * Lightweight DTO for product cards (Home/Gallery)
+ */
+export type ProductCardDTO = Pick<Product, 'id' | 'name' | 'price' | 'image_url' | 'slug' | 'category'>;
 
 /**
  * Filter and pagination parameters for product searches.

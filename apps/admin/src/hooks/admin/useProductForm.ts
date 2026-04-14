@@ -4,6 +4,7 @@ import { productRepo, storageRepo } from '@/lib/repositories'
 import { toast } from 'sonner'
 import { GeneralImage } from '@/components/products/form/GeneralImagesForm'
 import { VariationImage } from '@/components/products/form/VariationsForm'
+import { optimizeImage } from '@/lib/utils/image-optimizer'
 
 interface UseProductFormParams {
   product: Product | null; defaultCategory?: string; onSuccess: () => void; onOpenChange: (open: boolean) => void
@@ -41,8 +42,12 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
     const urls = []
     for (const img of list) {
       if (img.file) {
-        const path = `${Date.now()}-${img.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-        await storageRepo.uploadImage(path, img.file, img.file.type)
+        // Optimize image before upload to save space and Vercel costs
+        const optimizedBlob = await optimizeImage(img.file);
+        const fileName = img.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const path = `${Date.now()}-${fileName.split('.')[0]}.webp`;
+        
+        await storageRepo.uploadImage(path, optimizedBlob as File, 'image/webp')
         urls.push(storageRepo.getPublicUrl(path))
       } else if (img.url) urls.push(img.url)
     }
@@ -58,23 +63,23 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
       finalColors.push({ name: c.name, code: c.code, stock: calStock, sizes: c.sizes, images: uploadedColorImages })
     }
     const stockValue = formData.hasColors ? finalColors.reduce((sum, c) => sum + (c.stock || 0), 0) : formData.stock
-    return { 
-      ...formData, 
-      images: formData.hasColors ? null : uploadedGeneral, 
-      image_url: formData.hasColors ? null : (uploadedGeneral[0] || null), 
-      colors: formData.hasColors ? finalColors : null, 
-      stock: stockValue, 
-      totalStock: stockValue 
-    } as unknown as Product
+    return {
+      ...formData,
+      images: formData.hasColors ? null : (uploadedGeneral.length > 0 ? uploadedGeneral : (formData.images || null)),
+      image_url: formData.hasColors ? null : (uploadedGeneral[0] || formData.image_url || null),
+      colors: formData.hasColors ? finalColors : null,
+      stock: stockValue ?? 0,
+      totalStock: stockValue ?? 0,
+    } as Product
   }, [formData, imagesGenerales, couleurs])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true)
     try {
       const p = await buildPayload()
-      const res = product?.id 
-        ? await productRepo.update(product.id, p as unknown as Parameters<typeof productRepo.update>[1]) 
-        : await productRepo.create(p as unknown as Parameters<typeof productRepo.create>[0])
+      const res = product?.id
+        ? await productRepo.update(product.id, p)
+        : await productRepo.create(p)
       if (res.success) { toast.success(product ? 'Mis à jour' : 'Créé'); onSuccess(); onOpenChange(false) }
       else throw new Error(res.error || 'Erreur')
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Erreur') } finally { setLoading(false) }

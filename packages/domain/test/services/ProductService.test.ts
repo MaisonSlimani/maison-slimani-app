@@ -39,8 +39,6 @@ test('Product Functions - getSelectedStock', async (t) => {
     featured: false,
     size: null,
     slug: 'produit-test',
-    averageRating: 0,
-    ratingCount: 0
   };
 
   await t.test('returns base stock when no colors/sizes selected', () => {
@@ -79,8 +77,6 @@ test('Product Functions - validateProductSelections', async (t) => {
     featured: false,
     size: null,
     slug: 'produit-test',
-    averageRating: 0,
-    ratingCount: 0
   };
 
   await t.test('fails if color missing when required', () => {

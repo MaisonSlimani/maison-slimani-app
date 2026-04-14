@@ -157,7 +157,6 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
       }
       produits: {
         Row: {
-          average_rating: number | null
           categorie: string | null
           couleurs: Json | null
           date_ajout: string | null
@@ -179,7 +178,6 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
           vedette: boolean | null
         }
         Insert: {
-          average_rating?: number | null
           categorie?: string | null
           couleurs?: Json | null
           date_ajout?: string | null
@@ -190,7 +188,6 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
           images?: Json | null
           nom: string
           prix: number
-          rating_count?: number | null
           search_vector?: unknown
           slug?: string | null
           stock?: number | null
@@ -201,7 +198,6 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
           vedette?: boolean | null
         }
         Update: {
-          average_rating?: number | null
           categorie?: string | null
           couleurs?: Json | null
           date_ajout?: string | null
@@ -212,7 +208,6 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
           images?: Json | null
           nom?: string
           prix?: number
-          rating_count?: number | null
           search_vector?: unknown
           slug?: string | null
           stock?: number | null
