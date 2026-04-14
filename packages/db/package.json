@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
     "test": "tsx --test test/**/*.test.ts",
     "lint": "eslint ."
   },

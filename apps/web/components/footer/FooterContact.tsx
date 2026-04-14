@@ -1,4 +1,4 @@
-import { SiteSettings } from '@/types/index'
+import { SiteSettings } from '@maison/domain'
 
 export function FooterContact({ settings, loading }: { settings: SiteSettings; loading: boolean }) {
   if (loading) return (
@@ -8,16 +8,16 @@ export function FooterContact({ settings, loading }: { settings: SiteSettings; l
     </div>
   )
 
-  const hasInfo = settings.email_entreprise?.trim() || settings.telephone?.trim() || settings.adresse?.trim()
+  const hasInfo = settings.companyEmail?.trim() || settings.phone?.trim() || settings.address?.trim()
 
   return (
     <div>
       <h4 className="font-medium mb-4 text-dore">Contact</h4>
       {hasInfo ? (
         <>
-          {settings.email_entreprise?.trim() && <a href={`mailto:${settings.email_entreprise}`} className="text-ecru/80 hover:text-dore transition-colors text-sm block mb-2">{settings.email_entreprise}</a>}
-          {settings.telephone?.trim() && <a href={`tel:${settings.telephone.replace(/\s/g, '')}`} className="text-ecru/80 hover:text-dore transition-colors text-sm block mb-2">{settings.telephone}</a>}
-          {settings.adresse?.trim() && <p className="text-ecru/70 text-sm mb-2">{settings.adresse}</p>}
+          {settings.companyEmail?.trim() && <a href={`mailto:${settings.companyEmail}`} className="text-ecru/80 hover:text-dore transition-colors text-sm block mb-2">{settings.companyEmail}</a>}
+          {settings.phone?.trim() && <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="text-ecru/80 hover:text-dore transition-colors text-sm block mb-2">{settings.phone}</a>}
+          {settings.address?.trim() && <p className="text-ecru/70 text-sm mb-2">{settings.address}</p>}
         </>
       ) : <p className="text-ecru/60 text-sm italic">Informations de contact à venir</p>}
       <p className="text-ecru/70 text-sm mb-2 mt-4">Livraison gratuite dans tout le Maroc</p>

@@ -7,13 +7,13 @@ export interface TrendingSearch {
 
 export interface ProductSuggestion {
   id: string;
-  nom: string;
-  prix: number;
+  name: string;
+  price: number;
   image_url: string | null;
 }
 
 export interface CategorySuggestion {
-  nom: string;
+  name: string;
   slug: string;
   count: number;
 }
@@ -86,7 +86,13 @@ export class SearchRepository {
           .from('produits')
           .select('id, nom, prix, image_url')
           .in('id', productIds);
-        return (products as ProductSuggestion[]) || [];
+        
+        return (products || []).map(p => ({
+            id: p.id,
+            name: p.nom,
+            price: p.prix,
+            image_url: p.image_url
+        }));
       }
     } catch (_e) { /* fallback */ }
 
@@ -96,7 +102,13 @@ export class SearchRepository {
       .or(`nom.ilike.${query}%,nom.ilike.%${query}%`)
       .order('vedette', { ascending: false })
       .limit(limit);
-    return (fallback as ProductSuggestion[]) || [];
+      
+    return (fallback || []).map(p => ({
+        id: p.id,
+        name: p.nom,
+        price: p.prix,
+        image_url: p.image_url
+    }));
   }
 
   async getCategorySuggestions(query: string, limit: number = 5): Promise<CategorySuggestion[]> {
@@ -107,7 +119,7 @@ export class SearchRepository {
       });
       if (!error && data && (data as unknown as CategorySuggestionRpc[]).length > 0) {
         return (data as unknown as CategorySuggestionRpc[]).map(c => ({
-          nom: c.category_name,
+          name: c.category_name,
           slug: c.category_slug,
           count: Number(c.product_count)
         }));
@@ -129,7 +141,7 @@ export class SearchRepository {
         .from('produits')
         .select('*', { count: 'exact', head: true })
         .eq('categorie', cat.nom);
-      results.push({ nom: cat.nom, slug: cat.slug, count: count || 0 });
+      results.push({ name: cat.nom, slug: cat.slug, count: count || 0 });
     }
     return results;
   }

@@ -12,7 +12,7 @@ export const fetchHomeData = unstable_cache(
     const supabase = await createPublicClient()
     
     // Concurrent fetching for minimum latency
-    const [categories, produitsVedette, settings] = await Promise.all([
+    const [categories, featuredProducts, settings] = await Promise.all([
       new CategoryRepository(supabase).findAllActive(),
       new ProductRepository(supabase).findFeatured(6),
       new SettingsRepository(supabase).getSettings()
@@ -20,8 +20,8 @@ export const fetchHomeData = unstable_cache(
 
     // Process WhatsApp number exactly as the client hook did
     let whatsappNumber = null
-    if (settings?.telephone) {
-      let phone = settings.telephone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')
+    if (settings?.phone) {
+      let phone = settings.phone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '')
       if (!phone.startsWith('212')) {
         const processedPhone = phone.startsWith('0') ? phone.substring(1) : phone
         phone = '212' + processedPhone
@@ -31,7 +31,7 @@ export const fetchHomeData = unstable_cache(
 
     return { 
       categories, 
-      produitsVedette, 
+      featuredProducts, 
       settings,
       whatsappNumber 
     }

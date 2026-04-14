@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { settingsRepo } from '@/lib/repositories'
 import { SettingsForm, SettingsFormData } from '@/components/settings/SettingsForm'
 
-const DEFAULT_FORM: SettingsFormData = { email_entreprise: '', telephone: '', adresse: '', description: '' }
+const DEFAULT_FORM: SettingsFormData = { companyEmail: '', phone: '', address: '', description: '' }
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -17,9 +17,9 @@ export default function SettingsPage() {
         const settings = await settingsRepo.getSettings()
         if (settings) {
           setFormData({
-            email_entreprise: settings.email_entreprise ?? '',
-            telephone: settings.telephone ?? '',
-            adresse: settings.adresse ?? '',
+            companyEmail: settings.companyEmail ?? '',
+            phone: settings.phone ?? '',
+            address: settings.address ?? '',
             description: settings.description ?? '',
           })
         }

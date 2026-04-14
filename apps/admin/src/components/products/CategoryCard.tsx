@@ -17,10 +17,10 @@ const colorSchemes = [
 
 interface CategoryCardProps {
   category: Category
-  index: number
+  index?: number
 }
 
-export function CategoryCard({ category, index }: CategoryCardProps) {
+export default function CategoryCard({ category, index = 0 }: CategoryCardProps) {
   const navigate = useNavigate()
   const scheme = colorSchemes[index % colorSchemes.length]
 
@@ -37,15 +37,15 @@ export function CategoryCard({ category, index }: CategoryCardProps) {
           <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-white/50 flex-shrink-0 shadow-lg">
             <img
               src={category.image_url || '/assets/categorie-default.jpg'}
-              alt={category.nom}
+              alt={category.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
-                <h3 className="text-2xl font-serif mb-2 text-primary">{category.nom}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <h3 className="text-2xl font-serif mb-2 text-primary">{category.name}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                   {category.description || 'Aucune description'}
                 </p>
               </div>
@@ -53,7 +53,7 @@ export function CategoryCard({ category, index }: CategoryCardProps) {
             </div>
             <Button
               variant="outline"
-              className="mt-4 group-hover:bg-white group-hover:text-primary"
+              className="mt-4 group-hover:bg-white group-hover:text-primary transition-colors"
               onClick={(e) => {
                 e.stopPropagation()
                 navigate(`/produits/${category.slug}`)

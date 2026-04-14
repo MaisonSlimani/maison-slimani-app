@@ -36,7 +36,7 @@ export const WishlistItem = ({
         <div className="relative w-20 h-20 rounded overflow-hidden bg-muted">
           <OptimizedImage
             src={item.image_url || item.image || '/placeholder.jpg'}
-            alt={item.nom}
+            alt={item.name}
             fill
             className="object-cover"
             sizes="80px"
@@ -52,11 +52,11 @@ export const WishlistItem = ({
             className="block"
           >
             <h3 className="font-medium text-sm mb-1 line-clamp-2 hover:text-dore transition-colors">
-              {item.nom}
+              {item.name}
             </h3>
           </Link>
           <p className="text-base font-serif text-dore font-semibold">
-            {item.prix.toLocaleString('fr-MA')} MAD
+            {item.price.toLocaleString('fr-MA')} MAD
           </p>
         </div>
         

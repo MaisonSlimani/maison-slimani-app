@@ -17,7 +17,7 @@ function VariationHeader({ variation, onUpdate, onRemove }: { variation: Variati
     <div className="flex justify-between items-start mb-4">
       <div className="grid grid-cols-2 gap-4 flex-1">
         <div className="space-y-2"><Label>Couleur</Label>
-          <Input value={variation.nom} onChange={e => onUpdate({ ...variation, nom: e.target.value })} placeholder="ex: Noir" />
+          <Input value={variation.name} onChange={e => onUpdate({ ...variation, name: e.target.value })} placeholder="ex: Noir" />
         </div>
         <div className="space-y-2"><Label>Code Hex</Label>
           <div className="flex gap-2">
@@ -33,19 +33,19 @@ function VariationHeader({ variation, onUpdate, onRemove }: { variation: Variati
 
 function TailleGrid({ variation, onUpdate }: { variation: VariationWithPending; onUpdate: (u: VariationWithPending) => void }) {
   const hT = (i: number, n: string, s: number) => {
-    const t = [...(variation.tailles || [])]; t[i] = { nom: n, stock: s }; onUpdate({ ...variation, tailles: t })
+    const t = [...(variation.sizes || [])]; t[i] = { name: n, stock: s }; onUpdate({ ...variation, sizes: t })
   }
   return (
     <div><Label className="text-xs uppercase tracking-wider text-muted-foreground">Tailles & Stock</Label>
       <div className="grid grid-cols-1 gap-2 mt-2">
-        {(variation.tailles || []).map((t, i) => (
+        {(variation.sizes || []).map((t, i) => (
           <div key={i} className="flex gap-2 items-center">
-            <Input placeholder="Taille" value={t.nom} onChange={e => hT(i, e.target.value, t.stock)} className="flex-1" />
-            <Input type="number" value={t.stock} onChange={e => hT(i, t.nom, parseInt(e.target.value) || 0)} className="w-24" />
-            <Button variant="ghost" size="icon" onClick={() => onUpdate({ ...variation, tailles: (variation.tailles || []).filter((_, idx) => idx !== i) })} className="h-8 w-8"><X className="w-3 h-3" /></Button>
+            <Input placeholder="Taille" value={t.name} onChange={e => hT(i, e.target.value, t.stock)} className="flex-1" />
+            <Input type="number" value={t.stock} onChange={e => hT(i, t.name, parseInt(e.target.value) || 0)} className="w-24" />
+            <Button variant="ghost" size="icon" onClick={() => onUpdate({ ...variation, sizes: (variation.sizes || []).filter((_, idx) => idx !== i) })} className="h-8 w-8"><X className="w-3 h-3" /></Button>
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => onUpdate({ ...variation, tailles: [...(variation.tailles || []), { nom: '', stock: 0 }] })} className="w-full border-dashed h-8 text-xs"><Plus className="w-3 h-3 mr-1" /> Ajouter</Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => onUpdate({ ...variation, sizes: [...(variation.sizes || []), { name: '', stock: 0 }] })} className="w-full border-dashed h-8 text-xs"><Plus className="w-3 h-3 mr-1" /> Ajouter</Button>
       </div>
     </div>
   )

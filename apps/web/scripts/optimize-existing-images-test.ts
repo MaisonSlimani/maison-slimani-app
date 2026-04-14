@@ -281,7 +281,7 @@ async function optimizeSingleImage(
     const { data: products, error: findError } = await supabase
       .from('produits')
       .select('id, nom, image_url, images')
-      .or(`image_url.ilike.%${file.name}%,images.cs.{${file.name}}`) as { data: ProductRow[] | null, error: any }
+      .or(`image_url.ilike.%${file.name}%,images.cs.{${file.name}}`) as unknown as { data: ProductRow[] | null, error: unknown }
 
     if (!findError && products && products.length > 0) {
       console.log(`   Found ${products.length} product(s) referencing this image`)

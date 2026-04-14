@@ -4,41 +4,29 @@ import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Card, Button } from '@maison/ui'
 import { ShoppingBag, Heart, ShoppingCart } from 'lucide-react'
-import { useCart } from '@/lib/hooks/useCart'
-import { useWishlist } from '@/lib/hooks/useWishlist'
 import { useRealtimeStock } from '@/lib/hooks/useRealtimeStock'
-import { toast } from 'sonner'
-import { trackAddToWishlist } from '@/lib/analytics'
 import { cn } from '@maison/shared'
 import { Product, ProductVariation } from '@maison/domain'
 import ProductCardImage from './product/ProductCardImage'
 import ProductPurchaseDialog from './product/ProductPurchaseDialog'
+import { useProductCardActions } from '@/hooks/product/useProductCardActions'
 import { slugify } from '@/lib/utils/product-urls'
 
 interface CarteProduitProps {
-  produit: Product
+  product: Product
   showActions?: boolean
 }
 
-const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
-  const { items, addItem: addToCart } = useCart()
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
+const CarteProduit = ({ product: produit, showActions = false }: CarteProduitProps) => {
   const [currentColorIndex, setCurrentColorIndex] = useState(0)
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [selectedTaille, setSelectedTaille] = useState('')
-  const [selectedCouleur, setSelectedCouleur] = useState('')
-  const [quantite, setQuantite] = useState(1)
-
+  
   useRealtimeStock(produit.id)
-  const inWishlist = isInWishlist(produit.id)
-  const isInCart = items.some(item => item.id === produit.id)
 
   const { colorImages, imageUrl, isOutOfStock } = useMemo(() => {
-    const vars = produit.couleurs as ProductVariation[] | null
+    const vars = produit.colors as ProductVariation[] | null
     
-    const resolveImages = () => (produit.has_colors && vars) ? vars.map(c => ({ 
-      couleur: c.nom, 
+    const resolveImages = () => (produit.hasColors && vars) ? vars.map(c => ({ 
+      color: c.name, 
       image: Array.isArray(c.images) ? c.images[0] : (c.images || produit.image_url) 
     })).filter(ci => !!ci.image) : []
     
@@ -50,59 +38,50 @@ const CarteProduit = ({ produit, showActions = false }: CarteProduitProps) => {
     return { colorImages: cImgs, imageUrl: img, isOutOfStock: !hasStock }
   }, [produit, currentColorIndex])
 
-  const href = `/boutique/${produit.categorie ? slugify(produit.categorie) : 'cat'}/${produit.slug || slugify(produit.nom || '')}`
+  const {
+    isInCart,
+    inWishlist,
+    isAddingToCart,
+    showModal,
+    setShowModal,
+    selectedSize,
+    setSelectedSize,
+    selectedColor,
+    setSelectedColor,
+    quantity,
+    setQuantity,
+    onAddToCart,
+    onToggleWishlist,
+    onConfirmPurchase
+  } = useProductCardActions({ produit, imageUrl, isOutOfStock: !!isOutOfStock })
 
-  const onAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation()
-    if (isAddingToCart || isOutOfStock) return
-    if (produit.has_colors || (produit.tailles && produit.tailles.length > 0)) return setShowModal(true)
-    setIsAddingToCart(true)
-    try {
-      await addToCart({ ...produit, quantite: 1, image_url: imageUrl, taille: null, couleur: null }, false)
-      toast.success('Ajouté au panier')
-    } catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur') }
-    finally { setIsAddingToCart(false) }
-  }
-
-  const onToggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation()
-    if (inWishlist) return removeFromWishlist(produit.id)
-    addToWishlist({ ...produit, quantite: 1, image_url: imageUrl, taille: null, couleur: null })
-    trackAddToWishlist({ content_name: produit.nom, content_ids: [produit.id], content_type: 'product', value: produit.prix, currency: 'MAD' })
-  }
+  const href = `/boutique/${produit.category ? slugify(produit.category) : 'cat'}/${produit.slug || slugify(produit.name || '')}`
 
   return (
     <Card className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all relative flex flex-col h-full">
       <Link href={href} className="flex-1 flex flex-col">
         <ProductCardImage
-          imageUrl={imageUrl} nom={produit.nom} hasMultipleColors={colorImages.length > 1}
-          colorImages={colorImages} currentColorIndex={currentColorIndex}
+          imageUrl={imageUrl} name={produit.name} hasMultipleColors={colorImages.length > 1}
+          colorImages={colorImages.map(ci => ({ color: ci.color, image: ci.image }))} 
+          currentColorIndex={currentColorIndex}
           onPreviousColor={(e) => { e.preventDefault(); setCurrentColorIndex(i => i === 0 ? colorImages.length - 1 : i - 1) }}
           onNextColor={(e) => { e.preventDefault(); setCurrentColorIndex(i => i === colorImages.length - 1 ? 0 : i + 1) }}
           inWishlist={inWishlist} isOutOfStock={!!isOutOfStock}
         />
         <div className="p-4 flex-1 flex flex-col justify-between">
-          <h3 className="font-medium text-lg truncate">{produit.nom}</h3>
-          <p className="text-xl font-serif text-charbon mt-2">{produit.prix.toLocaleString('fr-MA')} DH</p>
+          <h3 className="font-medium text-lg truncate">{produit.name}</h3>
+          <p className="text-xl font-serif text-charbon mt-2">{produit.price.toLocaleString('fr-MA')} DH</p>
         </div>
       </Link>
       {showActions && <CardActions isInCart={isInCart} inWishlist={inWishlist} onAdd={onAddToCart} onWish={onToggleWishlist} />}
       <ProductPurchaseDialog
-        showModal={showModal} setShowModal={setShowModal} produit={produit} selectedCouleur={selectedCouleur} setSelectedCouleur={setSelectedCouleur}
-        selectedTaille={selectedTaille} setSelectedTaille={setSelectedTaille} quantite={quantite} setQuantite={setQuantite}
-        taillesDisponibles={produit.tailles?.map((t) => t.nom) || []} onConfirm={async (buyNow) => {
-          setIsAddingToCart(true)
-          try {
-            await addToCart({ ...produit, quantite, taille: selectedTaille, couleur: selectedCouleur, image_url: imageUrl }, !buyNow)
-            setShowModal(false)
-            if (buyNow) {
-              window.location.href = '/checkout'
-            } else {
-              toast.success('Ajouté au panier')
-            }
-          } catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur') }
-          finally { setIsAddingToCart(false) }
-        }} isAddingToCart={isAddingToCart}
+        showModal={showModal} setShowModal={setShowModal} produit={produit} 
+        selectedColor={selectedColor} setSelectedColor={setSelectedColor}
+        selectedSize={selectedSize} setSelectedSize={setSelectedSize} 
+        quantity={quantity} setQuantity={setQuantity}
+        sizesAvailable={produit.sizes?.map((t) => t.name) || []} 
+        onConfirm={onConfirmPurchase} 
+        isAddingToCart={isAddingToCart}
       />
     </Card>
   )

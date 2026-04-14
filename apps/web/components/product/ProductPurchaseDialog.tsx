@@ -10,45 +10,50 @@ interface ProductPurchaseDialogProps {
   showModal: boolean
   setShowModal: (show: boolean) => void
   produit: Product
-  selectedCouleur: string
-  setSelectedCouleur: (val: string) => void
-  selectedTaille: string
-  setSelectedTaille: (val: string) => void
-  quantite: number
-  setQuantite: (val: number) => void
-  taillesDisponibles: string[]
+  selectedColor: string
+  setSelectedColor: (val: string) => void
+  selectedSize: string
+  setSelectedSize: (val: string) => void
+  quantity: number
+  setQuantity: (val: number) => void
+  sizesAvailable: string[] // Changed name to match parent usage if needed
   onConfirm: (buyNow: boolean) => void
   isAddingToCart: boolean
 }
 
 const ProductPurchaseDialog = ({
   showModal, setShowModal, produit,
-  selectedCouleur, setSelectedCouleur,
-  selectedTaille, setSelectedTaille,
-  quantite, setQuantite,
-  taillesDisponibles, onConfirm, isAddingToCart
+  selectedColor, setSelectedColor,
+  selectedSize, setSelectedSize,
+  quantity, setQuantity,
+  sizesAvailable, onConfirm, isAddingToCart
 }: ProductPurchaseDialogProps) => {
-  const variations = produit.couleurs as ProductVariation[] | null;
-  const hasColorsSelected = !produit.has_colors || !!selectedCouleur;
-  const hasSizeSelected = (produit.tailles?.length || 0) <= 0 || !!selectedTaille;
+  const variations = produit.colors as ProductVariation[] | null;
+  const hasColorsSelected = !produit.hasColors || !!selectedColor;
+  const hasSizeSelected = (produit.sizes?.length || 0) <= 0 || !!selectedSize;
   const canPurchase = !isAddingToCart && hasColorsSelected && hasSizeSelected;
 
   return (
     <Dialog open={!!showModal} onOpenChange={setShowModal}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{produit.nom}</DialogTitle>
+          <DialogTitle>{produit.name}</DialogTitle>
           <DialogDescription>
-            {produit.has_colors ? 'Sélectionnez couleur, taille et quantité' : 'Sélectionnez taille et quantité'}
+            {produit.hasColors ? 'Sélectionnez couleur, taille et quantité' : 'Sélectionnez taille et quantité'}
           </DialogDescription>
         </DialogHeader>
 
         <PurchaseSelections 
-          hasColors={!!produit.has_colors} variations={variations}
-          selectedCouleur={selectedCouleur} setSelectedCouleur={setSelectedCouleur}
-          taillesDisponibles={taillesDisponibles} selectedTaille={selectedTaille} setSelectedTaille={setSelectedTaille}
-          quantite={quantite} setQuantite={setQuantite}
-          _produit={produit}
+          hasColors={!!produit.hasColors} 
+          variations={variations}
+          selectedColor={selectedColor} 
+          setSelectedColor={setSelectedColor}
+          availableSizes={sizesAvailable} 
+          selectedSize={selectedSize} 
+          setSelectedSize={setSelectedSize}
+          quantity={quantity} 
+          setQuantity={setQuantity}
+          _produit={produit} // Using normalized product
         />
 
         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">

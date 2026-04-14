@@ -13,14 +13,14 @@ export function useFavorisData() {
   const [loadingProduct, setLoadingProduct] = useState(false)
   const [showModal, setShowModal] = useState<string | null>(null)
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
-  const [selectedCouleur, setSelectedCouleur] = useState<string>('')
-  const [selectedTaille, setSelectedTaille] = useState<string>('')
-  const [quantite, setQuantite] = useState<Record<string, number>>({})
+  const [selectedColor, setSelectedColor] = useState<string>('')
+  const [selectedSize, setSelectedSize] = useState<string>('')
+  const [quantity, setQuantity] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const qtys: Record<string, number> = {}
     items.forEach(it => { qtys[it.id] = 1 })
-    setQuantite(qtys)
+    setQuantity(qtys)
   }, [items])
 
   const fetchProductData = async (item: CartItem) => {
@@ -32,8 +32,8 @@ export function useFavorisData() {
       const data = payload?.data as Product
       if (!data) return
       setProductData(data)
-      const first = data.couleurs?.find(c => (c.stock || 0) > 0) || data.couleurs?.[0]
-      if (first) setSelectedCouleur(first.nom)
+      const first = data.colors?.find(c => (c.stock || 0) > 0) || data.colors?.[0]
+      if (first) setSelectedColor(first.name)
       setShowModal(item.id)
     } catch { toast.error('Erreur chargement') }
     finally { setLoadingProduct(false) }
@@ -43,7 +43,13 @@ export function useFavorisData() {
     if (!productData || productData.id !== item.id) { await fetchProductData(item); return }
     setAddingToCart(item.id)
     try {
-      await addToCart({ id: item.id, nom: item.nom, prix: item.prix, quantite: quantite[item.id] || 1, image_url: item.image_url, couleur: selectedCouleur || null, taille: selectedTaille || null, stock: productData.stock })
+      await addToCart({ 
+        ...item,
+        quantity: quantity[item.id] || 1, 
+        color: selectedColor || null, 
+        size: selectedSize || null, 
+        stock: productData.stock 
+      })
       toast.success('Ajouté'); setShowModal(null)
     } catch (err) { 
       toast.error(err instanceof Error ? err.message : 'Erreur') 
@@ -51,5 +57,5 @@ export function useFavorisData() {
     finally { setAddingToCart(null) }
   }
 
-  return { items, removeItem, isLoaded, isInCart: (id: string) => cartItems.some(i => i.id === id), addingToCart, showModal, setShowModal, productData, loadingProduct, selectedCouleur, setSelectedCouleur, selectedTaille, setSelectedTaille, quantite, setQuantite, handleAddToCart, fetchProductData }
+  return { items, removeItem, isLoaded, isInCart: (id: string) => cartItems.some(i => i.id === id), addingToCart, showModal, setShowModal, productData, loadingProduct, selectedColor, setSelectedColor, selectedSize, setSelectedSize, quantity, setQuantity, handleAddToCart, fetchProductData }
 }

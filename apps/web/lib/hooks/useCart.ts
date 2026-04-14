@@ -1,58 +1,90 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { trackAddToCart } from '@/lib/analytics'
-import { CartItem } from '@maison/domain'
+import { CartItem, cartItemSchema } from '@maison/domain'
+import { createPersistentStore } from '@maison/shared'
+import { z } from 'zod'
+
+const cartStore = createPersistentStore<CartItem[]>({
+  key: 'cart',
+  version: 2,
+  schema: z.array(cartItemSchema) as z.ZodType<CartItem[]>,
+  fallback: [],
+  migrate: (old: unknown, _fromVersion: number) => {
+    if (!Array.isArray(old)) return [];
+    // Migration from old French/DB names to clean English Domain names
+    return old.map(item => ({
+      ...item,
+      name: item.name || item.nom,
+      price: item.price || item.prix,
+      quantity: item.quantity || item.quantite,
+      size: item.size || item.taille,
+      color: item.color || item.couleur
+    })) as CartItem[];
+  }
+});
 
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
-  const prevItemsRef = useRef<string>('')
-  const itemsRef = useRef<CartItem[]>([])
-
-  const load = useCallback(() => {
-    if (typeof window === 'undefined') return
-    const saved = localStorage.getItem('cart')
-    if (saved) {
-      try { setItems(JSON.parse(saved)); prevItemsRef.current = saved } catch (e) { console.error(e) }
-    } else { setItems([]); prevItemsRef.current = '[]' }
-  }, [])
-
-  useEffect(() => { if (typeof window !== 'undefined') { load(); setIsLoaded(true) } }, [load])
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !isLoaded) return
-    window.addEventListener('cartUpdated', load)
-    return () => window.removeEventListener('cartUpdated', load)
-  }, [isLoaded, load])
+    setItems(cartStore.get());
+    setIsLoaded(true);
 
-  useEffect(() => {
-    itemsRef.current = items
-    if (isLoaded && typeof window !== 'undefined') {
-      const json = JSON.stringify(items)
-      localStorage.setItem('cart', json)
-      if (prevItemsRef.current !== json) window.dispatchEvent(new Event('cartUpdated'))
-      prevItemsRef.current = json
-    }
-  }, [items, isLoaded])
+    const unsubscribe = cartStore.subscribe((newItems) => {
+      setItems(newItems);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const addItem = async (item: CartItem, openDrawer = true) => {
     const { CartService } = await import('@maison/domain')
-    const result = new CartService().addItem(itemsRef.current, item)
+    const current = cartStore.get()
+    const result = new CartService().addItem(current, item)
     if (!result.success || !result.data) throw new Error(result.error || "Erreur")
-    setItems(result.data)
-    trackAddToCart({ content_name: item.nom, content_ids: [item.id], content_type: 'product', value: item.prix * item.quantite, currency: 'MAD', contents: [{ id: item.id, quantity: item.quantite, item_price: item.prix }] })
-    if (openDrawer && typeof window !== 'undefined') setTimeout(() => window.dispatchEvent(new CustomEvent('openCartDrawer')), 0)
+    
+    cartStore.set(result.data)
+    
+    trackAddToCart({ 
+      content_name: item.name, 
+      content_ids: [item.id], 
+      content_type: 'product', 
+      value: item.price * item.quantity, 
+      currency: 'MAD', 
+      contents: [{ id: item.id, quantity: item.quantity, item_price: item.price }] 
+    })
+    
+    if (openDrawer && typeof window !== 'undefined') {
+      setTimeout(() => window.dispatchEvent(new CustomEvent('openCartDrawer')), 0)
+    }
   }
 
   const removeItem = (id: string, color?: string | null, size?: string | null) => {
-    setItems(prev => prev.filter(i => !(i.id === id && (color === undefined || i.couleur === color) && (size === undefined || i.taille === size))))
+    const current = cartStore.get()
+    const filtered = current.filter(i => !(i.id === id && (color === undefined || i.color === color) && (size === undefined || i.size === size)))
+    cartStore.set(filtered)
   }
 
   const updateQuantity = (id: string, q: number, c?: string | null, s?: string | null) => {
     if (q <= 0) { removeItem(id, c, s); return }
-    setItems(prev => prev.map(i => (i.id === id && (c === undefined || i.couleur === c) && (s === undefined || i.taille === s)) ? { ...i, quantite: q } : i))
+    const current = cartStore.get()
+    const updated = current.map(i => (i.id === id && (c === undefined || i.color === c) && (s === undefined || i.size === s)) ? { ...i, quantity: q } : i)
+    cartStore.set(updated)
   }
 
-  return { items, addItem, removeItem, updateQuantity, clearCart: () => setItems([]), total: items.reduce((a, i) => a + i.prix * i.quantite, 0), totalItems: items.length, isLoaded }
+  return { 
+    items, 
+    addItem, 
+    removeItem, 
+    updateQuantity, 
+    clearCart: () => cartStore.clear(), 
+    total: items.reduce((a, i) => a + i.price * i.quantity, 0), 
+    totalItems: items.length, 
+    isLoaded 
+  }
 }

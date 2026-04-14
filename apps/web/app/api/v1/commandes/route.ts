@@ -6,8 +6,10 @@ import { OrderRepository } from '@maison/db';
 import { OrderService, Order, commandeSchema } from '@maison/domain';
 import { sendCommandeEmails } from '@/lib/emails/send';
 import { PRODUCTS_CACHE_TAG } from '@/lib/cache/tags';
-import { getClientIdentifier } from '@/lib/middleware/rate-limit';
-import { CommandeEmailPayload } from '@/lib/emails/types';
+import { getClientIdentifier, applyRateLimit } from '@/lib/middleware/rate-limit';
+import { createLogger } from '@maison/shared';
+
+const logger = createLogger('commandes.route');
 
 /**
  * Handle post-order side effects asynchronously without blocking the request
@@ -16,18 +18,21 @@ async function triggerPostOrderActions(commande: Order) {
   try {
     await sendCommandeEmails({
       id: commande.id,
-      nom_client: commande.nom_client,
-      telephone: commande.telephone,
-      adresse: commande.adresse,
-      ville: commande.ville,
-      produits: commande.produits as CommandeEmailPayload['produits'],
+      clientName: commande.customerName,
+      phone: commande.phone,
+      address: commande.address,
+      city: commande.city,
+      products: commande.items,
       total: commande.total,
-      statut: commande.statut || 'En attente',
-      client_email: commande.email,
+      status: commande.status || 'En attente',
+      clientEmail: commande.email,
     });
     revalidateTag(PRODUCTS_CACHE_TAG);
-  } catch (err: unknown) {
-    console.error('[After-Order Error]:', err);
+    } catch (err: unknown) {
+    logger.error('After-Order Actions Failed:', err, { 
+      orderId: commande.id,
+      clientEmail: commande.email 
+    });
   }
 }
 
@@ -35,14 +40,29 @@ export const dynamic = 'force-dynamic';
 
 export const POST = createApiHandler(async (req: Request) => {
   const identifier = getClientIdentifier(req as NextRequest);
+  
+  // 1. Rate Limiting
+  const rateLimitStatus = await applyRateLimit({
+    key: `order_limit_${identifier}`,
+    limit: 5,
+    windowMs: 60 * 60 * 1000 // 1 hour
+  });
+
+  if (!rateLimitStatus.success) {
+    throw {
+      status: 429,
+      message: `Trop de requêtes. Veuillez réessayer dans ${rateLimitStatus.retryAfter} secondes.`,
+    };
+  }
+
   const body = await req.json();
 
-  // 1. Validation
+  // 2. Validation
   const validatedData = commandeSchema.parse(body);
 
-  // 2. Security: Recalculate total on server
-  const serverTotal = validatedData.produits.reduce(
-    (acc, p) => acc + (p.prix * p.quantite), 0
+  // 3. Security: Recalculate total on server
+  const serverTotal = validatedData.items.reduce(
+    (acc, p) => acc + (p.price * p.quantity), 0
   );
 
   // 3. Dependency Injection
@@ -52,14 +72,14 @@ export const POST = createApiHandler(async (req: Request) => {
 
   // 4. Atomic Execution
   const result = await orderService.placeOrder({
-    nom_client: validatedData.nom_client,
-    telephone: validatedData.telephone,
-    adresse: validatedData.adresse,
-    ville: validatedData.ville,
+    customerName: validatedData.customerName,
+    phone: validatedData.phone,
+    address: validatedData.address,
+    city: validatedData.city,
     email: validatedData.email || null,
-    produits: validatedData.produits,
+    items: validatedData.items,
     total: serverTotal,
-    idempotency_key: body.idempotency_key || identifier
+    idempotencyKey: body.idempotencyKey || identifier
   });
 
   if (!result.success || !result.data) {

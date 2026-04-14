@@ -33,7 +33,14 @@ export default function DesktopPanierView() {
           {items.length === 0 ? <PanierEmpty /> : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
               <div className="lg:col-span-2 space-y-6">
-                {items.map((item) => <PanierItem key={`${item.id}-${item.couleur}-${item.taille}`} item={item} removeItem={removeItem} updateQuantity={updateQuantity} />)}
+                {items.map((item) => (
+                  <PanierItem 
+                    key={`${item.id}-${item.color || ''}-${item.size || ''}`} 
+                    item={item} 
+                    removeItem={removeItem} 
+                    updateQuantity={updateQuantity} 
+                  />
+                ))}
               </div>
               <div className="lg:col-span-1">
                 <PanierSummary total={total} />

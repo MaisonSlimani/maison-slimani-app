@@ -2,19 +2,24 @@
 
 import { useEffect } from 'react'
 import { subscribeToStockUpdate } from '@maison/db'
-import { Product } from '@maison/domain'
+import { Product, ProductVariation } from '@maison/domain'
 
-export function useProductStock(productId: string, setProduit: React.Dispatch<React.SetStateAction<Product>>) {
+export function useProductStock(productId: string, setProduct: React.Dispatch<React.SetStateAction<Product>>) {
   useEffect(() => {
     if (!productId) return
-    const unsubscribe = subscribeToStockUpdate(productId, (updated) => {
-      setProduit((prev) => ({ 
+    const unsubscribe = subscribeToStockUpdate(productId, (updated: { 
+      id: string; 
+      stock: number | null; 
+      colors: ProductVariation[] | null; 
+      hasColors: boolean | null; 
+    }) => {
+      setProduct((prev) => ({ 
         ...prev, 
         stock: updated.stock, 
-        couleurs: updated.couleurs, 
-        has_colors: updated.has_colors 
+        colors: updated.colors, 
+        hasColors: updated.hasColors 
       }))
     })
     return () => unsubscribe()
-  }, [productId, setProduit])
+  }, [productId, setProduct])
 }

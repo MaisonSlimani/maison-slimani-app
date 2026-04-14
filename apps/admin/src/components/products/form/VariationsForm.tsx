@@ -15,7 +15,7 @@ interface CouleursFormProps {
 
 export function CouleursForm({ couleurs, onChange }: CouleursFormProps) {
   const addCouleur = () => {
-    onChange([...couleurs, { nom: '', code: '#000000', stock: 0, tailles: [], images: [], pendingImages: [] }])
+    onChange([...couleurs, { name: '', code: '#000000', stock: 0, sizes: [], images: [], pendingImages: [] }])
   }
 
   const removeCouleur = (index: number) => {

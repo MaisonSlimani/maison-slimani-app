@@ -1,14 +1,14 @@
 import { core } from './core'
 
-export const trackCheckoutStarted = (cartItems: { id: string; nom?: string; name?: string; quantity?: number; prix?: number; price?: number }[], cartValue: number) => {
+export const trackCheckoutStarted = (cartItems: { id: string; name?: string; quantity?: number; price?: number }[], cartValue: number) => {
     core.track('Checkout Started', {
         num_items: cartItems.length,
         cart_value: cartValue,
         items: cartItems.map(item => ({
             product_id: item.id,
-            product_name: item.nom || item.name,
+            product_name: item.name,
             quantity: item.quantity,
-            price: item.prix || item.price,
+            price: item.price,
         })),
     })
 }
@@ -24,7 +24,7 @@ export const trackOrderCompleted = (order: {
     id: string
     total: number
     numItems: number
-    items: { id: string; nom?: string; name?: string; quantity?: number; prix?: number; price?: number }[]
+    items: { id: string; name?: string; quantity?: number; price?: number }[]
     paymentMethod?: string
 }) => {
     core.track('Order Completed', {
@@ -34,9 +34,9 @@ export const trackOrderCompleted = (order: {
         payment_method: order.paymentMethod,
         items: order.items.map(item => ({
             product_id: item.id,
-            product_name: item.nom || item.name,
+            product_name: item.name,
             quantity: item.quantity,
-            price: item.prix || item.price,
+            price: item.price,
         })),
     })
 }

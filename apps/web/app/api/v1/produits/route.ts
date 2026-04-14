@@ -1,34 +1,15 @@
 
-import { z } from 'zod';
 import { createApiHandler } from '@/lib/api/handler';
 import { createClient } from '@/lib/supabase/server';
 import { ProductRepository } from '@maison/db';
-
-const optionalNumber = z.preprocess(
-  (val) => (val === '' ? undefined : val),
-  z.coerce.number().optional()
-);
-
-const querySchema = z.object({
-  search: z.string().optional(),
-  categorie: z.string().optional(),
-  minPrice: optionalNumber,
-  maxPrice: optionalNumber,
-  inStock: z.preprocess((v) => v === 'true', z.boolean().optional()),
-  couleur: z.preprocess((v) => (Array.isArray(v) ? v : v ? [v] : undefined), z.array(z.string()).optional()),
-  taille: z.preprocess((v) => (Array.isArray(v) ? v : v ? [v] : undefined), z.array(z.string()).optional()),
-  sort: z.enum(['prix_asc', 'prix_desc']).optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
-  offset: z.coerce.number().min(0).default(0),
-  useFullText: z.preprocess((v) => v === 'true', z.boolean().default(false))
-});
+import { produitQuerySchema } from '@maison/domain';
 
 export const dynamic = 'force-dynamic';
 
 export const GET = createApiHandler(async (req: Request) => {
   const url = new URL(req.url);
   const rawParams = parseMultiValueParams(url.searchParams);
-  const filters = querySchema.parse(rawParams);
+  const filters = produitQuerySchema.parse(rawParams);
 
   const supabase = await createClient();
   const repo = new ProductRepository(supabase);

@@ -5,7 +5,7 @@
  * Special focus on mobile performance
  */
 
-import { chromium, Browser, Page, BrowserContext, ConsoleMessage, Request, Response } from 'playwright'
+import { chromium, Browser, Page, ConsoleMessage, Request, Response } from 'playwright'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
@@ -65,34 +65,34 @@ class QATestSuite {
   private baseUrl: string
   private results: PageTestResult[] = []
   private allErrors: ErrorReport[] = []
-  
+
   constructor(baseUrl: string = 'https://maison-slimani-experience.vercel.app') {
     this.baseUrl = baseUrl
   }
-  
+
   async initialize() {
     console.log('🚀 Initializing QA Test Suite...')
-    this.browser = await chromium.launch({ 
+    this.browser = await chromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
   }
-  
+
   async close() {
     if (this.browser) {
       await this.browser.close()
     }
   }
-  
+
   getAllErrors(): ErrorReport[] {
     return this.allErrors
   }
-  
+
   async testPage(url: string): Promise<PageTestResult> {
     if (!this.browser) throw new Error('Browser not initialized')
-    
+
     console.log(`\n🔍 Testing: ${url}`)
-    
+
     const result: PageTestResult = {
       url,
       status: 'passed',
@@ -109,37 +109,37 @@ class QATestSuite {
       },
       loadTime: 0
     }
-    
+
     // Test Desktop Performance
     console.log('   📊 Testing desktop performance...')
     result.performance.desktop = await this.testPerformance(url, 'desktop')
-    
+
     // Test Mobile Performance (critical!)
     console.log('   📱 Testing mobile performance...')
     result.performance.mobile = await this.testPerformance(url, 'mobile')
-    
+
     // Test Functionality
     console.log('   🔧 Testing functionality...')
     await this.testFunctionality(url, result)
-    
+
     // Collect errors
     result.errors = this.allErrors.filter(e => e.url === url)
-    
+
     // Determine status
     if (result.errors.some(e => e.severity === 'critical' || e.severity === 'high')) {
       result.status = 'failed'
     } else if (result.errors.length > 0 || result.functionality.brokenLinks.length > 0) {
       result.status = 'warning'
     }
-    
+
     return result
   }
-  
+
   async testPerformance(url: string, device: 'desktop' | 'mobile'): Promise<PerformanceMetrics | null> {
     if (!this.browser) return null
-    
+
     const context = await this.browser.newContext({
-      viewport: device === 'mobile' 
+      viewport: device === 'mobile'
         ? { width: 375, height: 667 } // iPhone SE size
         : { width: 1920, height: 1080 },
       userAgent: device === 'mobile'
@@ -149,7 +149,7 @@ class QATestSuite {
       isMobile: device === 'mobile',
       hasTouch: device === 'mobile'
     })
-    
+
     const page = await context.newPage()
     const errors: ErrorReport[] = []
     const networkErrors: string[] = []
@@ -160,7 +160,7 @@ class QATestSuite {
     let cssSize = 0
     let networkRequests = 0
     let failedRequests = 0
-    
+
     // Track console errors
     page.on('console', (msg: ConsoleMessage) => {
       const type = msg.type()
@@ -174,7 +174,7 @@ class QATestSuite {
         })
       }
     })
-    
+
     // Track page errors
     page.on('pageerror', (error: Error) => {
       errors.push({
@@ -185,19 +185,19 @@ class QATestSuite {
         stack: error.stack
       })
     })
-    
+
     // Track network requests
     page.on('request', (request: Request) => {
       networkRequests++
       const resourceType = request.resourceType()
       const url = request.url()
-      
+
       // Check for failed resources
       if (url.includes('404') || url.includes('error')) {
         networkErrors.push(url)
       }
     })
-    
+
     page.on('requestfailed', (request: Request) => {
       failedRequests++
       networkErrors.push(request.url())
@@ -212,12 +212,12 @@ class QATestSuite {
         }
       })
     })
-    
+
     page.on('response', (response: Response) => {
       const headers = response.headers()
       const contentLength = parseInt(headers['content-length'] || '0', 10)
       totalSize += contentLength
-      
+
       const resourceType = response.request().resourceType()
       if (resourceType === 'image') {
         imageSize += contentLength
@@ -226,7 +226,7 @@ class QATestSuite {
       } else if (resourceType === 'stylesheet') {
         cssSize += contentLength
       }
-      
+
       // Check for error status codes
       if (response.status() >= 400) {
         errors.push({
@@ -241,35 +241,35 @@ class QATestSuite {
         })
       }
     })
-    
+
     try {
       // Start performance measurement
       const startTime = Date.now()
-      
+
       // Navigate with performance API
-      await page.goto(url, { 
+      await page.goto(url, {
         waitUntil: 'networkidle',
-        timeout: 30000 
+        timeout: 30000
       })
-      
+
       // Wait for page to be fully interactive
       await page.waitForLoadState('domcontentloaded')
       await page.waitForTimeout(2000) // Wait for any lazy-loaded content
-      
+
       loadTime = Date.now() - startTime
-      
+
       // Get performance metrics using CDP
       const client = await context.newCDPSession(page)
       await client.send('Performance.enable')
       await client.send('Runtime.enable')
-      
+
       // Get performance timing
       const performanceTiming = await page.evaluate(() => {
         const perf = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
         const paint = performance.getEntriesByType('paint')
         const fcp = paint.find(p => p.name === 'first-contentful-paint')
         const lcp = performance.getEntriesByType('largest-contentful-paint')
-        
+
         return {
           loadTime: perf.loadEventEnd - perf.fetchStart,
           domContentLoaded: perf.domContentLoadedEventEnd - perf.fetchStart,
@@ -277,7 +277,7 @@ class QATestSuite {
           largestContentfulPaint: lcp.length > 0 ? lcp[lcp.length - 1].startTime : 0
         }
       })
-      
+
       // Calculate Core Web Vitals
       const metrics = await page.evaluate(() => {
         return new Promise<{ cls: number }>((resolve) => {
@@ -293,26 +293,26 @@ class QATestSuite {
             resolve({ cls: clsValue })
           })
           observer.observe({ type: 'layout-shift', buffered: true })
-          
+
           setTimeout(() => {
             observer.disconnect()
             resolve({ cls: clsValue })
           }, 3000)
         })
       })
-      
+
       // Calculate TBT (Total Blocking Time) - simplified
       const tbt = await page.evaluate(() => {
         const longTasks = performance.getEntriesByType('longtask') as PerformanceEntry[]
         return longTasks.reduce((sum, task) => sum + (task.duration - 50), 0)
       })
-      
+
       // Calculate Speed Index (simplified)
       const speedIndex = await this.calculateSpeedIndex(page)
-      
+
       // Store errors
       this.allErrors.push(...errors)
-      
+
       const perfMetrics: PerformanceMetrics = {
         url,
         device,
@@ -330,24 +330,25 @@ class QATestSuite {
         networkRequests,
         failedRequests
       }
-      
+
       await context.close()
       return perfMetrics
-      
-    } catch (error: any) {
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
       errors.push({
         type: 'runtime',
         severity: 'critical',
-        message: `Failed to load page: ${error.message}`,
+        message: `Failed to load page: ${err.message}`,
         url,
-        stack: error.stack
+        stack: err.stack
       })
       this.allErrors.push(...errors)
       await context.close()
       return null
     }
   }
-  
+
   async calculateSpeedIndex(page: Page): Promise<number> {
     // Simplified Speed Index calculation
     // In production, you'd use a more sophisticated method
@@ -360,19 +361,19 @@ class QATestSuite {
       return 0
     }
   }
-  
+
   async testFunctionality(url: string, result: PageTestResult) {
     if (!this.browser) return
-    
+
     const context = await this.browser.newContext({
       viewport: { width: 1920, height: 1080 }
     })
     const page = await context.newPage()
-    
+
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
       await page.waitForTimeout(1000)
-      
+
       // Test broken links
       const links = await page.locator('a[href]').all()
       for (const link of links.slice(0, 20)) { // Limit to first 20 links
@@ -391,7 +392,7 @@ class QATestSuite {
           // Link might be external or invalid
         }
       }
-      
+
       // Test missing images
       const images = await page.locator('img').all()
       for (const img of images) {
@@ -410,7 +411,7 @@ class QATestSuite {
           // Image might be external
         }
       }
-      
+
       // Test forms
       const forms = await page.locator('form').all()
       for (const form of forms) {
@@ -421,12 +422,12 @@ class QATestSuite {
             const id = await input.getAttribute('id')
             const name = await input.getAttribute('name')
             const label = id ? await page.locator(`label[for="${id}"]`).count() : 0
-            
+
             if (!label && !name) {
               result.functionality.formIssues.push('Required field without label or name')
             }
           }
-          
+
           // Check for submit buttons
           const submitButton = await form.locator('button[type="submit"], input[type="submit"]').count()
           if (submitButton === 0) {
@@ -436,14 +437,14 @@ class QATestSuite {
           // Form might have issues
         }
       }
-      
+
       // Basic accessibility checks
       // Check for missing alt text on images
       const imagesWithoutAlt = await page.locator('img:not([alt])').count()
       if (imagesWithoutAlt > 0) {
         result.functionality.accessibilityIssues.push(`${imagesWithoutAlt} images without alt text`)
       }
-      
+
       // Check for missing headings hierarchy
       const h1Count = await page.locator('h1').count()
       if (h1Count === 0) {
@@ -451,35 +452,36 @@ class QATestSuite {
       } else if (h1Count > 1) {
         result.functionality.accessibilityIssues.push('Multiple H1 headings found')
       }
-      
+
       // Check for buttons without accessible names
       const buttons = await page.locator('button').all()
       for (const button of buttons.slice(0, 10)) {
         const text = await button.textContent()
         const ariaLabel = await button.getAttribute('aria-label')
         const ariaLabelledBy = await button.getAttribute('aria-labelledby')
-        
+
         if (!text?.trim() && !ariaLabel && !ariaLabelledBy) {
           result.functionality.accessibilityIssues.push('Button without accessible name')
         }
       }
-      
-    } catch (error: any) {
+
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
       this.allErrors.push({
         type: 'runtime',
         severity: 'high',
-        message: `Functionality test failed: ${error.message}`,
+        message: `Functionality test failed: ${err.message}`,
         url,
-        stack: error.stack
+        stack: err.stack
       })
     } finally {
       await context.close()
     }
   }
-  
+
   async runAllTests() {
     console.log('\n🧪 Starting Comprehensive QA Testing Suite...\n')
-    
+
     const pagesToTest = [
       '/',
       '/boutique',
@@ -499,7 +501,7 @@ class QATestSuite {
       '/admin/commandes',
       '/admin/parametres',
     ]
-    
+
     for (const pagePath of pagesToTest) {
       const fullUrl = `${this.baseUrl}${pagePath}`
       try {
@@ -529,43 +531,43 @@ class QATestSuite {
       }
     }
   }
-  
+
   generateReport(): string {
     const totalPages = this.results.length
     const passedPages = this.results.filter(r => r.status === 'passed').length
     const failedPages = this.results.filter(r => r.status === 'failed').length
     const warningPages = this.results.filter(r => r.status === 'warning').length
-    
+
     const criticalErrors = this.allErrors.filter(e => e.severity === 'critical')
     const highErrors = this.allErrors.filter(e => e.severity === 'high')
     const mediumErrors = this.allErrors.filter(e => e.severity === 'medium')
     const lowErrors = this.allErrors.filter(e => e.severity === 'low')
-    
+
     // Performance analysis
     const mobilePerfs = this.results
       .map(r => r.performance.mobile)
       .filter(p => p !== null) as PerformanceMetrics[]
-    
+
     const desktopPerfs = this.results
       .map(r => r.performance.desktop)
       .filter(p => p !== null) as PerformanceMetrics[]
-    
+
     const avgMobileLCP = mobilePerfs.length > 0
       ? mobilePerfs.reduce((sum, p) => sum + p.largestContentfulPaint, 0) / mobilePerfs.length
       : 0
-    
+
     const avgMobileFCP = mobilePerfs.length > 0
       ? mobilePerfs.reduce((sum, p) => sum + p.firstContentfulPaint, 0) / mobilePerfs.length
       : 0
-    
+
     const avgMobileTBT = mobilePerfs.length > 0
       ? mobilePerfs.reduce((sum, p) => sum + p.totalBlockingTime, 0) / mobilePerfs.length
       : 0
-    
+
     const avgMobileCLS = mobilePerfs.length > 0
       ? mobilePerfs.reduce((sum, p) => sum + p.cumulativeLayoutShift, 0) / mobilePerfs.length
       : 0
-    
+
     let report = `# 🐛 RAPPORT QA COMPLET - MAISON SLIMANI
 # Analyse Professionnelle des Bugs, Erreurs et Performances
 
@@ -578,9 +580,9 @@ class QATestSuite {
 
 ### Statut Global
 - **Pages Testées:** ${totalPages}
-- **✅ Réussies:** ${passedPages} (${Math.round(passedPages/totalPages*100)}%)
-- **❌ Échouées:** ${failedPages} (${Math.round(failedPages/totalPages*100)}%)
-- **⚠️ Avertissements:** ${warningPages} (${Math.round(warningPages/totalPages*100)}%)
+- **✅ Réussies:** ${passedPages} (${Math.round(passedPages / totalPages * 100)}%)
+- **❌ Échouées:** ${failedPages} (${Math.round(failedPages / totalPages * 100)}%)
+- **⚠️ Avertissements:** ${warningPages} (${Math.round(warningPages / totalPages * 100)}%)
 
 ### Erreurs Détectées
 - **🔴 Critiques:** ${criticalErrors.length}
@@ -622,13 +624,13 @@ class QATestSuite {
 ### Métriques de Performance Mobile par Page
 
 `
-    
+
     mobilePerfs.forEach(perf => {
       const lcpStatus = perf.largestContentfulPaint < 2500 ? '✅' : perf.largestContentfulPaint < 4000 ? '⚠️' : '❌'
       const fcpStatus = perf.firstContentfulPaint < 1800 ? '✅' : perf.firstContentfulPaint < 3000 ? '⚠️' : '❌'
       const tbtStatus = perf.totalBlockingTime < 200 ? '✅' : perf.totalBlockingTime < 600 ? '⚠️' : '❌'
       const clsStatus = perf.cumulativeLayoutShift < 0.1 ? '✅' : perf.cumulativeLayoutShift < 0.25 ? '⚠️' : '❌'
-      
+
       report += `#### ${perf.url}\n`
       report += `- **LCP:** ${perf.largestContentfulPaint.toFixed(0)}ms ${lcpStatus}\n`
       report += `- **FCP:** ${perf.firstContentfulPaint.toFixed(0)}ms ${fcpStatus}\n`
@@ -642,7 +644,7 @@ class QATestSuite {
       report += `- **Requêtes Échouées:** ${perf.failedRequests}\n`
       report += `\n`
     })
-    
+
     // Desktop Performance Summary
     if (desktopPerfs.length > 0) {
       const avgDesktopLCP = desktopPerfs.reduce((sum, p) => sum + p.largestContentfulPaint, 0) / desktopPerfs.length
@@ -651,10 +653,10 @@ class QATestSuite {
       report += `- **FCP Moyen:** ${desktopPerfs.reduce((sum, p) => sum + p.firstContentfulPaint, 0) / desktopPerfs.length}ms\n`
       report += `\n`
     }
-    
+
     // Errors Section
     report += `## 🐛 ERREURS DÉTECTÉES\n\n`
-    
+
     if (criticalErrors.length > 0) {
       report += `### 🔴 Erreurs Critiques (${criticalErrors.length})\n\n`
       criticalErrors.forEach((error, index) => {
@@ -669,7 +671,7 @@ class QATestSuite {
         report += `\n`
       })
     }
-    
+
     if (highErrors.length > 0) {
       report += `### 🟠 Erreurs Élevées (${highErrors.length})\n\n`
       highErrors.slice(0, 20).forEach((error, index) => {
@@ -680,15 +682,15 @@ class QATestSuite {
       }
       report += `\n`
     }
-    
+
     // Functionality Issues
     report += `## 🔧 PROBLÈMES FONCTIONNELS\n\n`
-    
+
     const allBrokenLinks = this.results.flatMap(r => r.functionality.brokenLinks)
     const allMissingImages = this.results.flatMap(r => r.functionality.missingImages)
     const allFormIssues = this.results.flatMap(r => r.functionality.formIssues)
     const allAccessibilityIssues = this.results.flatMap(r => r.functionality.accessibilityIssues)
-    
+
     if (allBrokenLinks.length > 0) {
       report += `### Liens Cassés (${allBrokenLinks.length})\n\n`
       allBrokenLinks.slice(0, 10).forEach(link => {
@@ -699,7 +701,7 @@ class QATestSuite {
       }
       report += `\n`
     }
-    
+
     if (allMissingImages.length > 0) {
       report += `### Images Manquantes (${allMissingImages.length})\n\n`
       allMissingImages.slice(0, 10).forEach(img => {
@@ -710,7 +712,7 @@ class QATestSuite {
       }
       report += `\n`
     }
-    
+
     if (allFormIssues.length > 0) {
       report += `### Problèmes de Formulaires (${allFormIssues.length})\n\n`
       allFormIssues.forEach(issue => {
@@ -718,7 +720,7 @@ class QATestSuite {
       })
       report += `\n`
     }
-    
+
     if (allAccessibilityIssues.length > 0) {
       report += `### Problèmes d'Accessibilité (${allAccessibilityIssues.length})\n\n`
       allAccessibilityIssues.forEach(issue => {
@@ -726,15 +728,15 @@ class QATestSuite {
       })
       report += `\n`
     }
-    
+
     // Detailed Page Results
     report += `## 📄 DÉTAIL PAR PAGE\n\n`
-    
+
     this.results.forEach(result => {
       const statusIcon = result.status === 'passed' ? '✅' : result.status === 'failed' ? '❌' : '⚠️'
       report += `### ${statusIcon} ${result.url}\n\n`
       report += `**Statut:** ${result.status.toUpperCase()}\n`
-      
+
       if (result.performance.mobile) {
         const perf = result.performance.mobile
         report += `**Performance Mobile:**\n`
@@ -744,25 +746,25 @@ class QATestSuite {
         report += `- CLS: ${perf.cumulativeLayoutShift.toFixed(3)}\n`
         report += `- Taille: ${perf.totalSize} KB\n`
       }
-      
+
       if (result.errors.length > 0) {
         report += `**Erreurs:** ${result.errors.length}\n`
       }
-      
+
       if (result.functionality.brokenLinks.length > 0) {
         report += `**Liens Cassés:** ${result.functionality.brokenLinks.length}\n`
       }
-      
+
       if (result.functionality.missingImages.length > 0) {
         report += `**Images Manquantes:** ${result.functionality.missingImages.length}\n`
       }
-      
+
       report += `\n`
     })
-    
+
     // Recommendations
     report += `## 🎯 RECOMMANDATIONS PRIORITAIRES\n\n`
-    
+
     if (avgMobileLCP > 2500) {
       report += `### 1. Optimiser le LCP Mobile (CRITIQUE)\n`
       report += `- Utiliser Next.js Image avec optimization automatique\n`
@@ -772,7 +774,7 @@ class QATestSuite {
       report += `- Minimiser le CSS et JavaScript initial\n`
       report += `\n`
     }
-    
+
     if (avgMobileFCP > 1800) {
       report += `### 2. Améliorer le First Contentful Paint\n`
       report += `- Inline le CSS critique\n`
@@ -781,7 +783,7 @@ class QATestSuite {
       report += `- Optimiser le rendu initial\n`
       report += `\n`
     }
-    
+
     if (avgMobileTBT > 200) {
       report += `### 3. Réduire le Total Blocking Time\n`
       report += `- Code splitting par route\n`
@@ -790,7 +792,7 @@ class QATestSuite {
       report += `- Utiliser React.lazy() pour les composants lourds\n`
       report += `\n`
     }
-    
+
     if (avgMobileCLS > 0.1) {
       report += `### 4. Éliminer le Layout Shift\n`
       report += `- Définir width/height sur toutes les images\n`
@@ -799,20 +801,20 @@ class QATestSuite {
       report += `- Réserver l'espace pour les publicités/embeds\n`
       report += `\n`
     }
-    
+
     if (criticalErrors.length > 0) {
       report += `### 5. Corriger les Erreurs Critiques\n`
       report += `- ${criticalErrors.length} erreur(s) critique(s) détectée(s)\n`
       report += `- Voir la section "Erreurs Détectées" ci-dessus\n`
       report += `\n`
     }
-    
+
     report += `---\n`
     report += `*Rapport généré automatiquement par le QA Test Suite*\n`
-    
+
     return report
   }
-  
+
   async saveReport(report: string) {
     const reportPath = path.join(process.cwd(), 'QA_REPORT.md')
     await fs.writeFile(reportPath, report, 'utf-8')
@@ -825,25 +827,25 @@ async function main() {
   const baseUrl = process.env.BASE_URL || 'https://maison-slimani-experience.vercel.app'
   console.log(`\n🧪 QA Test Suite - Testing: ${baseUrl}\n`)
   console.log('🌐 Test de la version PRODUCTION\n')
-  
+
   const qaSuite = new QATestSuite(baseUrl)
-  
+
   try {
     await qaSuite.initialize()
     await qaSuite.runAllTests()
-    
+
     const report = qaSuite.generateReport()
     await qaSuite.saveReport(report)
-    
+
     const allErrors = qaSuite.getAllErrors()
     const totalErrors = allErrors.length
     const criticalErrors = allErrors.filter(e => e.severity === 'critical').length
-    
+
     console.log('\n✨ Tests terminés!')
     console.log(`📊 Total d'erreurs détectées: ${totalErrors}`)
     console.log(`🔴 Erreurs critiques: ${criticalErrors}`)
     console.log(`📄 Rapport sauvegardé dans QA_REPORT.md\n`)
-    
+
   } catch (error) {
     console.error('❌ Erreur lors des tests:', error)
     process.exit(1)

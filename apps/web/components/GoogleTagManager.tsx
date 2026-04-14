@@ -14,7 +14,7 @@ export function GoogleTagManagerHead() {
             try {
                 const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
                 if (result.success && result.data) {
-                    setHeaderCode(result.data.google_tag_manager_header || null)
+                    setHeaderCode(result.data.gtmHeader || null)
                 }
             } catch (error) {
                 console.error('Error fetching GTM settings:', error)
@@ -65,7 +65,7 @@ export function GoogleTagManagerBody() {
             try {
                 const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
                 if (result.success && result.data) {
-                    setBodyCode(result.data.google_tag_manager_body || null)
+                    setBodyCode(result.data.gtmBody || null)
                 }
             } catch (error) {
                 console.error('Error fetching GTM settings:', error)
@@ -87,5 +87,5 @@ export function GoogleTagManagerBody() {
     )
 }
 
-// Default export for backward compatibility (header only)
+// Default export for header only
 export default GoogleTagManagerHead

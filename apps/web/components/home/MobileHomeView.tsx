@@ -12,7 +12,7 @@ import { MobileHomeCollections } from './MobileHomeCollections'
 import { MobileHomeSelection } from './MobileHomeSelection'
 
 export default function MobileHomeView({ data }: { data: HomeViewData }) {
-  const { categories, produitsVedette, whatsappNumber } = data
+  const { categories, featuredProducts, whatsappNumber } = data
   const maisonImage = '/assets/lookbook-atelier.jpg'
 
   return (
@@ -22,7 +22,7 @@ export default function MobileHomeView({ data }: { data: HomeViewData }) {
       <div className="bg-charbon text-ecru py-3 text-[10px] tracking-[0.2em] text-center uppercase font-light">Livraison Gratuite • Fait Main • Retours 7J</div>
       <MobileHomeCollections categories={categories} />
       <GoldDivider variant="centered" spacing="sm" />
-      <MobileHomeSelection produits={produitsVedette} />
+      <MobileHomeSelection products={featuredProducts} />
       <GoldDivider variant="centered" withIcon="sparkles" />
       
       <section className="px-4 py-8">

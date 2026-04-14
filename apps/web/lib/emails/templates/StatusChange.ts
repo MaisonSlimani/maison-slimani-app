@@ -16,7 +16,7 @@ export function buildStatusChangeTemplate(commande: CommandeEmailPayload, contac
       <p>Mise à jour de votre commande</p>
     </div>
     <div class="content">
-      <p>Bonjour ${commande.nom_client},</p>
+      <p>Bonjour ${commande.clientName},</p>
       <p>Nous avons le plaisir de vous informer que votre commande a été expédiée et est en cours de livraison.</p>
       
       <div class="section" style="background:#f8f5f0; padding:20px; border:1px solid #d4a574; text-align:center;">
@@ -25,7 +25,7 @@ export function buildStatusChangeTemplate(commande: CommandeEmailPayload, contac
 
       <div class="section">
         <h2>Détails</h2>
-        <p><strong>Adresse :</strong> ${commande.adresse}, ${commande.ville}</p>
+        <p><strong>Adresse :</strong> ${commande.address}, ${commande.city}</p>
         <p><strong>Total :</strong> ${formatPrice(commande.total)}</p>
       </div>
     </div>

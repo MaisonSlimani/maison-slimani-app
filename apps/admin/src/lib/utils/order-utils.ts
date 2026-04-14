@@ -3,8 +3,8 @@ import { Order } from '@maison/domain'
 /**
  * Returns CSS classes for order status badges.
  */
-export const getStatutColor = (statut: string | null) => {
-  switch (statut) {
+export const getStatutColor = (status: string | null) => {
+  switch (status) {
     case 'En attente':
       return 'bg-yellow-400/20 text-yellow-600 border-yellow-400/30'
     case 'Expédiée':
@@ -25,12 +25,12 @@ export const formatOrdersToCSV = (commandes: Order[]) => {
   const headers = ['ID', 'Client', 'Téléphone', 'Ville', 'Total', 'Statut', 'Date']
   const rows = commandes.map((c) => [
     c.id.substring(0, 8),
-    c.nom_client,
-    c.telephone ?? '',
-    c.ville ?? '',
+    c.customerName,
+    c.phone ?? '',
+    c.city ?? '',
     c.total,
-    c.statut ?? '',
-    c.date_commande ? new Date(c.date_commande).toLocaleDateString('fr-FR') : '',
+    c.status ?? '',
+    c.orderedAt ? new Date(c.orderedAt).toLocaleDateString('fr-FR') : '',
   ])
 
   return [

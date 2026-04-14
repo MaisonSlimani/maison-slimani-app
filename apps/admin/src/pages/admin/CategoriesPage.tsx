@@ -9,7 +9,7 @@ import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { categoryRepo } from '@/lib/repositories'
-import { Category } from '@maison/domain'
+import { Category, CategoryInput } from '@maison/domain'
 import { CategoryCard } from '@/components/categories/CategoryCard'
 import { CategoriesHeader } from '@/components/categories/CategoriesHeader'
 
@@ -17,7 +17,7 @@ export default function CategoriesPage() {
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategorie, setEditingCategorie] = useState<Category | null>(null)
-  const [formData, setFormData] = useState({ nom: '', slug: '', description: '', image_url: '', ordre: 0, active: true })
+  const [formData, setFormData] = useState({ name: '', slug: '', description: '', image_url: '', order: 0, isActive: true })
   const [uploading, setUploading] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
@@ -30,7 +30,15 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent, imageUrl: string | null) => {
     e.preventDefault(); setUploading(true)
     try {
-      const payload = { ...formData, description: formData.description || null, image_url: imageUrl || null, ordre: parseInt(formData.ordre.toString()) || 0 }
+      const payload: CategoryInput = { 
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description || null, 
+        image_url: imageUrl || null, 
+        order: parseInt(formData.order.toString()) || 0,
+        isActive: formData.isActive,
+        color: null
+      }
       const res = editingCategorie ? await categoryRepo.update(editingCategorie.id, payload) : await categoryRepo.create(payload)
       if (!res.success) throw new Error(res.error || 'Erreur')
       toast.success(editingCategorie ? 'Mis à jour' : 'Créé')
@@ -58,7 +66,7 @@ export default function CategoriesPage() {
       <CategoriesHeader dialogOpen={dialogOpen} setDialogOpen={setDialogOpen} editingCategorie={editingCategorie} setEditingCategorie={setEditingCategorie} formData={formData} setFormData={setFormData} categoriesCount={categories.length} onSubmit={handleSubmit} uploading={uploading} />
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((c: Category) => (
-          <CategoryCard key={c.id} categorie={c} onEdit={cat => { setEditingCategorie(cat); setFormData({ nom: cat.nom, slug: cat.slug, description: cat.description || '', image_url: cat.image_url || '', ordre: cat.ordre || 0, active: cat.active !== false }); setDialogOpen(true) }} onDelete={setDeleteId} />
+          <CategoryCard key={c.id} categorie={c} onEdit={cat => { setEditingCategorie(cat); setFormData({ name: cat.name, slug: cat.slug, description: cat.description || '', image_url: cat.image_url || '', order: cat.order || 0, isActive: cat.isActive !== false }); setDialogOpen(true) }} onDelete={setDeleteId} />
         ))}
       </div>
       {categories.length === 0 && (

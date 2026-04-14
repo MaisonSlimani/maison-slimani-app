@@ -3,17 +3,10 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import CarteCategorie from '@/components/CarteCategorie'
-
-interface CategoryItem {
-  titre: string
-  lien: string
-  image: string
-  id?: string
-  tagline?: string
-}
+import { CategoryCardItem } from '@/types/views'
 
 interface HomeCategoriesProps {
-  categories: CategoryItem[]
+  categories: CategoryCardItem[]
   loading: boolean
 }
 
@@ -27,7 +20,7 @@ export function HomeCategories({ categories, loading }: HomeCategoriesProps) {
       {!loading ? (
         <div className="grid md:grid-cols-2 gap-8 container max-w-6xl mx-auto">
           {categories.map((cat, i: number) => (
-            <motion.div key={cat.titre} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <motion.div key={cat.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <CarteCategorie {...cat} priority={i === 0} />
             </motion.div>
           ))}

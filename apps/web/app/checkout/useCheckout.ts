@@ -9,12 +9,20 @@ import { tracker } from '@/lib/mixpanel-tracker'
 
 import { CartItem } from '@maison/domain'
 
+import { cleanCartItems, sendOrder } from '@/lib/api/order-client'
+
 export function useCheckout() {
   const router = useRouter()
   const { items, total, clearCart, isLoaded } = useCart()
   const [loading, setLoading] = useState(false)
   const [orderComplete, setOrderComplete] = useState(false)
-  const [formData, setFormData] = useState({ nom_client: '', telephone: '', email: '', adresse: '', ville: '' })
+  const [formData, setFormData] = useState({ 
+    customerName: '', 
+    phone: '', 
+    email: '', 
+    address: '', 
+    city: '' 
+  })
 
   useCheckoutAnalytics(isLoaded, items, total)
 
@@ -30,7 +38,7 @@ export function useCheckout() {
     
     try {
       const { commandeSchema } = await import('@maison/domain')
-      const payload = { ...formData, produits: cleanCartItems(items), total }
+      const payload = { ...formData, items: cleanCartItems(items), total }
       const validation = commandeSchema.safeParse(payload)
       
       if (!validation.success) {
@@ -38,7 +46,10 @@ export function useCheckout() {
       }
 
       setLoading(true)
-      const res = await sendOrder(validation.data)
+      const res = await sendOrder({
+        ...validation.data,
+        email: validation.data.email ?? null
+      })
       
       if (!res.success) {
         setLoading(false)
@@ -64,38 +75,14 @@ export function useCheckout() {
 function useCheckoutAnalytics(isLoaded: boolean, items: CartItem[], total: number) {
   useEffect(() => {
     if (isLoaded && items.length > 0) {
-      const numItems = items.reduce((sum, item) => sum + item.quantite, 0)
+      const numItems = items.reduce((sum, item) => sum + item.quantity, 0)
       trackInitiateCheckout({
-        value: total, currency: 'MAD', num_items: numItems,
-        contents: items.map(i => ({ id: i.id, quantity: i.quantite, item_price: i.prix })),
+        value: total, 
+        currency: 'MAD', 
+        num_items: numItems,
+        contents: items.map(i => ({ id: i.id, quantity: i.quantity, name: i.name, item_price: i.price })),
       })
       tracker.trackCheckoutStarted(items, total)
     }
   }, [isLoaded, items, total])
 }
-
-function cleanCartItems(items: CartItem[]) {
-  return items.map(item => ({
-    id: item.id, nom: item.nom, prix: item.prix, quantite: item.quantite,
-    image_url: item.image_url || null, taille: item.taille || null, couleur: item.couleur || null
-  }))
-}
-
-async function sendOrder(data: unknown) {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 15000)
-  try {
-    const response = await fetch('/api/v1/commandes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...(data as Record<string, unknown>), idempotency_key: crypto.randomUUID() }),
-      signal: controller.signal
-    })
-    clearTimeout(timeoutId)
-    return await response.json()
-  } catch (err) {
-    clearTimeout(timeoutId)
-    throw err
-  }
-}
-

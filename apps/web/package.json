@@ -7,6 +7,7 @@
     "dev": "next dev -p 3005 --turbo",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "playwright test --grep-invert e2e",
     "test:e2e": "playwright test"
@@ -51,20 +52,25 @@
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.3",
     "@playwright/test": "^1.59.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.16.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.3",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^17.4.0",
+    "jsdom": "^29.0.2",
     "playwright": "^1.59.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.58.1"
+    "typescript-eslint": "^8.58.1",
+    "vitest": "^4.1.4"
   }
 }

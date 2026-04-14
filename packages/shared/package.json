@@ -6,10 +6,13 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@maison/domain": "workspace:*",
     "clsx": "^2.1.1",
+    "isomorphic-dompurify": "^3.8.0",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.25.76"
   }

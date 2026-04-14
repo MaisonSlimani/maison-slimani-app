@@ -1,16 +1,17 @@
 'use client'
 
 
+import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
-import { Product, ProductService } from '@maison/domain'
+import { Product, validateProductSelections, getSelectedStock } from '@maison/domain'
 
 interface ProductActionProps {
   produit: Product;
-  quantite: number;
-  couleur: string;
-  taille: string;
+  quantity: number;
+  color: string;
+  size: string;
   setAddedToCart: (added: boolean) => void;
   params: Record<string, string>;
 }
@@ -19,25 +20,28 @@ interface ProductActionProps {
  * Hook to manage product-level actions (Cart, Wishlist)
  * Orchestrates domain services and UI state.
  */
-export function useProductActions({ produit, quantite, couleur, taille, setAddedToCart, params }: ProductActionProps) {
-  const { addItem, clearCart } = useCart()
+export function useProductActions({ produit, quantity, color, size, setAddedToCart, params }: ProductActionProps) {
+  const router = useRouter()
+  const { addItem } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
-  const productService = new ProductService()
 
   const handleAddToCart = async (buyNow = false) => {
     if (!produit) return
     
-    const error = productService.validateSelections(produit, couleur, taille)
+    const error = validateProductSelections(produit, color, size)
     if (error) return toast.error(error)
 
     try {
-      if (buyNow) clearCart()
-      else setAddedToCart(true)
+      const item = prepareCartItem(produit, quantity, color, size, params)
 
-      const item = prepareCartItem(produit, quantite, couleur, taille, params, productService)
-      await addItem(item, !buyNow)
-      
-      handlePostAddActions(buyNow)
+      if (buyNow) {
+        persistBuyNowItem(item)
+        router.push('/checkout')
+        return
+      }
+
+      setAddedToCart(true)
+      await addItem(item, true)
     } catch (err) { 
       setAddedToCart(false)
       toast.error((err as Error).message) 
@@ -50,7 +54,7 @@ export function useProductActions({ produit, quantite, couleur, taille, setAdded
       removeFromWishlist(produit.id)
       toast.success('Retiré des favoris')
     } else {
-      addToWishlist({ ...produit, quantite: 1, image_url: produit.image_url, taille: null, couleur: null })
+      addToWishlist({ ...produit, quantity: 1, image_url: produit.image_url, size: null, color: null })
       toast.success('Ajouté aux favoris')
     }
   }
@@ -58,21 +62,26 @@ export function useProductActions({ produit, quantite, couleur, taille, setAdded
   return { handleAddToCart, handleToggleWishlist, isInWishlist: isInWishlist(produit.id) }
 }
 
-function prepareCartItem(produit: Product, quantite: number, couleur: string, taille: string, params: Record<string, string>, service: ProductService) {
+function prepareCartItem(produit: Product, quantity: number, color: string, size: string, params: Record<string, string>) {
   return {
     ...produit, 
-    quantite, 
-    taille: taille || null, 
-    couleur: couleur || null,
-    stock: service.getSelectedStock(produit, couleur, taille),
+    quantity, 
+    size: size || null, 
+    color: color || null,
+    stock: getSelectedStock(produit, color, size),
     image_url: produit.image_url, 
     slug: produit.slug || params.slug,
     categorySlug: params.categorie
   }
 }
 
-function handlePostAddActions(buyNow: boolean) {
-  if (buyNow) {
-    window.location.href = '/checkout'
-  }
+/**
+ * Writes a single item to localStorage synchronously for Buy Now flow.
+ * Bypasses React state to prevent race conditions with hard navigation.
+ */
+function persistBuyNowItem(item: ReturnType<typeof prepareCartItem>) {
+  const cartItems = JSON.stringify([{ ...item, quantity: item.quantity || 1 }])
+  localStorage.setItem('cart', cartItems)
+  window.dispatchEvent(new Event('cartUpdated'))
 }
+

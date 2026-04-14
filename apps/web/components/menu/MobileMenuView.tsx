@@ -4,10 +4,11 @@ import React from 'react'
 import { Mail, HelpCircle, FileText, Heart } from 'lucide-react'
 import { MenuItemCard } from './MenuItemCard'
 import { MenuSocialLinks } from './MenuSocialLinks'
+import { WishlistItem } from '@/lib/hooks/useWishlist'
 
 interface MenuData {
   socials: { facebook?: string; instagram?: string }
-  wishlistItems: { id: string; nom: string; prix: number; image_url: string | null }[]
+  wishlistItems: WishlistItem[]
   wishlistLoaded: boolean
 }
 

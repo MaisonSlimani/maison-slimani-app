@@ -80,7 +80,7 @@ export default function UpsellProducts({ productId, className = '' }: UpsellProd
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
             <CarteProduit
-              produit={product}
+              product={product}
               showActions={true}
             />
           </motion.div>

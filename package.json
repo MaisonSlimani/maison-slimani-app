@@ -11,21 +11,33 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "eslint \"{apps,packages}/**/*.{ts,tsx,js,json}\" --max-warnings 0",
+    "typecheck": "turbo typecheck",
     "clean": "turbo clean && rm -rf node_modules",
     "admin:dev": "turbo dev --filter maison-slimani-admin",
     "web:dev": "turbo dev --filter maison-slimani-web",
     "test": "turbo test",
-    "test:e2e": "turbo test:e2e"
+    "test:e2e": "turbo test:e2e",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "~20.19.39",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",
     "dotenv": "^17.4.1",
     "eslint": "~9.39.4",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "tsx": "^4.20.6",
     "turbo": "latest",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.58.1"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix"
+    ]
   },
   "packageManager": "pnpm@10.30.3"
 }

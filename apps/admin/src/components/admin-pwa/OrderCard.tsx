@@ -15,7 +15,7 @@ interface OrderCardProps {
   onStatusChange?: (newStatus: string) => void
 }
 
-const statutConfig: Record<string, { icon: typeof AlertCircle; color: string; label: string }> = {
+const statusConfig: Record<string, { icon: typeof AlertCircle; color: string; label: string }> = {
   'En attente': {
     icon: AlertCircle,
     color: 'bg-yellow-400/20 text-yellow-600 border-yellow-400/30',
@@ -39,9 +39,9 @@ const statutConfig: Record<string, { icon: typeof AlertCircle; color: string; la
 }
 
 export default function OrderCard({ commande, onView, onStatusChange }: OrderCardProps) {
-  const statut = commande.statut || 'En attente'
-  const config = statutConfig[statut] || statutConfig['En attente']
-  const StatutIcon = config.icon
+  const status = commande.status || 'En attente'
+  const config = statusConfig[status] || statusConfig['En attente']
+  const StatusIcon = config.icon
 
   return (
     <Card className="p-4 touch-manipulation">
@@ -49,18 +49,18 @@ export default function OrderCard({ commande, onView, onStatusChange }: OrderCar
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="font-serif font-semibold text-foreground">
-              {commande.nom_client}
+              {commande.customerName}
             </h3>
             <Badge
               variant="outline"
               className={cn('text-xs shrink-0', config.color)}
             >
-              <StatutIcon className="w-3 h-3 mr-1" />
+              <StatusIcon className="w-3 h-3 mr-1" />
               {config.label}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            {commande.ville} • {commande.telephone}
+            {commande.city} • {commande.phone}
           </p>
           {commande.email && (
             <p className="text-xs text-muted-foreground mt-1">
@@ -68,7 +68,7 @@ export default function OrderCard({ commande, onView, onStatusChange }: OrderCar
             </p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
-            {commande.date_commande ? format(new Date(commande.date_commande), 'PPp', { locale: fr }) : ''}
+            {commande.orderedAt ? format(new Date(commande.orderedAt), 'PPp', { locale: fr }) : ''}
           </p>
         </div>
         <div className="text-right shrink-0">
@@ -76,7 +76,7 @@ export default function OrderCard({ commande, onView, onStatusChange }: OrderCar
             {commande.total.toLocaleString('fr-MA')} MAD
           </p>
           <p className="text-xs text-muted-foreground">
-            {commande.produits?.length || 0} article{commande.produits?.length !== 1 ? 's' : ''}
+            {commande.items?.length || 0} article{commande.items?.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -96,11 +96,11 @@ export default function OrderCard({ commande, onView, onStatusChange }: OrderCar
         {onStatusChange && (
           <Button
             size="sm"
-            onClick={() => statut === 'En attente' && onStatusChange('Expédiée')}
-            disabled={statut !== 'En attente'}
+            onClick={() => status === 'En attente' && onStatusChange('Expédiée')}
+            disabled={status !== 'En attente'}
             className={cn(
               "flex-1",
-              statut === 'En attente' 
+              status === 'En attente' 
                 ? "bg-dore text-charbon hover:bg-dore/90" 
                 : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
             )}

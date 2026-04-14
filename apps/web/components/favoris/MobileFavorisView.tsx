@@ -36,12 +36,12 @@ export default function MobileFavorisView({ data }: { data: FavorisViewData }) {
               <Card key={item.id} className="p-4 bg-white rounded-3xl border-charbon/5 overflow-hidden">
                 <div className="flex gap-4">
                   <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-ecru">
-                    <OptimizedImage src={item.image_url || item.image || '/placeholder.jpg'} alt={item.nom} fill className="object-cover" />
+                    <OptimizedImage src={item.image_url || item.image || '/placeholder.jpg'} alt={item.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-serif text-lg leading-tight mb-1">{item.nom}</h3>
-                      <p className="text-dore font-serif">{item.prix.toLocaleString('fr-MA')} DH</p>
+                      <h3 className="font-serif text-lg leading-tight mb-1">{item.name}</h3>
+                      <p className="text-dore font-serif">{item.price.toLocaleString('fr-MA')} DH</p>
                     </div>
                     <div className="flex gap-2">
                       <Button 

@@ -8,8 +8,8 @@ interface CategoriesHeaderProps {
   setDialogOpen: (o: boolean) => void
   editingCategorie: Category | null
   setEditingCategorie: (c: Category | null) => void
-  formData: { nom: string; slug: string; description: string; image_url: string; ordre: number; active: boolean }
-  setFormData: (d: { nom: string; slug: string; description: string; image_url: string; ordre: number; active: boolean }) => void
+  formData: { name: string; slug: string; description: string; image_url: string; order: number; isActive: boolean }
+  setFormData: (d: { name: string; slug: string; description: string; image_url: string; order: number; isActive: boolean }) => void
   categoriesCount: number
   onSubmit: (e: React.FormEvent, url: string | null) => void
   uploading: boolean
@@ -28,7 +28,7 @@ export function CategoriesHeader({
         <DialogTrigger asChild>
           <Button onClick={() => {
             setEditingCategorie(null)
-            setFormData({ nom: '', slug: '', description: '', image_url: '', ordre: categoriesCount, active: true })
+            setFormData({ name: '', slug: '', description: '', image_url: '', order: categoriesCount, isActive: true })
           }}>
             <Plus className="w-4 h-4 mr-2" /> Nouvelle catégorie
           </Button>

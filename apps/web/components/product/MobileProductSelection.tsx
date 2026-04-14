@@ -7,31 +7,36 @@ import { cn } from '@maison/shared'
 
 import { ProductVariation } from '@maison/domain'
 
-interface ProductSelectionProps {
+interface ProductSize {
+  name: string;
+  stock?: number | null;
+}
+
+interface MobileProductSelectionProps {
   hasColors: boolean
-  couleurs: ProductVariation[]
+  colors: ProductVariation[]
   selectedColor: string | null
   setSelectedColor: (c: string) => void
-  taillesData: ProductVariation[]
-  selectedTaille: string | null
-  setSelectedTaille: (t: string) => void
+  sizesData: ProductSize[]
+  selectedSize: string | null
+  setSelectedSize: (t: string) => void
   isInCart: boolean
   onAddToCart: (checkout: boolean) => void
 }
 
 export function MobileProductSelection({
-  hasColors, couleurs, selectedColor, setSelectedColor,
-  taillesData, selectedTaille, setSelectedTaille,
+  hasColors, colors, selectedColor, setSelectedColor,
+  sizesData, selectedSize, setSelectedSize,
   isInCart, onAddToCart
-}: ProductSelectionProps) {
+}: MobileProductSelectionProps) {
   return (
     <div className="space-y-6">
-      {hasColors && couleurs?.length > 0 && (
+      {hasColors && colors?.length > 0 && (
         <div className="space-y-3">
           <span className="text-sm font-medium uppercase tracking-wider">Couleur: {selectedColor}</span>
           <div className="flex flex-wrap gap-3">
-            {couleurs.map((c) => (
-              <button key={c.nom} onClick={() => setSelectedColor(c.nom)} className={cn("w-12 h-12 rounded-xl border-2 transition-all p-0.5", selectedColor === c.nom ? "border-charbon scale-110" : "border-transparent")}>
+            {colors.map((c) => (
+              <button key={c.name} onClick={() => setSelectedColor(c.name)} className={cn("w-12 h-12 rounded-xl border-2 transition-all p-0.5", selectedColor === c.name ? "border-charbon scale-110" : "border-transparent")}>
                 <div className="w-full h-full rounded-lg" style={{ backgroundColor: c.code || '#000' }} />
               </button>
             ))}
@@ -39,12 +44,26 @@ export function MobileProductSelection({
         </div>
       )}
 
-      {taillesData.length > 0 && (
+      {sizesData && sizesData.length > 0 && (
         <div className="space-y-3">
           <span className="text-sm font-medium uppercase tracking-wider">Taille</span>
           <div className="grid grid-cols-5 gap-2">
-            {taillesData.map((t) => (
-              <button key={t.nom} disabled={(t.stock ?? 0) <= 0} onClick={() => setSelectedTaille(t.nom)} className={cn("h-12 rounded-xl border-2 flex items-center justify-center font-medium transition-all", (t.stock ?? 0) <= 0 ? "opacity-30 border-dashed" : selectedTaille === t.nom ? "bg-charbon text-white border-charbon shadow-md" : "border-charbon/10 bg-white")}>{t.nom}</button>
+            {sizesData.map((t) => (
+              <button 
+                key={t.name} 
+                disabled={(t.stock ?? 0) <= 0} 
+                onClick={() => setSelectedSize(t.name)} 
+                className={cn(
+                  "h-12 rounded-xl border-2 flex items-center justify-center font-medium transition-all", 
+                  (t.stock ?? 0) <= 0 
+                    ? "opacity-30 border-dashed" 
+                    : selectedSize === t.name
+                      ? "bg-charbon text-white border-charbon shadow-md" 
+                      : "border-charbon/10 bg-white"
+                )}
+              >
+                {t.name}
+              </button>
             ))}
           </div>
         </div>

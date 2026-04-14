@@ -35,14 +35,14 @@ export default function ProduitDetailClient({ produitInitial }: ProduitDetailCli
     script.textContent = JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Product',
-      name: produit.nom,
+      name: produit.name,
       description: produit.description,
       image: produit.image_url,
       sku: produit.id,
       brand: { '@type': 'Brand', name: 'Maison Slimani' },
       offers: {
         '@type': 'Offer',
-        price: produit.prix,
+        price: produit.price,
         priceCurrency: 'MAD',
         availability: (produit.stock || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         url: typeof window !== 'undefined' ? window.location.href : '',

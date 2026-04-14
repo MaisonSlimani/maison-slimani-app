@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { ProductRepository, createClient } from '@maison/db'
+import { ProductSitemapRepository, createClient } from '@maison/db'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maison-slimani.com'
@@ -12,8 +12,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const supabase = await createClient()
-    const productRepo = new ProductRepository(supabase)
-    const { categories, produits } = await productRepo.getSitemapData()
+    const productSitemapRepo = new ProductSitemapRepository(supabase)
+    const { categories, produits } = await productSitemapRepo.getSitemapData()
 
     const categoryPages: MetadataRoute.Sitemap = (categories || []).map((cat) => ({
       url: `${baseUrl}/boutique/${cat.slug}`,

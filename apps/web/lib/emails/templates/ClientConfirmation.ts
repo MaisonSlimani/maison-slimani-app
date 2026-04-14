@@ -16,21 +16,21 @@ export function buildClientConfirmationTemplate(commande: CommandeEmailPayload, 
       <p>Confirmation de commande</p>
     </div>
     <div class="content">
-      <p>Bonjour ${commande.nom_client},</p>
+      <p>Bonjour ${commande.clientName},</p>
       <p>Nous vous confirmons la réception de votre commande. Merci pour votre confiance !</p>
       
       <div class="section" style="background:#f8f5f0; padding:20px; border:1px solid #d4a574;">
         <p><strong>Commande #${commande.id.substring(0, 8).toUpperCase()}</strong></p>
-        <p>Statut : ${commande.statut}</p>
+        <p>Statut : ${commande.status}</p>
       </div>
 
       <div class="section">
         <h2>Produits commandés</h2>
         <table style="width:100%; border-collapse:collapse;">
-          ${commande.produits.map(p => `
+          ${commande.products.map(p => `
             <tr>
-              <td style="padding:10px; border-bottom:1px solid #e8e3d9;">${p.nom} x ${p.quantite}</td>
-              <td style="padding:10px; border-bottom:1px solid #e8e3d9; text-align:right;">${formatPrice(p.prix * p.quantite)}</td>
+              <td style="padding:10px; border-bottom:1px solid #e8e3d9;">${p.name} x ${p.quantity}</td>
+              <td style="padding:10px; border-bottom:1px solid #e8e3d9; text-align:right;">${formatPrice(p.price * p.quantity)}</td>
             </tr>
           `).join('')}
         </table>

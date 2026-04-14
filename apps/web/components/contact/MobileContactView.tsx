@@ -1,63 +1,60 @@
 'use client'
 
 import React from 'react'
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock, Instagram } from 'lucide-react'
 import ContactForm from '@/app/contact/ContactForm'
+import { SiteSettings } from '@maison/domain'
 
-import { ContactViewData } from '@/types/views'
+interface ContactViewData {
+  settings: SiteSettings;
+  loading: boolean;
+}
 
 export default function MobileContactView({ data }: { data: ContactViewData }) {
   const { settings, loading } = data
 
   return (
-    <div className="w-full min-h-screen pb-20 bg-ecru/30">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
-        <h1 className="text-2xl font-serif text-foreground">Contact</h1>
+    <div className="pt-24 pb-20 px-4 space-y-10">
+      <div className="text-center px-4">
+        <h1 className="text-4xl font-serif text-charbon mb-4">Nous <span className="text-dore">Contacter</span></h1>
+        <p className="text-base text-muted-foreground">Une équipe à votre écoute pour un service d'excellence.</p>
       </div>
 
-      <div className="px-4 py-6 space-y-8 max-w-md mx-auto">
-        <div className="space-y-4">
+      <div className="space-y-8">
+        <div className="space-y-6">
+          <InfoCard icon={Phone} label="Appelez-nous" value={settings.phone} href={settings.phone ? `tel:${settings.phone.replace(/\s/g, '')}` : undefined} />
+          <InfoCard icon={Mail} label="Email" value={settings.companyEmail} href={settings.companyEmail ? `mailto:${settings.companyEmail}` : undefined} />
+          <InfoCard icon={MapPin} label="Atelier" value={settings.address} />
+          <InfoCard icon={Clock} label="Horaires" value="Lun - Sam : 09:00 - 19:00" />
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl shadow-lg border border-charbon/5">
+          <h2 className="text-2xl font-serif mb-6 text-charbon">Écrivez-nous</h2>
           <ContactForm settings={settings} loading={loading} />
         </div>
 
-        <div className="pt-8 border-t border-charbon/5 space-y-6">
-          <h2 className="text-xl font-serif">Nos coordonnées</h2>
-          <div className="space-y-4">
-             {settings.telephone && (
-              <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-charbon/5">
-                <div className="w-10 h-10 rounded-full bg-dore/10 flex items-center justify-center text-dore">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Téléphone</p>
-                  <p className="font-medium">{settings.telephone}</p>
-                </div>
-              </div>
-            )}
-            {settings.email_entreprise && (
-              <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-charbon/5">
-                <div className="w-10 h-10 rounded-full bg-dore/10 flex items-center justify-center text-dore">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="font-medium">{settings.email_entreprise}</p>
-                </div>
-              </div>
-            )}
-            {settings.adresse && (
-              <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-charbon/5">
-                <div className="w-10 h-10 rounded-full bg-dore/10 flex items-center justify-center text-dore">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Atelier</p>
-                  <p className="font-medium text-sm">{settings.adresse}</p>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="p-6 bg-ecru/30 rounded-3xl text-center space-y-4">
+          <h4 className="font-serif text-lg">Maison Slimani</h4>
+          <p className="text-sm text-muted-foreground">Suivez notre savoir-faire ancestral</p>
+          <div className="flex justify-center gap-4"><div className="w-12 h-12 rounded-full bg-charbon flex items-center justify-center text-white"><Instagram className="w-6 h-6" /></div></div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function InfoCard({ icon: Icon, label, value, href }: { icon: React.ElementType; label: string; value?: string | null; href?: string }) {
+  if (!value) return null
+  return (
+    <div className="flex gap-4 items-center p-4 bg-white rounded-2xl shadow-sm border border-charbon/5">
+      <div className="w-12 h-12 rounded-xl bg-dore/10 flex items-center justify-center text-dore flex-shrink-0"><Icon className="w-6 h-6" /></div>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{label}</h4>
+        {href ? (
+          <a href={href} className="text-sm font-serif text-charbon truncate block">{value}</a>
+        ) : (
+          <p className="text-sm font-serif text-charbon truncate">{value}</p>
+        )}
       </div>
     </div>
   )

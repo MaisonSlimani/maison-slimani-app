@@ -84,7 +84,7 @@ export async function getCategorySlug(categoryName: string): Promise<string | nu
     if (response.ok) {
       const data = await response.json()
       if (data.success && data.data) {
-        const category = data.data.find((cat: { nom: string; slug: string }) => cat.nom === categoryName)
+        const category = data.data.find((cat: { name: string; slug: string }) => cat.name === categoryName)
         return category?.slug || null
       }
     }
@@ -93,4 +93,3 @@ export async function getCategorySlug(categoryName: string): Promise<string | nu
   }
   return null
 }
-

@@ -1,25 +1,27 @@
 import { FAQItem, SiteSettings, FilterState } from './index'
 import { Product, CartItem } from '@maison/domain'
+import { LucideIcon } from 'lucide-react'
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 
 /**
  * Mapped category item shape used by view components.
- * Derived from Category domain model by useHomeData.
+ * Derived from Category domain model.
  */
 export interface CategoryCardItem {
-  titre: string
+  title: string
   tagline: string
   image: string
-  lien: string
+  link: string
 }
 
 /**
- * Data shape passed from HomeClient to DesktopHomeView / MobileHomeView.
+ * Data shape passed from HomeClient to Home views.
  */
 export interface HomeViewData {
   categories: CategoryCardItem[]
   loadingCategories: boolean
-  produitsVedette: Product[]
-  loadingVedette: boolean
+  featuredProducts: Product[]
+  loadingFeatured: boolean
   whatsappNumber: string | null
   categorySlugMap: Record<string, string>
 }
@@ -28,12 +30,12 @@ export interface HomeViewData {
  * Data shape passed to ProductDetail view components.
  */
 export interface ProductViewData {
-  produit: Product & { categorySlug?: string }
+  product: Product & { categorySlug?: string }
   categorySlugMap?: Record<string, string>
 }
 
 /**
- * Data shape for Favoris View.
+ * Data shape for Favorites View.
  */
 export interface FavorisViewData {
   items: CartItem[];
@@ -60,8 +62,6 @@ export interface ContactViewData {
   loading: boolean;
 }
 
-import { LucideIcon } from 'lucide-react'
-
 /**
  * Navigation state hook return type.
  */
@@ -86,8 +86,6 @@ export interface BottomNavItem {
   badge?: number;
 }
 
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
-
 /**
  * Bottom navigation hook return type.
  */
@@ -104,9 +102,9 @@ export interface BottomNavState {
  * Boutique view data shape.
  */
 export interface BoutiqueViewData {
-  produits: Product[];
+  products: Product[];
   loadingProducts: boolean;
-  categories: { nom: string; slug: string }[];
+  categories: { name: string; slug: string }[];
   categoriesWithImages: CategoryCardItem[];
   loadingCategories: boolean;
 }
@@ -118,8 +116,8 @@ export interface BoutiqueHeaderProps {
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   onFocus: () => void;
-  categorie: string;
-  categories: { nom: string; slug: string }[];
+  category: string;
+  categories: { name: string; slug: string }[];
   router: AppRouterInstance;
 }
 
@@ -127,24 +125,18 @@ export interface BoutiqueHeaderProps {
  * Category view data shape.
  */
 export interface CategoryViewData {
-  categorieInfo: {
-    nom: string;
+  categoryInfo: {
+    name: string;
     description: string | null;
     image: string;
   } | null;
   loadingCategory: boolean;
-  produits: Product[];
-  produitsLoading: boolean;
-  triPrix: string;
-  setTriPrix: (val: string) => void;
+  products: Product[];
+  productsLoading: boolean;
+  triPrice: string;
+  setTriPrice: (val: string) => void;
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   filters: FilterState;
   setFilters: (filters: FilterState) => void;
-  pagination?: {
-    total: number;
-    count: number;
-    page: number;
-    totalPages: number;
-  };
 }

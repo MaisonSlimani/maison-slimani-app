@@ -13,17 +13,17 @@ export function useOrderConfirmation() {
       const orderDataStr = localStorage.getItem('lastOrder')
       if (orderDataStr) {
         const orderData = JSON.parse(orderDataStr) as Order
-        if (orderData.id && orderData.produits) {
+        if (orderData.id && orderData.items) {
           const total = orderData.total || 0
-          const numItems = orderData.produits.reduce((sum: number, p: CommandeProduit) => sum + (p.quantite || 0), 0)
+          const numItems = orderData.items.reduce((sum: number, p: CommandeProduit) => sum + (p.quantity || 0), 0)
 
           trackPurchase({
             value: total,
             currency: 'MAD',
-            contents: orderData.produits.map((p: CommandeProduit) => ({
+            contents: orderData.items.map((p: CommandeProduit) => ({
               id: p.id,
-              quantity: p.quantite || 1,
-              item_price: p.prix || 0,
+              quantity: p.quantity || 1,
+              item_price: p.price || 0,
             })),
             order_id: orderData.id,
             num_items: numItems,
@@ -33,21 +33,21 @@ export function useOrderConfirmation() {
             id: orderData.id,
             total,
             numItems,
-            items: orderData.produits.map((p: CommandeProduit) => ({
+            items: orderData.items.map((p: CommandeProduit) => ({
               id: p.id,
-              name: p.nom,
-              quantity: p.quantite || 1,
-              price: p.prix || 0,
+              name: p.name,
+              quantity: p.quantity || 1,
+              price: p.price || 0,
             })),
             paymentMethod: 'COD',
           })
 
-          if (orderData.nom_client) {
+          if (orderData.customerName) {
             tracker.setUserProfile({
-              $name: orderData.nom_client,
+              $name: orderData.customerName,
               $email: orderData.email || undefined,
-              $phone: orderData.telephone || undefined,
-              city: orderData.ville,
+              $phone: orderData.phone || undefined,
+              city: orderData.city,
             })
           }
 

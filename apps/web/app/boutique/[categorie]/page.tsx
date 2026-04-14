@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             }
         }
 
-        const title = category.nom || 'Collection'
+        const title = category.name || 'Collection'
         const categoryDescription = category.description || ''
         const description = categoryDescription
             ? `${categoryDescription} Découvrez notre collection ${title} de chaussures homme. Cuir marocain haut de gamme. Livraison gratuite.`

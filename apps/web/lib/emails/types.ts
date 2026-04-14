@@ -1,20 +1,19 @@
 import { z } from 'zod'
-import { commandeProduitSchema } from '@/lib/validations'
+import { commandeProduitSchema } from '@maison/domain'
 
 export const commandeEmailSchema = z.object({
   id: z.string().uuid(),
-  nom_client: z.string(),
-  telephone: z.string(),
-  adresse: z.string(),
-  ville: z.string(),
-  produits: z.array(commandeProduitSchema),
+  clientName: z.string(),
+  phone: z.string(),
+  address: z.string(),
+  city: z.string(),
+  products: z.array(commandeProduitSchema),
   total: z.number().nonnegative(),
-  statut: z.string(),
-  notification_statut: z.boolean().optional(),
-  ancien_statut: z.string().optional(),
-  nouveau_statut: z.string().optional(),
-  client_email: z.string().email().optional().nullable(),
+  status: z.string(),
+  statusNotification: z.boolean().optional(),
+  oldStatus: z.string().optional(),
+  newStatus: z.string().optional(),
+  clientEmail: z.string().email().optional().nullable(),
 })
 
 export type CommandeEmailPayload = z.infer<typeof commandeEmailSchema>
-

@@ -4,8 +4,6 @@ import ProduitDetailClient from '@/components/ProduitDetailClient'
 
 import { fetchProductByPath } from '../../../data/fetchProduct'
 
-import { slugify } from '@/lib/utils/product-urls'
-
 export async function generateMetadata(
   { params }: { params: Promise<{ categorie: string; slug: string }> }
 ): Promise<Metadata> {
@@ -14,15 +12,26 @@ export async function generateMetadata(
 
   if (!product) return { title: 'Produit introuvable', description: "Ce produit n'existe pas." }
 
-  const title = `${product.nom} | Maison Slimani`
-  const description = product.description?.substring(0, 160) || `Découvrez ${product.nom}.`
+  const title = `${product.name} | Maison Slimani`
+  const description = product.description?.replace(/<[^>]*>/g, '').substring(0, 160) || `Découvrez ${product.name}.`
   const mainImage = product.image_url || (product.images && product.images.length > 0 ? product.images[0] : null)
   const images = mainImage ? [mainImage] : []
+  
+  const canonicalPath = `/boutique/${categorie}/${slug}`
 
   return {
     title,
     description,
-    openGraph: { title, description, images, type: 'website' },
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: { 
+      title, 
+      description, 
+      images, 
+      type: 'website',
+      url: canonicalPath,
+    },
     twitter: { card: 'summary_large_image', title, description, images }
   }
 }
@@ -34,24 +43,31 @@ export default async function ProductPage(
   const product = await fetchProductByPath(categorie, slug)
   if (!product) notFound()
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maison-slimani.com'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.maison-slimani.com'
   const imageUrl = product.image_url || (product.images && product.images.length > 0 ? product.images[0] : '')
+  const pageUrl = `${siteUrl}/boutique/${categorie}/${slug}`
   
+  // Enhanced Product JSON-LD
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.nom,
+    name: product.name,
     image: imageUrl,
-    description: product.description,
+    description: product.description?.replace(/<[^>]*>/g, ''), // Strip HTML for JSON-LD
+    sku: product.id,
+    mpn: product.id,
+    category: product.category,
     brand: {
       '@type': 'Brand',
       name: 'Maison Slimani'
     },
     offers: {
       '@type': 'Offer',
-      url: `${siteUrl}/boutique/${slugify(product.categorie || '')}/${product.slug}`,
+      url: pageUrl,
       priceCurrency: 'MAD',
-      price: product.prix,
+      price: product.price,
+      priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      itemCondition: 'https://schema.org/NewCondition',
       availability: (product.stock !== null && product.stock > 0) 
         ? 'https://schema.org/InStock' 
         : 'https://schema.org/OutOfStock',

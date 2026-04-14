@@ -17,10 +17,10 @@ test('DashboardService - calculateMetrics with empty data', () => {
 test('DashboardService - calculates revenue and orders correctly', () => {
   const service = new DashboardService();
   const orders: Partial<Order>[] = [
-    { total: 100, statut: 'Livré' },
-    { total: 50, statut: 'En attente' },
-    { total: 200, statut: 'Annulé' }, // Cancelled orders still count toward total revenue in this logic but maybe shouldn't? Current logic says yes.
-    { total: 0, statut: 'En attente' }
+    { total: 100, status: 'Livré' },
+    { total: 50, status: 'En attente' },
+    { total: 200, status: 'Annulé' }, 
+    { total: 0, status: 'En attente' }
   ];
 
   const metrics = service.calculateMetrics(orders as Order[], []);
@@ -33,10 +33,10 @@ test('DashboardService - calculates revenue and orders correctly', () => {
 test('DashboardService - calculates stock metrics correctly', () => {
   const service = new DashboardService();
   const products: Partial<Product>[] = [
-    { total_stock: 10 },
-    { total_stock: 0 },
-    { total_stock: -5 }, // Exceptional case but should be handled
-    { total_stock: 100 }
+    { totalStock: 10 },
+    { totalStock: 0 },
+    { totalStock: -5 }, 
+    { totalStock: 100 }
   ];
 
   const metrics = service.calculateMetrics([], products as Product[]);
@@ -47,13 +47,13 @@ test('DashboardService - calculates stock metrics correctly', () => {
 
 test('DashboardService - handles null/undefined values gracefully', () => {
   const service = new DashboardService();
-  const orders: any[] = [
-    { total: null, statut: 'En attente' },
-    { total: 100, statut: 'En attente' }
+  const orders: Partial<Order>[] = [
+    { total: undefined, status: 'En attente' },
+    { total: 100, status: 'En attente' }
   ];
-  const products: any[] = [
-    { total_stock: undefined },
-    { total_stock: 50 }
+  const products: Partial<Product>[] = [
+    { totalStock: undefined },
+    { totalStock: 50 }
   ];
 
   const metrics = service.calculateMetrics(orders as Order[], products as Product[]);

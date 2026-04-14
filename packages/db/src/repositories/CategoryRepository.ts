@@ -1,22 +1,29 @@
 import { AppSupabaseClient } from '../client.types';
-import { Category, DomainResult } from '@maison/domain';
+import { Category, CategoryInput, DomainResult, ICategoryRepository } from '@maison/domain';
 import { Database, TablesInsert, TablesUpdate } from '../database.types';
 
-export class CategoryRepository {
+type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+
+export class CategoryRepository implements ICategoryRepository {
   private supabase: AppSupabaseClient;
   constructor(supabase: AppSupabaseClient) {
     this.supabase = supabase;
   }
 
-  private mapCategory(data: Database["public"]["Tables"]["categories"]["Row"]): Category {
+  /**
+   * Maps a raw database row to a clean Domain Category model.
+   */
+  private mapCategory(data: CategoryRow): Category {
     return {
-      ...data,
+      id: data.id,
+      name: data.nom,
+      slug: data.slug,
       description: data.description || null,
       image_url: data.image_url || null,
-      active: data.active || false,
-      ordre: data.ordre || 0,
-      date_creation: data.date_creation || null,
-      couleur: data.couleur || null,
+      isActive: data.active ?? false,
+      order: data.ordre ?? 0,
+      createdAt: data.date_creation,
+      color: data.couleur || null,
     };
   }
 
@@ -52,10 +59,18 @@ export class CategoryRepository {
     return data ? this.mapCategory(data) : null;
   }
 
-  async create(payload: TablesInsert<'categories'>): Promise<DomainResult<Category>> {
+  async create(payload: CategoryInput): Promise<DomainResult<Category>> {
     const { data, error } = await this.supabase
       .from('categories')
-      .insert(payload)
+      .insert({
+        nom: payload.name,
+        slug: payload.slug,
+        description: payload.description,
+        image_url: payload.image_url,
+        active: payload.isActive,
+        ordre: payload.order,
+        couleur: payload.color
+      })
       .select()
       .single();
 
@@ -63,10 +78,19 @@ export class CategoryRepository {
     return { success: true, data: data ? this.mapCategory(data) : undefined };
   }
 
-  async update(id: string, payload: TablesUpdate<'categories'>): Promise<DomainResult<Category>> {
+  async update(id: string, payload: Partial<CategoryInput>): Promise<DomainResult<Category>> {
+    const dbPayload: TablesUpdate<'categories'> = {};
+    if (payload.name !== undefined) dbPayload.nom = payload.name;
+    if (payload.slug !== undefined) dbPayload.slug = payload.slug;
+    if (payload.description !== undefined) dbPayload.description = payload.description;
+    if (payload.image_url !== undefined) dbPayload.image_url = payload.image_url;
+    if (payload.isActive !== undefined) dbPayload.active = payload.isActive;
+    if (payload.order !== undefined) dbPayload.ordre = payload.order;
+    if (payload.color !== undefined) dbPayload.couleur = payload.color;
+
     const { data, error } = await this.supabase
       .from('categories')
-      .update(payload)
+      .update(dbPayload)
       .eq('id', id)
       .select()
       .single();

@@ -4,7 +4,7 @@ import { Package } from 'lucide-react'
 import { productRepo } from '@/lib/repositories'
 import { toast } from 'sonner'
 import { useState } from 'react'
-import { ProductListItem } from './ProductListItem'
+import ProductListItem from './ProductListItem'
 
 interface ProductListProps {
   products: Product[]
@@ -48,7 +48,7 @@ export function ProductList({ products, onEdit, onRefresh }: ProductListProps) {
           key={product.id} 
           product={product} 
           onEdit={onEdit} 
-          onDeleteRequest={setDeleteId} 
+          onDelete={setDeleteId} 
         />
       ))}
 

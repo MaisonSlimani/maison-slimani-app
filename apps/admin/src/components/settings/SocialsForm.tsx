@@ -1,9 +1,9 @@
-import { SiteSettings } from '@maison/db'
+import { SiteSettings } from '@maison/domain'
 import { Button, Input, Label, Textarea, Card } from '@maison/ui'
 
 export type SocialsFormData = Pick<
   SiteSettings,
-  'facebook' | 'instagram' | 'meta_pixel_code' | 'google_tag_manager_header' | 'google_tag_manager_body'
+  'facebook' | 'instagram' | 'metaPixelCode' | 'gtmHeader' | 'gtmBody'
 >
 
 interface SocialsFormProps {
@@ -26,17 +26,17 @@ export function SocialsForm({ formData, update, onSubmit, saving }: SocialsFormP
             <Input id="instagram" type="url" placeholder="https://www.instagram.com/votre-compte" value={formData.instagram ?? ''} onChange={update('instagram')} />
           </div>
         </div>
-        <div className="pt-4 border-t"><Label htmlFor="meta_pixel_code">Meta Pixel Code</Label>
-          <Textarea id="meta_pixel_code" rows={6} value={formData.meta_pixel_code ?? ''} onChange={update('meta_pixel_code')} className="font-mono text-sm" />
+        <div className="pt-4 border-t"><Label htmlFor="metaPixelCode">Meta Pixel Code</Label>
+          <Textarea id="metaPixelCode" rows={6} value={formData.metaPixelCode ?? ''} onChange={update('metaPixelCode')} className="font-mono text-sm" />
           <p className="text-xs text-muted-foreground mt-1">Collez ici le code complet de votre Meta Pixel.</p>
         </div>
         <div className="pt-4 border-t space-y-4">
           <h3 className="font-medium">Google Tag Manager</h3>
-          <div><Label htmlFor="gtm_header">Code Header (Head)</Label>
-            <Textarea id="gtm_header" rows={6} value={formData.google_tag_manager_header ?? ''} onChange={update('google_tag_manager_header')} className="font-mono text-sm" />
+          <div><Label htmlFor="gtmHeader">Code Header (Head)</Label>
+            <Textarea id="gtmHeader" rows={6} value={formData.gtmHeader ?? ''} onChange={update('gtmHeader')} className="font-mono text-sm" />
           </div>
-          <div><Label htmlFor="gtm_body">Code Body (Body)</Label>
-            <Textarea id="gtm_body" rows={4} value={formData.google_tag_manager_body ?? ''} onChange={update('google_tag_manager_body')} className="font-mono text-sm" />
+          <div><Label htmlFor="gtmBody">Code Body (Body)</Label>
+            <Textarea id="gtmBody" rows={4} value={formData.gtmBody ?? ''} onChange={update('gtmBody')} className="font-mono text-sm" />
           </div>
         </div>
         <Button type="submit" disabled={saving}>{saving ? 'Sauvegarde...' : 'Sauvegarder'}</Button>

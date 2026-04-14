@@ -13,7 +13,7 @@ import { CategoryViewData } from '@/types/views'
 import { Product } from '@maison/domain'
 
 export default function MobileCategoryView({ data }: { data: CategoryViewData }) {
-  const { categorieInfo, loadingCategory, produits, produitsLoading } = data
+  const { categoryInfo, loadingCategory, products, productsLoading } = data
   const { openDrawer } = useCartDrawer(); const { totalItems } = useCart()
   const [showScrollTop, setShowScrollTop] = React.useState(false)
 
@@ -22,31 +22,31 @@ export default function MobileCategoryView({ data }: { data: CategoryViewData })
     window.addEventListener('scroll', sync); return () => window.removeEventListener('scroll', sync)
   }, [])
 
-  if (loadingCategory || !categorieInfo) return <MobileSkeleton />
+  if (loadingCategory || !categoryInfo) return <MobileSkeleton />
 
   return (
     <div className="w-full min-h-screen pb-20 bg-ecru/30">
-      <Hero banner={categorieInfo} />
+      <Hero banner={categoryInfo} />
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 space-y-3">
         <SearchBar query={data.searchQuery} setQuery={data.setSearchQuery} total={totalItems} onOpen={openDrawer} />
-        <Filters data={data} categoryName={categorieInfo.nom} />
+        <Filters data={data} categoryName={categoryInfo.name} />
       </div>
       <div className="px-4 py-6">
-        {produitsLoading ? <div className="grid grid-cols-2 gap-4 max-w-md mx-auto"><ProductCardSkeleton count={6} /></div> : 
-         produits.length === 0 ? <div className="py-20 text-center text-muted-foreground font-serif">Aucun produit trouvé</div> :
-         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">{produits.map((p: Product) => <ProductCard key={p.id} produit={p} />)}</div>}
+        {productsLoading ? <div className="grid grid-cols-2 gap-4 max-w-md mx-auto"><ProductCardSkeleton count={6} /></div> : 
+         products.length === 0 ? <div className="py-20 text-center text-muted-foreground font-serif">Aucun produit trouvé</div> :
+         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">{products.map((p: Product) => <ProductCard key={p.id} product={p} />)}</div>}
       </div>
       {showScrollTop && <Button size="icon" className="fixed bottom-24 right-4 z-50 rounded-full bg-dore shadow-xl" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><ArrowUp className="w-4 h-4" /></Button>}
     </div>
   )
 }
 
-function Hero({ banner }: { banner: { image: string; nom: string } }) {
+function Hero({ banner }: { banner: { image: string; name: string } }) {
   return (
     <div className="relative h-56">
-      <Image src={banner.image} alt={banner.nom} fill className="object-cover" />
+      <Image src={banner.image} alt={banner.name} fill className="object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-charbon/80 to-transparent" />
-      <div className="absolute inset-0 flex items-end p-6"><h1 className="text-4xl font-serif text-white">{banner.nom}</h1></div>
+      <div className="absolute inset-0 flex items-end p-6"><h1 className="text-4xl font-serif text-white">{banner.name}</h1></div>
     </div>
   )
 }
@@ -63,7 +63,7 @@ function SearchBar({ query, setQuery, total, onOpen }: { query: string; setQuery
 function Filters({ data, categoryName }: { data: CategoryViewData; categoryName: string }) {
   return (
     <div className="flex gap-2">
-      <Select value={data.triPrix} onValueChange={data.setTriPrix}><SelectTrigger className="h-9 text-xs w-[140px] bg-muted border-0"><SelectValue placeholder="Trier" /></SelectTrigger><SelectContent><SelectItem value="prix-asc">Prix croissant</SelectItem><SelectItem value="prix-desc">Prix décroissant</SelectItem></SelectContent></Select>
+      <Select value={data.triPrice} onValueChange={data.setTriPrice}><SelectTrigger className="h-9 text-xs w-[140px] bg-muted border-0"><SelectValue placeholder="Trier" /></SelectTrigger><SelectContent><SelectItem value="price-asc">Prix croissant</SelectItem><SelectItem value="price-desc">Prix décroissant</SelectItem></SelectContent></Select>
       <ProductFilter onFilterChange={data.setFilters} currentFilters={data.filters} categoryName={categoryName} />
     </div>
   )

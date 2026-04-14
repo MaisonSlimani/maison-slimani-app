@@ -28,14 +28,14 @@ export function OrderItemActions({
             {selectedCommande && (
               <div className="space-y-6">
                 <div className="space-y-3">
-                  {(selectedCommande.produits ?? []).map((p, i) => (
+                  {(selectedCommande.items ?? []).map((p, i) => (
                     <div key={i} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
                       {p.image_url && <img src={p.image_url} alt="" className="w-16 h-16 rounded-lg object-cover" />}
                       <div className="flex-1">
-                        <p className="font-medium">{p.nom}</p>
-                        <p className="text-sm text-muted-foreground">{p.quantite} × {p.prix.toLocaleString('fr-MA')} DH</p>
+                        <p className="font-medium">{p.name}</p>
+                        <p className="text-sm text-muted-foreground">{p.quantity} × {p.price.toLocaleString('fr-MA')} DH</p>
                       </div>
-                      <p className="font-medium text-dore">{(p.prix * p.quantite).toLocaleString('fr-MA')} DH</p>
+                      <p className="font-medium text-dore">{(p.price * p.quantity).toLocaleString('fr-MA')} DH</p>
                     </div>
                   ))}
                 </div>

@@ -5,8 +5,8 @@ import { createClient } from './supabase';
 export type StockUpdateCallback = (data: { 
   id: string; 
   stock: number | null; 
-  couleurs: ProductVariation[] | null;
-  has_colors: boolean | null;
+  colors: ProductVariation[] | null;
+  hasColors: boolean | null;
 }) => void;
 
 /**
@@ -31,8 +31,8 @@ export const subscribeToStockUpdate = (productId: string, onUpdate: StockUpdateC
       (payload: RealtimePostgresUpdatePayload<{ 
         id: string; 
         stock: number | null; 
-        couleurs: ProductVariation[] | null; 
-        has_colors: boolean | null; 
+        colors: ProductVariation[] | null; 
+        hasColors: boolean | null; 
       }>) => {
         onUpdate(payload.new);
       }
@@ -66,8 +66,8 @@ export const subscribeToBulkStockUpdates = (productIds: string[], onUpdate: Stoc
       (payload: RealtimePostgresUpdatePayload<{ 
         id: string; 
         stock: number | null; 
-        couleurs: ProductVariation[] | null; 
-        has_colors: boolean | null; 
+        colors: ProductVariation[] | null; 
+        hasColors: boolean | null; 
       }>) => {
         onUpdate(payload.new);
       }

@@ -2,19 +2,19 @@ import { Product, CartItem } from '@maison/domain'
 
 /**
  * A product-like object that can be mapped to a GA4 GTM item.
- * Covers domain Product, CartItem, and legacy analytics-specific fields.
+ * Standardizes access to clean Domain properties.
  */
 export interface GTMProductInput {
   id: string
-  nom?: string
-  content_name?: string
-  prix?: number
-  value?: number
-  quantite?: number
+  name?: string
+  price?: number
   quantity?: number
-  categorie?: string | null
-  category?: string
+  category?: string | null
   list_name?: string
+  // Legacy support for older analytics calls
+  nom?: string
+  prix?: number
+  quantite?: number
 }
 
 type GTMEvent = {
@@ -45,10 +45,10 @@ declare global {
 export const mapProductToGTM = (product: GTMProductInput, index?: number) => {
     return {
         item_id: product.id,
-        item_name: product.nom ?? product.content_name,
-        price: product.prix ?? product.value,
-        quantity: product.quantite ?? product.quantity ?? 1,
-        item_category: product.categorie ?? product.category,
+        item_name: product.name ?? product.nom,
+        price: product.price ?? product.prix,
+        quantity: product.quantity ?? product.quantite ?? 1,
+        item_category: product.category,
         item_list_name: product.list_name,
         index,
     }
@@ -66,14 +66,13 @@ export const pushToDataLayer = (event: GTMEvent) => {
 
 /**
  * GA4: view_item
- * Triggered when a user views a product details page
  */
 export const gtmViewItem = (product: Product) => {
     pushToDataLayer({
         event: 'view_item',
         ecommerce: {
             currency: 'MAD',
-            value: product.prix,
+            value: product.price,
             items: [mapProductToGTM(product)]
         }
     })
@@ -81,14 +80,13 @@ export const gtmViewItem = (product: Product) => {
 
 /**
  * GA4: add_to_cart
- * Triggered when a user adds a product to cart
  */
 export const gtmAddToCart = (product: CartItem) => {
     pushToDataLayer({
         event: 'add_to_cart',
         ecommerce: {
             currency: 'MAD',
-            value: (product.prix || 0) * (product.quantite || 1),
+            value: (product.price || 0) * (product.quantity || 1),
             items: [mapProductToGTM(product)]
         }
     })
@@ -96,7 +94,6 @@ export const gtmAddToCart = (product: CartItem) => {
 
 /**
  * GA4: view_cart
- * Triggered when a user views their cart
  */
 export const gtmViewCart = (cartItems: CartItem[], totalValue: number) => {
     pushToDataLayer({
@@ -111,7 +108,6 @@ export const gtmViewCart = (cartItems: CartItem[], totalValue: number) => {
 
 /**
  * GA4: begin_checkout
- * Triggered when a user starts the checkout process
  */
 export const gtmBeginCheckout = (cartItems: CartItem[], totalValue: number) => {
     pushToDataLayer({
@@ -126,7 +122,6 @@ export const gtmBeginCheckout = (cartItems: CartItem[], totalValue: number) => {
 
 /**
  * GA4: add_payment_info
- * Triggered when a user submits payment info (or moves to payment step)
  */
 export const gtmAddPaymentInfo = (cartItems: CartItem[], totalValue: number, paymentType: string) => {
     pushToDataLayer({
@@ -142,7 +137,6 @@ export const gtmAddPaymentInfo = (cartItems: CartItem[], totalValue: number, pay
 
 /**
  * GA4: purchase
- * Triggered when a purchase is confirmed
  */
 export const gtmPurchase = (order: {
     id: string
@@ -172,7 +166,7 @@ export const gtmAddToWishlist = (product: Product | CartItem) => {
         event: 'add_to_wishlist',
         ecommerce: {
             currency: 'MAD',
-            value: product.prix,
+            value: product.price,
             items: [mapProductToGTM(product)]
         }
     })
@@ -198,7 +192,7 @@ export const gtmViewItemList = (categoryName: string, products: Product[]) => {
         event: 'view_item_list',
         ecommerce: {
             item_list_name: categoryName,
-            items: products.slice(0, 10).map((p, idx) => mapProductToGTM(p, idx)) // Limit to first 10 to avoid huge payloads
+            items: products.slice(0, 10).map((p, idx) => mapProductToGTM(p, idx))
         }
     })
 }

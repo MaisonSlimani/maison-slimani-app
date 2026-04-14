@@ -6,17 +6,9 @@ import Link from 'next/link'
 import CarteCategorie from '@/components/CarteCategorie'
 import { Button } from '@maison/ui'
 import CategoryCardSkeleton from '@/components/skeletons/CategoryCardSkeleton'
-
 import { Category } from '@maison/domain'
-
 import { useBoutiqueData } from '@/hooks/useBoutiqueData'
-
-interface BoutiqueCategory {
-  titre: string;
-  tagline: string;
-  image: string;
-  lien: string;
-}
+import { CategoryCardItem } from '@/types/views'
 
 export default function DesktopBoutiqueView({ initialCategories }: { initialCategories?: Category[] }) {
   const { categoriesWithImages, loadingCategories } = useBoutiqueData('tous', '', initialCategories)
@@ -43,14 +35,19 @@ export default function DesktopBoutiqueView({ initialCategories }: { initialCate
   )
 }
 
-function useBoutiqueSEO(categories: BoutiqueCategory[], loading: boolean) {
+function useBoutiqueSEO(categories: CategoryCardItem[], loading: boolean) {
   useEffect(() => {
     if (loading) return
     document.title = 'Boutique - Nos Collections | Maison Slimani'
     const script = document.createElement('script')
     script.id = 'boutique-structured-data'
     script.type = 'application/ld+json'
-    script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Boutique - Nos Collections', url: window.location.href })
+    script.textContent = JSON.stringify({ 
+      '@context': 'https://schema.org', 
+      '@type': 'CollectionPage', 
+      name: 'Boutique - Nos Collections', 
+      url: window.location.href 
+    })
     document.head.appendChild(script)
     return () => { document.getElementById('boutique-structured-data')?.remove() }
   }, [categories, loading])
@@ -67,7 +64,7 @@ function BoutiqueHero() {
   )
 }
 
-function CategoryGrid({ categories }: { categories: BoutiqueCategory[] }) {
+function CategoryGrid({ categories }: { categories: CategoryCardItem[] }) {
   if (categories.length === 0) return (
     <div className="text-center py-16">
       <p className="text-charbon/70 text-lg mb-6">Aucune catégorie disponible</p>
@@ -80,7 +77,7 @@ function CategoryGrid({ categories }: { categories: BoutiqueCategory[] }) {
   return (
     <div className="grid md:grid-cols-2 gap-8">
       {categories.map((cat, i) => (
-        <motion.div key={cat.titre} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15, duration: 0.8 }} whileHover={{ y: -8 }}>
+        <motion.div key={cat.title} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15, duration: 0.8 }} whileHover={{ y: -8 }}>
           <CarteCategorie {...cat} priority={i < 2} />
         </motion.div>
       ))}

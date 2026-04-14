@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Category, HomeData, Product, SiteSettings } from '@maison/domain'
 import { apiFetch, ENDPOINTS } from '@/lib/api/client'
+import { CategoryCardItem } from '@/types/views'
 
 export function useHomeData(initialData?: HomeData) {
-  const [categories, setCategories] = useState(() => mapCategories(initialData?.categories))
+  const [categories, setCategories] = useState<CategoryCardItem[]>(() => mapCategories(initialData?.categories))
   const [loadingCategories, setLoadingCategories] = useState(!initialData?.categories)
   const [whatsappNumber, setWhatsappNumber] = useState(initialData?.whatsappNumber || null)
   const [categorySlugMap, setCategorySlugMap] = useState<Record<string, string>>(() => getSlugMap(initialData?.categories))
@@ -29,10 +30,10 @@ export function useHomeData(initialData?: HomeData) {
     }
   }, [categoriesData, initialData])
 
-  const { data: produitsVedette = initialData?.produitsVedette || [], isPending: loadingVedette } = useQuery({
-    queryKey: ['produits', 'vedette'],
+  const { data: featuredProducts = initialData?.featuredProducts || [], isPending: loadingFeatured } = useQuery({
+    queryKey: ['produits', 'featured'],
     staleTime: 15 * 60 * 1000,
-    initialData: initialData?.produitsVedette,
+    initialData: initialData?.featuredProducts,
     queryFn: async ({ signal }) => {
       const result = await apiFetch<Product[]>(`${ENDPOINTS.PRODUITS}?vedette=true&limit=6`, { signal })
       if (!result.success) throw new Error(result.error || 'Erreur API')
@@ -42,29 +43,36 @@ export function useHomeData(initialData?: HomeData) {
 
   useEffect(() => {
     if (initialData?.whatsappNumber) return
-    const chargerSettings = async () => {
+    const chargeSettings = async () => {
       try {
         const result = await apiFetch<SiteSettings>(ENDPOINTS.SETTINGS)
-        if (result.success && result.data?.telephone) {
-          setWhatsappNumber(formatWhatsApp(result.data.telephone))
+        if (result.success && result.data?.phone) {
+          setWhatsappNumber(formatWhatsApp(result.data.phone))
         }
       } catch (err) { console.error(err) }
     }
-    chargerSettings()
+    chargeSettings()
   }, [initialData])
 
-  return { categories, loadingCategories, produitsVedette, loadingVedette, whatsappNumber, categorySlugMap }
+  return { 
+    categories, 
+    loadingCategories, 
+    featuredProducts, 
+    loadingFeatured, 
+    whatsappNumber, 
+    categorySlugMap 
+  }
 }
 
-function mapCategories(data: Category[] | undefined) {
+function mapCategories(data: Category[] | undefined): CategoryCardItem[] {
   if (!data) return []
   return data
     .filter((cat) => cat.image_url?.trim())
     .map((cat) => ({
-      titre: cat.nom,
+      title: cat.name,
       tagline: cat.description || '',
       image: cat.image_url!,
-      lien: `/boutique/${cat.slug}`,
+      link: `/boutique/${cat.slug}`,
     }))
 }
 
@@ -72,7 +80,7 @@ function getSlugMap(data: Category[] | undefined) {
   const map: Record<string, string> = {}
   if (!data) return map
   data.forEach((cat) => {
-    if (cat.nom && cat.slug) map[cat.nom] = cat.slug
+    if (cat.name && cat.slug) map[cat.name] = cat.slug
   })
   return map
 }

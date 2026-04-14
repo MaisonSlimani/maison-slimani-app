@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { settingsRepo } from '@/lib/repositories'
 import { SocialsForm, SocialsFormData } from '@/components/settings/SocialsForm'
 
-const DEFAULT_FORM: SocialsFormData = { facebook: '', instagram: '', meta_pixel_code: '', google_tag_manager_header: '', google_tag_manager_body: '' }
+const DEFAULT_FORM: SocialsFormData = { facebook: '', instagram: '', metaPixelCode: '', gtmHeader: '', gtmBody: '' }
 
 export default function SocialsPage() {
   const [loading, setLoading] = useState(true)
@@ -19,9 +19,9 @@ export default function SocialsPage() {
           setFormData({
             facebook: settings.facebook ?? '',
             instagram: settings.instagram ?? '',
-            meta_pixel_code: settings.meta_pixel_code ?? '',
-            google_tag_manager_header: settings.google_tag_manager_header ?? '',
-            google_tag_manager_body: settings.google_tag_manager_body ?? '',
+            metaPixelCode: settings.metaPixelCode ?? '',
+            gtmHeader: settings.gtmHeader ?? '',
+            gtmBody: settings.gtmBody ?? '',
           })
         }
       } catch { toast.error('Erreur lors du chargement') }

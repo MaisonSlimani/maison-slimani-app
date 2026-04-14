@@ -43,8 +43,8 @@ export default function MobileFAQView({ data }: { data: FAQViewData }) {
                 <MessageCircle className="w-5 h-5" /> WhatsApp
               </a>
             )}
-            {settings.email_entreprise && (
-              <a href={`mailto:${settings.email_entreprise}`} className="flex items-center justify-center gap-2 p-4 bg-charbon text-white rounded-2xl">
+            {settings.companyEmail && (
+              <a href={`mailto:${settings.companyEmail}`} className="flex items-center justify-center gap-2 p-4 bg-charbon text-white rounded-2xl">
                 <Mail className="w-5 h-5" /> Email
               </a>
             )}

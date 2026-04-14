@@ -38,7 +38,7 @@ export const CartItem = ({
         className="relative w-20 h-20 rounded overflow-hidden flex-shrink-0 bg-muted"
         onClick={onClose}
       >
-        <Image src={imageUrl} alt={item.nom} fill className="object-cover" sizes="80px" />
+        <Image src={imageUrl} alt={item.name} fill className="object-cover" sizes="80px" />
       </Link>
 
       <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -50,21 +50,21 @@ export const CartItem = ({
             </div>
           )}
           <Link href={productUrl} onClick={onClose}>
-            <h4 className="font-medium hover:text-dore transition-colors truncate">{item.nom}</h4>
+            <h4 className="font-medium hover:text-dore transition-colors truncate">{item.name}</h4>
           </Link>
           <p className="text-sm text-muted-foreground">
-            {item.couleur && <span>{item.couleur}</span>}
-            {item.couleur && item.taille && <span> • </span>}
-            {item.taille && <span>{item.taille}</span>}
+            {item.color && <span>{item.color}</span>}
+            {item.color && item.size && <span> • </span>}
+            {item.size && <span>{item.size}</span>}
           </p>
-          <p className="text-dore font-semibold mt-1">{item.prix.toLocaleString('fr-MA')} DH</p>
+          <p className="text-dore font-semibold mt-1">{item.price.toLocaleString('fr-MA')} DH</p>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center border rounded-lg">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onQuantityChange(item, item.quantite - 1)}><Minus/></Button>
-            <span className="w-8 text-center">{item.quantite}</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onQuantityChange(item, item.quantite + 1)}><Plus/></Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onQuantityChange(item, item.quantity - 1)}><Minus/></Button>
+            <span className="w-8 text-center">{item.quantity}</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onQuantityChange(item, item.quantity + 1)}><Plus/></Button>
           </div>
           <Button variant="outline" size="icon" className="h-8 w-8 text-red-500 border-red-200" onClick={() => onRemove(item)}><Trash2/></Button>
         </div>

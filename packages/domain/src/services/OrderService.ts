@@ -1,8 +1,5 @@
 import { Order, DomainResult, OrderPlacementPayload } from '../models';
- 
-export interface IOrderRepository {
-  placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>>;
-}
+import { IOrderRepository } from '../repositories/IOrderRepository';
  
 export class OrderService {
   constructor(
@@ -15,15 +12,15 @@ export class OrderService {
    */
   async placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>> {
     // 1. Domain Invariants & business rule validation
-    if (!payload.nom_client?.trim()) {
+    if (!payload.customerName?.trim()) {
       return { success: false, error: 'Le nom du client est requis' };
     }
 
-    if (!payload.adresse?.trim()) {
+    if (!payload.address?.trim()) {
       return { success: false, error: 'L\'adresse est requise' };
     }
 
-    if (payload.produits.length === 0) {
+    if (payload.items.length === 0) {
       return { success: false, error: 'Le panier est vide' };
     }
 

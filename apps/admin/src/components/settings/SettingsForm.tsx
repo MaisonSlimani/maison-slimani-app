@@ -1,9 +1,9 @@
-import { SiteSettings } from '@maison/db'
+import { SiteSettings } from '@maison/domain'
 import { Button, Card, Input, Label, Textarea } from '@maison/ui'
 
 export type SettingsFormData = Pick<
   SiteSettings,
-  'email_entreprise' | 'telephone' | 'adresse' | 'description'
+  'companyEmail' | 'phone' | 'address' | 'description'
 >
 
 interface SettingsFormProps {
@@ -19,15 +19,15 @@ export function SettingsForm({ formData, update, onSubmit, saving }: SettingsFor
       <h2 className="text-xl font-serif mb-6">Coordonnées de l'entreprise</h2>
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
-          <div><Label htmlFor="email_entreprise">Email</Label>
-            <Input id="email_entreprise" type="email" value={formData.email_entreprise ?? ''} onChange={update('email_entreprise')} />
+          <div><Label htmlFor="companyEmail">Email</Label>
+            <Input id="companyEmail" type="email" value={formData.companyEmail ?? ''} onChange={update('companyEmail')} />
           </div>
-          <div><Label htmlFor="telephone">Téléphone</Label>
-            <Input id="telephone" type="tel" value={formData.telephone ?? ''} onChange={update('telephone')} />
+          <div><Label htmlFor="phone">Téléphone</Label>
+            <Input id="phone" type="tel" value={formData.phone ?? ''} onChange={update('phone')} />
           </div>
         </div>
-        <div><Label htmlFor="adresse">Adresse</Label>
-          <Input id="adresse" value={formData.adresse ?? ''} onChange={update('adresse')} />
+        <div><Label htmlFor="address">Adresse</Label>
+          <Input id="address" value={formData.address ?? ''} onChange={update('address')} />
         </div>
         <div><Label htmlFor="description">Description</Label>
           <Textarea id="description" rows={4} value={formData.description ?? ''} onChange={update('description')} />

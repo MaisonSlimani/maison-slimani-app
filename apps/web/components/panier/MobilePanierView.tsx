@@ -34,7 +34,14 @@ export default function MobilePanierView() {
       <div className="px-4 py-6">
         {items.length === 0 ? <MobilePanierEmpty /> : (
           <div className="space-y-4 max-w-md mx-auto">
-            {items.map((item) => <MobilePanierItem key={`${item.id}-${item.couleur}-${item.taille}`} item={item} removeItem={removeItem} updateQuantity={updateQuantity} />)}
+            {items.map((item) => (
+              <MobilePanierItem 
+                key={`${item.id}-${item.color || ''}-${item.size || ''}`} 
+                item={item} 
+                removeItem={removeItem} 
+                updateQuantity={updateQuantity} 
+              />
+            ))}
             <MobilePanierSummary total={total} />
           </div>
         )}

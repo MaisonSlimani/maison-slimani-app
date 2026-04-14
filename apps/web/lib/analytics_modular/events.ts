@@ -17,7 +17,7 @@ interface MetaProductPayload {
 }
 
 interface MetaCheckoutPayload {
-  contents: Array<{ id: string; nom?: string; quantity: number; item_price?: number }>
+  contents: Array<{ id: string; name?: string; quantity: number; item_price?: number }>
   value: number
   order_id?: string
   tax?: number
@@ -29,9 +29,9 @@ export function trackViewContent(p: MetaProductPayload) {
   trackEvent('ViewContent', p)
   GTM.gtmViewItem({
     id: p.content_ids?.[0] ?? '',
-    nom: p.content_name ?? '',
-    prix: p.value ?? 0,
-    categorie: p.categorie ?? 'General',
+    name: p.content_name ?? '',
+    price: p.value ?? 0,
+    category: p.categorie ?? 'General',
   } as Product)
 }
 
@@ -39,10 +39,10 @@ export function trackAddToCart(p: MetaProductPayload) {
   trackEvent('AddToCart', p)
   GTM.gtmAddToCart({
     id: p.content_ids?.[0] ?? '',
-    nom: p.content_name ?? '',
-    prix: p.value ?? 0,
-    quantite: p.contents?.[0]?.quantity ?? 1,
-    categorie: p.categorie ?? null,
+    name: p.content_name ?? '',
+    price: p.value ?? 0,
+    quantity: p.contents?.[0]?.quantity ?? 1,
+    category: p.categorie ?? null,
   } as CartItem)
 }
 
@@ -50,11 +50,11 @@ export function trackInitiateCheckout(d: MetaCheckoutPayload) {
   trackEvent('InitiateCheckout', d)
   const items: CartItem[] = d.contents.map((i) => ({
     id: i.id,
-    nom: i.nom ?? `Product ${i.id}`,
-    prix: i.item_price ?? 0,
-    quantite: i.quantity,
+    name: i.name ?? `Product ${i.id}`,
+    price: i.item_price ?? 0,
+    quantity: i.quantity,
     image_url: null,
-  }))
+  })) as CartItem[]
   GTM.gtmBeginCheckout(items, d.value)
 }
 
@@ -62,11 +62,11 @@ export function trackPurchase(d: MetaCheckoutPayload) {
   trackEvent('Purchase', d)
   const items: CartItem[] = d.contents.map((i) => ({
     id: i.id,
-    nom: i.nom ?? `Product ${i.id}`,
-    prix: i.item_price ?? 0,
-    quantite: i.quantity,
+    name: i.name ?? `Product ${i.id}`,
+    price: i.item_price ?? 0,
+    quantity: i.quantity,
     image_url: null,
-  }))
+  })) as CartItem[]
   GTM.gtmPurchase({ id: d.order_id ?? '', value: d.value, tax: d.tax, shipping: d.shipping, items })
 }
 

@@ -14,7 +14,7 @@ import { CategoryViewData } from '@/types/views'
 import { Product } from '@maison/domain'
 
 export default function DesktopCategoryView({ data }: { data: CategoryViewData }) {
-  const { categorieInfo, produits, produitsLoading } = data
+  const { categoryInfo, products, productsLoading } = data
   const { openDrawer } = useCartDrawer(); const { totalItems } = useCart()
   const [showScrollTop, setShowScrollTop] = React.useState(false)
 
@@ -24,27 +24,27 @@ export default function DesktopCategoryView({ data }: { data: CategoryViewData }
     return () => window.removeEventListener('scroll', syncScroll)
   }, [])
 
-  if (!categorieInfo) return <CategorySkeleton />
+  if (!categoryInfo) return <CategorySkeleton />
 
   return (
     <div className="pb-0 pt-20">
-      <CategoryBanner banner={categorieInfo} />
+      <CategoryBanner banner={categoryInfo} />
       <div className="container px-6 py-12 mx-auto">
         <ControlsSection data={data} total={totalItems} onOpenCart={openDrawer} />
-        <ProduitGrid loading={produitsLoading} list={produits} />
+        <ProduitGrid loading={productsLoading} list={products} />
       </div>
       {showScrollTop && <ScrollToTop />}
     </div>
   )
 }
 
-function CategoryBanner({ banner }: { banner: { image: string; nom: string; description?: string | null } }) {
+function CategoryBanner({ banner }: { banner: { image: string; name: string; description?: string | null } }) {
   return (
     <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-      <Image src={banner.image} alt={banner.nom} fill className="object-cover" priority sizes="100vw" />
+      <Image src={banner.image} alt={banner.name} fill className="object-cover" priority sizes="100vw" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
       <div className="relative z-10 text-center container px-6">
-        <h1 className="text-7xl font-serif text-white mb-6 drop-shadow-2xl">{banner.nom}</h1>
+        <h1 className="text-7xl font-serif text-white mb-6 drop-shadow-2xl">{banner.name}</h1>
         <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">{banner.description}</p>
       </div>
       <Link href="/boutique" className="absolute top-8 left-8 z-10">
@@ -55,13 +55,13 @@ function CategoryBanner({ banner }: { banner: { image: string; nom: string; desc
 }
 
 function ControlsSection({ data, total, onOpenCart }: { data: CategoryViewData; total: number; onOpenCart: () => void }) {
-  if (!data.categorieInfo) return null
+  if (!data.categoryInfo) return null
   return (
     <div className="flex flex-col md:flex-row items-center gap-6 mb-12">
       <div className="relative flex-1 w-full"><Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" /><Input placeholder={`Rechercher...`} value={data.searchQuery} onChange={(e) => data.setSearchQuery(e.target.value)} className="pl-12 h-14 bg-secondary/20 border-0 text-lg rounded-xl" /></div>
       <div className="flex items-center gap-4">
-        <Select value={data.triPrix} onValueChange={data.setTriPrix}><SelectTrigger className="h-14 w-[200px] rounded-xl"><SelectValue placeholder="Trier" /></SelectTrigger><SelectContent><SelectItem value="prix-asc">Prix croissant</SelectItem><SelectItem value="prix-desc">Prix décroissant</SelectItem></SelectContent></Select>
-        <ProductFilter onFilterChange={data.setFilters} currentFilters={data.filters} categoryName={data.categorieInfo.nom} />
+        <Select value={data.triPrice} onValueChange={data.setTriPrice}><SelectTrigger className="h-14 w-[200px] rounded-xl"><SelectValue placeholder="Trier" /></SelectTrigger><SelectContent><SelectItem value="price-asc">Prix croissant</SelectItem><SelectItem value="price-desc">Prix décroissant</SelectItem></SelectContent></Select>
+        <ProductFilter onFilterChange={data.setFilters} currentFilters={data.filters} categoryName={data.categoryInfo.name} />
         <Button onClick={onOpenCart} size="lg" variant="outline" className="h-14 w-14 p-0 rounded-xl relative"><ShoppingCart className="w-6 h-6" />{total > 0 && <span className="absolute -top-1 -right-1 bg-dore text-charbon text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold border-2 border-white">{total}</span>}</Button>
       </div>
     </div>
@@ -71,7 +71,7 @@ function ControlsSection({ data, total, onOpenCart }: { data: CategoryViewData; 
 function ProduitGrid({ loading, list }: { loading: boolean; list: Product[] }) {
   if (loading) return <div className="grid grid-cols-1 md:grid-cols-3 gap-8"><ProductCardSkeleton count={6} /></div>
   if (list.length === 0) return <div className="py-32 text-center text-muted-foreground font-serif text-2xl">Aucun produit ne correspond à vos critères</div>
-  return <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">{list.map((p) => <CarteProduit key={p.id} produit={p} showActions />)}</div>
+  return <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">{list.map((p) => <CarteProduit key={p.id} product={p} showActions />)}</div>
 }
 
 function CategorySkeleton() {

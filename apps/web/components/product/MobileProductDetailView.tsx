@@ -11,9 +11,9 @@ import { MobileProductSelection } from './MobileProductSelection'
 
 export default function MobileProductDetailView({ data }: { data: ProductDetailViewData }) {
   const { 
-    produit, couleur, setCouleur, taille, setTaille, 
+    produit, color, setColor, size, setSize, 
     isInCart, inWishlist, handleAddToCart, handleToggleWishlist, 
-    taillesData, allImages 
+    sizesData, allImages 
   } = data
 
   return (
@@ -23,7 +23,7 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
           images={allImages} 
           enableZoom={false} 
           showThumbnails={true} 
-          selectedColor={couleur ?? undefined} 
+          selectedColor={color ?? undefined} 
         />
         <button onClick={handleToggleWishlist} className="absolute top-4 left-4 z-10 w-11 h-11 rounded-full bg-white/90 shadow-lg flex items-center justify-center">
           <Heart className={cn("w-6 h-6", inWishlist && "fill-dore text-dore")} />
@@ -32,26 +32,26 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
 
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-serif mb-2">{produit.nom}</h1>
-          <p className="text-2xl font-serif text-dore">{produit.prix.toLocaleString('fr-MA')} DH</p>
+          <h1 className="text-3xl font-serif mb-2">{produit.name}</h1>
+          <p className="text-2xl font-serif text-dore">{produit.price.toLocaleString('fr-MA')} DH</p>
         </div>
 
         <div className="prose prose-sm max-w-none text-charbon/80" dangerouslySetInnerHTML={{ __html: produit.description }} />
 
         <MobileProductSelection 
-          hasColors={!!produit.has_colors} 
-          couleurs={(produit.couleurs as ProductVariation[]) ?? []} 
-          selectedColor={couleur} 
-          setSelectedColor={setCouleur}
-          taillesData={taillesData} 
-          selectedTaille={taille} 
-          setSelectedTaille={setTaille}
+          hasColors={!!produit.hasColors} 
+          colors={(produit.colors as ProductVariation[]) ?? []} 
+          selectedColor={color} 
+          setSelectedColor={setColor}
+          sizesData={sizesData} 
+          selectedSize={size} 
+          setSelectedSize={setSize}
           isInCart={isInCart}
           onAddToCart={handleAddToCart}
         />
       </div>
       
-      <SimilarProducts productCategory={produit.categorie ?? ''} productId={produit.id} />
+      <SimilarProducts productCategory={produit.category ?? ''} productId={produit.id} />
     </div>
   )
 }

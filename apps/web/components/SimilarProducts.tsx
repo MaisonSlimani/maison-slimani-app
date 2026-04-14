@@ -40,7 +40,7 @@ export default function SimilarProducts({ productId, productCategory, limit = RE
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {products.map((p, i) => (
           <motion.div key={p.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-            <CarteProduit produit={p} showActions />
+            <CarteProduit product={p} showActions />
           </motion.div>
         ))}
       </div>

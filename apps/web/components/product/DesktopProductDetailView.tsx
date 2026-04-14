@@ -12,31 +12,31 @@ import { Product, ProductVariation } from '@maison/domain'
 
 export interface ProductDetailViewData {
   produit: Product
-  couleur: string
-  setCouleur: (c: string) => void
-  taille: string
-  setTaille: (t: string) => void
+  color: string
+  setColor: (c: string) => void
+  size: string
+  setSize: (t: string) => void
   addedToCart: boolean
   isInCart: boolean
   inWishlist: boolean
   handleAddToCart: (checkout: boolean) => void
   handleToggleWishlist: () => void
-  taillesData: ProductVariation[]
+  sizesData: ProductVariation[]
   allImages: { url: string; couleur?: string | null }[]
 }
 
 export default function DesktopProductDetailView({ data }: { data: ProductDetailViewData }) {
   const { 
     produit, 
-    couleur, 
-    setCouleur, 
-    taille, 
-    setTaille, 
+    color, 
+    setColor, 
+    size, 
+    setSize, 
     isInCart,
     inWishlist, 
     handleAddToCart, 
     handleToggleWishlist, 
-    taillesData, 
+    sizesData, 
     allImages 
   } = data
 
@@ -51,20 +51,20 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
               images={allImages} 
               enableZoom={true} 
               showThumbnails={true} 
-              selectedColor={couleur ?? undefined} 
+              selectedColor={color ?? undefined} 
             />
           </motion.div>
 
           <motion.div className="space-y-8" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
-            <ProductInfo nom={produit.nom} prix={produit.prix} categorie={produit.categorie ?? ''} description={produit.description} />
+            <ProductInfo name={produit.name} price={produit.price} category={produit.category ?? ''} description={produit.description} />
             <ProductSelection 
-              hasColors={!!produit.has_colors} 
-              couleurs={(produit.couleurs as ProductVariation[]) ?? []} 
-              selectedColor={couleur} 
-              setSelectedColor={setCouleur} 
-              taillesData={taillesData} 
-              selectedTaille={taille} 
-              setSelectedTaille={setTaille} 
+              hasColors={!!produit.hasColors} 
+              colors={(produit.colors as ProductVariation[]) ?? []} 
+              selectedColor={color} 
+              setSelectedColor={setColor} 
+              sizesData={sizesData} 
+              selectedSize={size} 
+              setSelectedSize={setSize} 
               isInCart={isInCart}
               inWishlist={inWishlist} 
               onAddToCart={handleAddToCart} 
@@ -76,7 +76,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
 
         <section className="mt-24">
           <h2 className="text-4xl font-serif mb-12 text-center">Produits similaires</h2>
-          <SimilarProducts productCategory={produit.categorie ?? ''} productId={produit.id} />
+          <SimilarProducts productCategory={produit.category ?? ''} productId={produit.id} />
         </section>
       </div>
     </div>

@@ -24,13 +24,13 @@ export const trackProductClicked = (product: { id: string; name: string; positio
     })
 }
 
-export const trackProductListViewed = (listName: string, products: { id: string; nom?: string; name?: string }[]) => {
+export const trackProductListViewed = (listName: string, products: { id: string; name?: string }[]) => {
     core.track('Product List Viewed', {
         list_name: listName,
         products_count: products.length,
         products: products.slice(0, 10).map((p, idx) => ({
             product_id: p.id,
-            product_name: p.nom || p.name,
+            product_name: p.name,
             position: idx + 1,
         })),
     })

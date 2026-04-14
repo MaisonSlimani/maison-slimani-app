@@ -33,7 +33,7 @@ export function ProductFormDialog({ open, onOpenChange, product, categories, onS
               <RichTextEditor content={formData.description || ''} onChange={html => setFormData({ ...formData, description: html })} />
             </div>
           </div>
-          {formData.has_colors ? <CouleursForm couleurs={couleurs} onChange={setCouleurs} /> : <GeneralImagesForm images={imagesGenerales} onChange={setImagesGenerales} />}
+          {formData.hasColors ? <CouleursForm couleurs={couleurs} onChange={setCouleurs} /> : <GeneralImagesForm images={imagesGenerales} onChange={setImagesGenerales} />}
           <div className="flex justify-end gap-3 pt-6 border-t mt-8">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
             <Button type="submit" disabled={loading} className="min-w-[120px]">{loading ? 'Enregistrement...' : (product ? 'Mettre à jour' : 'Créer')}</Button>

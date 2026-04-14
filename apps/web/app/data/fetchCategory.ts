@@ -21,14 +21,14 @@ export const fetchCategoryData = async (categorySlug: string): Promise<CategoryP
         return {
           category: { 
             id: 'all', 
-            nom: 'Toutes les chaussures', 
+            name: 'Toutes les chaussures', 
             slug: 'tous', 
             description: 'Découvrez notre collection complète de chaussures artisanales en cuir.', 
-            active: true, 
-            ordre: 0, 
+            isActive: true, 
+            order: 0, 
             image_url: null, 
-            date_creation: null, 
-            couleur: null 
+            createdAt: null, 
+            color: null 
           },
           products,
           allCategories
@@ -39,7 +39,7 @@ export const fetchCategoryData = async (categorySlug: string): Promise<CategoryP
       if (!category) return null
 
       const products = await productRepo.search({ 
-        categorie: category.nom, 
+        category: category.name, 
         limit: 100 
       }).then(res => res.data)
       

@@ -13,7 +13,7 @@ export function CategoryCard({ categorie, onEdit, onDelete }: CategoryCardProps)
     <Card className="p-6 overflow-hidden">
       <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden border border-border bg-muted">
         {categorie.image_url ? (
-          <img src={categorie.image_url} alt={categorie.nom} className="w-full h-full object-cover" />
+          <img src={categorie.image_url} alt={categorie.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
             <ImageIcon className="w-12 h-12 text-muted-foreground" />
@@ -22,9 +22,9 @@ export function CategoryCard({ categorie, onEdit, onDelete }: CategoryCardProps)
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-serif">{categorie.nom}</h3>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${categorie.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-            {categorie.active ? 'Active' : 'Inactive'}
+          <h3 className="text-xl font-serif">{categorie.name}</h3>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${categorie.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+            {categorie.isActive ? 'Active' : 'Inactive'}
           </span>
         </div>
         <p className="text-sm text-muted-foreground">{categorie.description || 'Aucune description'}</p>

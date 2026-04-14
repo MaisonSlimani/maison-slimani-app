@@ -8,6 +8,9 @@
 const API_VERSION = 'v1';
 const BASE_PATH = `/api/${API_VERSION}`;
 
+import { createLogger } from '@maison/shared';
+const logger = createLogger('api.client');
+
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -41,7 +44,7 @@ export async function apiFetch<T>(
 
     return await response.json();
   } catch (error) {
-    console.error(`Fetch error for ${url}:`, error);
+    logger.error(`Fetch error for ${url}:`, error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown network error' 

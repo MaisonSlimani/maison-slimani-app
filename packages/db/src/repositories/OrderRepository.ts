@@ -1,23 +1,44 @@
 import { AppSupabaseClient } from '../client.types';
-import { Order, DomainResult, CommandeProduit, OrderPlacementPayload } from '@maison/domain';
+import { Order, DomainResult, CommandeProduit, OrderPlacementPayload, IOrderRepository } from '@maison/domain';
 import { Database, Json } from '../database.types';
+
+type OrderRow = Database["public"]["Tables"]["commandes"]["Row"];
 
 interface CreateOrderRpcResult {
   success: boolean;
-  data?: Database["public"]["Tables"]["commandes"]["Row"];
+  data?: OrderRow;
   error?: string;
 }
 
-export class OrderRepository {
+export class OrderRepository implements IOrderRepository {
   constructor(private supabase: AppSupabaseClient) {}
 
-  private mapOrder(data: Database["public"]["Tables"]["commandes"]["Row"]): Order {
+  /**
+   * Maps a raw database row to a clean Domain Order model.
+   */
+  private mapOrder(data: OrderRow): Order {
     return {
-      ...data,
-      // Map JSON produits to typed array
-      produits: data.produits as unknown as CommandeProduit[],
-      // Status string cast to union (handled in Domain)
-      statut: data.statut as Order['statut'],
+      id: data.id,
+      customerName: data.nom_client,
+      phone: data.telephone,
+      address: data.adresse,
+      city: data.ville,
+      email: data.email,
+      // Map JSON produits to typed array, handling potential renames inside line items
+      items: (data.produits as unknown as Array<{ id: string, name?: string, nom?: string, price?: number, prix?: number, quantity?: number, quantite?: number, image_url?: string, size?: string, taille?: string, color?: string, couleur?: string }>)?.map(item => ({
+        id: item.id,
+        name: item.name || item.nom,
+        price: item.price || item.prix,
+        quantity: item.quantity || item.quantite,
+        image_url: item.image_url,
+        size: item.size || item.taille,
+        color: item.color || item.couleur
+      })) as CommandeProduit[],
+      total: data.total,
+      status: data.statut as Order['status'],
+      orderedAt: data.date_commande,
+      // Idempotency key not currently stored in the row but used for RPC
+      idempotencyKey: null,
     };
   }
 
@@ -72,19 +93,28 @@ export class OrderRepository {
 
   /**
    * Atomic Order Placement via Postgres RPC.
-   * Consolidates stock decrement and order insertion in one transaction.
+   * Maps the clean Domain payload to the specific RPC arguments.
    */
   async placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>> {
-    // Note: RPC arguments must match the Postgres function signature exactly
+    // Translate domain naming back to DB-naming for the RPC parameters
     const { data, error } = await this.supabase.rpc('create_order_v2_atomic', {
-      p_nom_client: payload.nom_client,
-      p_telephone: payload.telephone,
-      p_adresse: payload.adresse,
-      p_ville: payload.ville,
+      p_nom_client: payload.customerName,
+      p_telephone: payload.phone,
+      p_adresse: payload.address,
+      p_ville: payload.city,
       p_email: payload.email,
-      p_produits: payload.produits as unknown as Json,
+      p_produits: payload.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image_url: item.image_url,
+        size: item.size,
+        color: item.color
+      })) as unknown as Json,
       p_total: payload.total,
-      p_idempotency_key: payload.idempotency_key
+      // RPC expect non-null string
+      p_idempotency_key: payload.idempotencyKey || `manual_${Date.now()}`
     });
 
     if (error) {

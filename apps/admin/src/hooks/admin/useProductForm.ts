@@ -13,26 +13,26 @@ type VariationWithPending = ProductVariation & { pendingImages?: VariationImage[
 
 export function useProductForm({ product, defaultCategory, onSuccess, onOpenChange }: UseProductFormParams) {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<Partial<Product>>({ nom: '', prix: 0, description: '', categorie: defaultCategory || '', stock: 0, vedette: false, has_colors: false })
+  const [formData, setFormData] = useState<Partial<Product>>({ name: '', price: 0, description: '', category: defaultCategory || '', stock: 0, featured: false, hasColors: false })
   const [imagesGenerales, setImagesGenerales] = useState<GeneralImage[]>([])
   const [couleurs, setCouleurs] = useState<VariationWithPending[]>([])
 
   useEffect(() => {
     if (product) {
       setFormData(product)
-      if (product.has_colors && product.couleurs) {
-        setCouleurs((product.couleurs as ProductVariation[]).map(c => ({ 
-          ...c, nom: c.nom || '', code: c.code || '#000000', 
-          stock: c.stock || 0, tailles: c.tailles || [], 
+      if (product.hasColors && product.colors) {
+        setCouleurs((product.colors as ProductVariation[]).map(c => ({ 
+          ...c, name: c.name || '', code: c.code || '#000000', 
+          stock: c.stock || 0, sizes: c.sizes || [], 
           images: c.images || [], pendingImages: [] 
         })))
         setImagesGenerales([])
-      } else if (!product.has_colors && product.images) {
+      } else if (!product.hasColors && product.images) {
         setImagesGenerales(product.images.map(url => ({ file: null, url })))
         setCouleurs([])
       }
     } else {
-      setFormData({ nom: '', prix: 0, description: '', categorie: defaultCategory || '', stock: 0, vedette: false, has_colors: false })
+      setFormData({ name: '', price: 0, description: '', category: defaultCategory || '', stock: 0, featured: false, hasColors: false })
       setImagesGenerales([]); setCouleurs([])
     }
   }, [product, defaultCategory])
@@ -51,20 +51,20 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
 
   const buildPayload = useCallback(async () => {
     const uploadedGeneral = await uploadImages(imagesGenerales)
-    const finalCouleurs = []
+    const finalColors = []
     for (const c of couleurs) {
       const uploadedColorImages = [...(c.images || []), ...(await uploadImages(c.pendingImages || []))]
-      const calStock = c.tailles?.reduce((sum, t) => sum + (t.stock || 0), 0) || c.stock || 0
-      finalCouleurs.push({ nom: c.nom, code: c.code, stock: calStock, tailles: c.tailles, images: uploadedColorImages })
+      const calStock = c.sizes?.reduce((sum, t) => sum + (t.stock || 0), 0) || c.stock || 0
+      finalColors.push({ name: c.name, code: c.code, stock: calStock, sizes: c.sizes, images: uploadedColorImages })
     }
-    const stockValue = formData.has_colors ? finalCouleurs.reduce((sum, c) => sum + (c.stock || 0), 0) : formData.stock
+    const stockValue = formData.hasColors ? finalColors.reduce((sum, c) => sum + (c.stock || 0), 0) : formData.stock
     return { 
       ...formData, 
-      images: formData.has_colors ? null : uploadedGeneral, 
-      image_url: formData.has_colors ? null : (uploadedGeneral[0] || null), 
-      couleurs: formData.has_colors ? finalCouleurs : null, 
+      images: formData.hasColors ? null : uploadedGeneral, 
+      image_url: formData.hasColors ? null : (uploadedGeneral[0] || null), 
+      colors: formData.hasColors ? finalColors : null, 
       stock: stockValue, 
-      total_stock: stockValue 
+      totalStock: stockValue 
     } as unknown as Product
   }, [formData, imagesGenerales, couleurs])
 

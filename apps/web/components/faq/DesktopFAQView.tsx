@@ -49,7 +49,7 @@ export default function DesktopFAQView({ data }: { data: FAQViewData }) {
               <MessageCircle className="w-6 h-6" /> WhatsApp
             </a>
           )}
-          <a href={`mailto:${settings.email_entreprise}`} className="flex items-center gap-3 px-8 py-4 bg-dore text-charbon rounded-2xl font-bold hover:scale-105 transition-transform">
+          <a href={`mailto:${settings.companyEmail}`} className="flex items-center gap-3 px-8 py-4 bg-dore text-charbon rounded-2xl font-bold hover:scale-105 transition-transform">
             <Mail className="w-6 h-6" /> Nous écrire
           </a>
         </div>

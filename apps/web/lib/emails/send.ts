@@ -1,10 +1,13 @@
 import { Resend } from 'resend'
 import { CommandeEmailPayload } from './types'
 import { buildClientConfirmationTemplate, buildAdminNotificationTemplate } from './templates'
-import { ContactRepository, createClient } from '@maison/db'
+import { SettingsRepository, createClient } from '@maison/db'
 import { ADMIN_EMAIL } from '@/lib/resend/client'
+import { createLogger } from '@maison/shared'
 
-// Lazily initialized — not at module scope so it doesn't crash during Next.js build analysis
+const logger = createLogger('emails.send')
+
+// Lazily initialized
 let resendInstance: Resend | null = null
 const getResend = () => {
   if (!resendInstance) {
@@ -16,15 +19,15 @@ const getResend = () => {
 export async function sendCommandeEmails(payload: CommandeEmailPayload) {
   try {
     const supabase = await createClient()
-    const contactRepo = new ContactRepository(supabase)
-    const settings = await contactRepo.getSettings()
-    const adminEmail = settings?.email_entreprise || ADMIN_EMAIL
+    const settingsRepo = new SettingsRepository(supabase)
+    const settings = await settingsRepo.getSettings()
+    const adminEmail = settings?.companyEmail || ADMIN_EMAIL
 
     // 1. Send to Client
-    if (payload.client_email) {
+    if (payload.clientEmail) {
       await getResend().emails.send({
         from: process.env.EMAIL_FROM || 'Maison Slimani <onboarding@resend.dev>',
-        to: payload.client_email,
+        to: payload.clientEmail,
         subject: `Confirmation de votre commande #${payload.id}`,
         html: buildClientConfirmationTemplate(payload),
       })
@@ -40,7 +43,7 @@ export async function sendCommandeEmails(payload: CommandeEmailPayload) {
 
     return { success: true }
   } catch (error) {
-    console.error('Error sending commande emails:', error)
+    logger.error('Error sending commande emails:', error);
     throw error
   }
 }

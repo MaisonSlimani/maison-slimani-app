@@ -15,17 +15,17 @@ export async function GET(
     const productRepo = new ProductRepository(supabase)
     const categoryRepo = new CategoryRepository(supabase)
 
-    const produit = await productRepo.findById(id)
-    if (!produit || !produit.categorie) {
+    const product = await productRepo.findById(id)
+    if (!product || !product.category) {
       return NextResponse.redirect(new URL('/boutique', request.url), 302)
     }
 
     const allCategories = await categoryRepo.findAllActive()
-    const category = allCategories.find(c => c.nom === produit.categorie)
+    const category = allCategories.find(c => c.name === product.category)
     
     if (!category) return NextResponse.redirect(new URL('/boutique', request.url), 302)
 
-    const productSlug = produit.slug || slugify(produit.nom || '')
+    const productSlug = product.slug || slugify(product.name || '')
     return NextResponse.redirect(new URL(`/boutique/${category.slug}/${productSlug}`, request.url), 301)
   } catch (error) {
     console.error('Redirect route error:', error)

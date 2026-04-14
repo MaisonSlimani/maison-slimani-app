@@ -5,13 +5,13 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 
 interface CarteCategorieProps {
-  titre: string
+  title: string
   image: string
-  lien: string
+  link: string
   priority?: boolean
 }
 
-const CarteCategorie = ({ titre, image, lien, priority = false }: CarteCategorieProps) => {
+const CarteCategorie = ({ title, image, link, priority = false }: CarteCategorieProps) => {
   return (
     <motion.div
       className="group relative overflow-hidden rounded-lg shadow-lg"
@@ -20,7 +20,7 @@ const CarteCategorie = ({ titre, image, lien, priority = false }: CarteCategorie
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
     >
-      <Link href={lien}>
+      <Link href={link}>
         <div className="aspect-[4/3] overflow-hidden relative w-full">
           <motion.div
             className="absolute inset-0 w-full h-full"
@@ -29,7 +29,7 @@ const CarteCategorie = ({ titre, image, lien, priority = false }: CarteCategorie
           >
             <Image
               src={image}
-              alt={titre}
+              alt={title}
               fill
               className="object-cover w-full h-full"
               loading={priority ? undefined : "lazy"}
@@ -38,12 +38,12 @@ const CarteCategorie = ({ titre, image, lien, priority = false }: CarteCategorie
             />
           </motion.div>
         
-        {/* Overlay dégradé sombre pour améliorer la lisibilité */}
+        {/* Dark gradient overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-charbon via-charbon/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
         
           {/* Only category name inside image */}
         <div className="absolute bottom-0 left-0 right-0 p-6 text-[#f8f5f0] drop-shadow-lg">
-            <h3 className="text-2xl font-serif">{titre}</h3>
+            <h3 className="text-2xl font-serif">{title}</h3>
           </div>
         </div>
       </Link>

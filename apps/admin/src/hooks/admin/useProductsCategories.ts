@@ -8,10 +8,10 @@ export function useProductsCategories() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const chargerCategories = async () => {
+    const fetchCategories = async () => {
       try {
         const data = await categoryRepo.findAll()
-        setCategories(data.filter(c => c.active !== false))
+        setCategories(data.filter(c => c.isActive !== false))
       } catch (error) {
         console.error('Error fetching categories:', error)
         toast.error('Erreur lors du chargement des catégories')
@@ -19,7 +19,7 @@ export function useProductsCategories() {
         setLoading(false)
       }
     }
-    chargerCategories()
+    fetchCategories()
   }, [])
 
   return { categories, loading }

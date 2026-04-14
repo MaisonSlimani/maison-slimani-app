@@ -4,10 +4,10 @@ import { Card, Button } from '@maison/ui'
 import { Package, ArrowRight, AlertCircle, Truck, CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@maison/shared'
 
-const statuts = [
+const statuses = [
   {
     slug: 'en-attente',
-    nom: 'En attente',
+    name: 'En attente',
     description: 'Nouvelles commandes en attente de traitement. Actions requises rapidement.',
     icon: AlertCircle,
     color: 'from-yellow-50 to-yellow-100',
@@ -16,7 +16,7 @@ const statuts = [
   },
   {
     slug: 'expediee',
-    nom: 'Expédiée',
+    name: 'Expédiée',
     description: 'Commandes expédiées et en cours de livraison. Suivez le statut de livraison.',
     icon: Truck,
     color: 'from-blue-50 to-blue-100',
@@ -25,7 +25,7 @@ const statuts = [
   },
   {
     slug: 'livree',
-    nom: 'Livrée',
+    name: 'Livrée',
     description: 'Commandes livrées avec succès. Archivez les commandes terminées.',
     icon: CheckCircle,
     color: 'from-green-50 to-green-100',
@@ -34,7 +34,7 @@ const statuts = [
   },
   {
     slug: 'annulee',
-    nom: 'Annulée',
+    name: 'Annulée',
     description: "Commandes annulées. Consultez l'historique des annulations.",
     icon: XCircle,
     color: 'from-red-50 to-red-100',
@@ -54,11 +54,11 @@ export default function CommandesPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {statuts.map((statut, index) => {
-          const Icon = statut.icon
+        {statuses.map((status, index) => {
+          const Icon = status.icon
           return (
             <motion.div
-              key={statut.slug}
+              key={status.slug}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -66,26 +66,26 @@ export default function CommandesPage() {
               <Card
                 className={cn(
                   'p-6 cursor-pointer transition-all hover:shadow-xl border-2 overflow-hidden group',
-                  `bg-gradient-to-br ${statut.color} ${statut.borderColor} hover:scale-105`
+                  `bg-gradient-to-br ${status.color} ${status.borderColor} hover:scale-105`
                 )}
-                onClick={() => navigate(`/commandes/${statut.slug}`)}
+                onClick={() => navigate(`/commandes/${status.slug}`)}
               >
                 <div className="flex gap-6 items-start">
-                  <div className={cn('w-24 h-24 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg border-2', statut.borderColor)}>
-                    <Icon className={cn('w-12 h-12', statut.badgeColor.replace('bg-', 'text-').split(' ')[0])} />
+                  <div className={cn('w-24 h-24 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg border-2', status.borderColor)}>
+                    <Icon className={cn('w-12 h-12', status.badgeColor.replace('bg-', 'text-').split(' ')[0])} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div>
-                        <h3 className="text-2xl font-serif mb-2 text-charbon">{statut.nom}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{statut.description}</p>
+                        <h3 className="text-2xl font-serif mb-2 text-charbon">{status.name}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{status.description}</p>
                       </div>
                       <Package className="w-6 h-6 text-dore flex-shrink-0 mt-1" />
                     </div>
                     <Button
                       variant="outline"
                       className="mt-4 group-hover:bg-white group-hover:text-charbon"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/commandes/${statut.slug}`) }}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/commandes/${status.slug}`) }}
                     >
                       Voir les commandes
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

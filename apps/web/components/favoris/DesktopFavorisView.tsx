@@ -56,14 +56,14 @@ function FavorisCard({ item, onRemove, onAdd, loading }: { item: CartItem; onRem
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="group">
       <Card className="p-8 rounded-[2.5rem] border-charbon/5 hover:shadow-2xl transition-all h-full flex flex-col">
         <div className="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6 bg-ecru">
-          <OptimizedImage src={item.image_url || item.image || '/placeholder.jpg'} alt={item.nom} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+          <OptimizedImage src={item.image_url || item.image || '/placeholder.jpg'} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
           <button onClick={() => onRemove(item.id)} className="absolute top-4 right-4 p-3 bg-white/90 rounded-xl text-red-500 shadow-lg hover:bg-red-500 hover:text-white transition-all transform hover:scale-110"><Trash2 className="w-5 h-5" /></button>
         </div>
         <div className="flex-1 flex flex-col">
-          <h3 className="text-2xl font-serif text-charbon mb-2 group-hover:text-dore transition-colors">{item.nom}</h3>
-          <p className="text-charbon/60 text-sm mb-6 uppercase tracking-widest">{item.categorie}</p>
+          <h3 className="text-2xl font-serif text-charbon mb-2 group-hover:text-dore transition-colors">{item.name}</h3>
+          <p className="text-charbon/60 text-sm mb-6 uppercase tracking-widest">{item.category}</p>
           <div className="mt-auto flex items-center justify-between gap-6">
-            <p className="text-3xl font-serif text-dore">{item.prix.toLocaleString('fr-MA')} DH</p>
+            <p className="text-3xl font-serif text-dore">{item.price.toLocaleString('fr-MA')} DH</p>
             <Button size="lg" className="rounded-2xl bg-charbon text-white hover:bg-dore hover:text-charbon h-16 w-16 p-0" onClick={() => onAdd(item)} disabled={loading}><ShoppingBag className="w-6 h-6" /></Button>
           </div>
         </div>

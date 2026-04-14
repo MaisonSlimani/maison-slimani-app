@@ -3,18 +3,18 @@
 import React from 'react'
 
 interface ProductInfoProps {
-  nom: string
-  prix: number
-  categorie: string
+  name: string
+  price: number
+  category: string
   description: string
 }
 
-export function ProductInfo({ nom, prix, categorie, description }: ProductInfoProps) {
+export function ProductInfo({ name, price, category, description }: ProductInfoProps) {
   return (
     <div className="space-y-4">
-      <span className="text-sm uppercase tracking-widest text-muted-foreground">{categorie}</span>
-      <h1 className="text-5xl font-serif text-charbon leading-tight">{nom}</h1>
-      <p className="text-4xl font-serif text-dore">{prix.toLocaleString('fr-MA')} DH</p>
+      <span className="text-sm uppercase tracking-widest text-muted-foreground">{category}</span>
+      <h1 className="text-5xl font-serif text-charbon leading-tight">{name}</h1>
+      <p className="text-4xl font-serif text-dore">{price.toLocaleString('fr-MA')} DH</p>
       <div 
         className="prose prose-lg max-w-none text-charbon/80 leading-relaxed pt-4"
         dangerouslySetInnerHTML={{ __html: description }}

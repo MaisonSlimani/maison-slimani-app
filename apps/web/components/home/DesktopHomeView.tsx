@@ -10,13 +10,13 @@ import { HomeContact } from './HomeContact'
 import { HomeTrustBar } from './HomeTrustBar'
 
 export default function DesktopHomeView({ data }: { data: HomeViewData }) {
-  const { categories, loadingCategories, produitsVedette, loadingVedette, whatsappNumber } = data
+  const { categories, loadingCategories, featuredProducts, loadingFeatured, whatsappNumber } = data
 
   return (
     <div className="overflow-x-hidden">
       <HomeHero />
       <HomeCategories categories={categories} loading={loadingCategories} />
-      <HomeFeatured produits={produitsVedette} loading={loadingVedette} />
+      <HomeFeatured products={featuredProducts} loading={loadingFeatured} />
       <HomeSavoirFaire />
       {whatsappNumber && <HomeContact whatsappNumber={whatsappNumber} />}
       <HomeTrustBar />

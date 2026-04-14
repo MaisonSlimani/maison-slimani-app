@@ -28,14 +28,16 @@ export default function DesktopCheckoutView() {
   )
 }
 
-interface FormData {
-  nom_client: string; telephone: string; email: string; adresse: string; ville: string
+import { Dispatch, SetStateAction } from 'react'
+
+interface CheckoutFormData {
+  customerName: string; phone: string; email: string; address: string; city: string
 }
 
-function CheckoutFormSection({ loading, formData, setFormData, onSubmit }: { loading: boolean; formData: FormData; setFormData: (d: FormData) => void; onSubmit: (e: React.FormEvent) => void }) {
+function CheckoutFormSection({ loading, formData, setFormData, onSubmit }: { loading: boolean; formData: CheckoutFormData; setFormData: Dispatch<SetStateAction<CheckoutFormData>>; onSubmit: (e: React.FormEvent) => void }) {
   const fields = [
-    { id: 'nom_client' as const, label: 'Nom complet *', placeholder: 'Ahmed El Mansouri', type: 'text' },
-    { id: 'telephone' as const, label: 'Téléphone *', placeholder: '+212 6XX-XXXXXX', type: 'tel' }
+    { id: 'customerName' as const, label: 'Nom complet *', placeholder: 'Ahmed El Mansouri', type: 'text' },
+    { id: 'phone' as const, label: 'Téléphone *', placeholder: '+212 6XX-XXXXXX', type: 'tel' }
   ]
   return (
     <div className="lg:col-span-3 space-y-8">
@@ -46,16 +48,16 @@ function CheckoutFormSection({ loading, formData, setFormData, onSubmit }: { loa
             {fields.map(f => (
               <div key={f.id} className="space-y-2">
                 <Label htmlFor={f.id} className="text-sm font-semibold">{f.label}</Label>
-                <Input id={f.id} required type={f.type} className="h-12" value={formData[f.id]} onChange={(e) => setFormData({ ...formData, [f.id]: e.target.value })} placeholder={f.placeholder} />
+                <Input id={f.id} required type={f.type} className="h-12" value={formData[f.id] || ''} onChange={(e) => setFormData({ ...formData, [f.id]: e.target.value })} placeholder={f.placeholder} />
               </div>
             ))}
           </div>
-          <div className="space-y-2"><Label htmlFor="email" className="text-sm font-semibold">Email (optionnel)</Label><Input id="email" type="email" className="h-12" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="votre@email.com" /></div>
+          <div className="space-y-2"><Label htmlFor="email" className="text-sm font-semibold">Email (optionnel)</Label><Input id="email" type="email" className="h-12" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="votre@email.com" /></div>
           <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2"><Label htmlFor="adresse" className="text-sm font-semibold">Adresse complète *</Label><Input id="adresse" required className="h-12" value={formData.adresse} onChange={(e) => setFormData({ ...formData, adresse: e.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="ville" className="text-sm font-semibold">Ville *</Label><Input id="ville" required className="h-12" value={formData.ville} onChange={(e) => setFormData({ ...formData, ville: e.target.value })} placeholder="Casablanca, Rabat..." /></div>
+            <div className="space-y-2"><Label htmlFor="address" className="text-sm font-semibold">Adresse complète *</Label><Input id="address" required className="h-12" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="city" className="text-sm font-semibold">Ville *</Label><Input id="city" required className="h-12" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Casablanca, Rabat..." /></div>
           </div>
-          <Button type="submit" size="lg" className="w-full bg-charbon text-white h-12 text-sm font-bold tracking-[0.2em] uppercase hover:bg-charbon/90 transition-all shadow-md mt-4" disabled={loading || !formData.nom_client || !formData.telephone || !formData.adresse || !formData.ville}>{loading ? 'Traitement...' : 'Confirmer la commande'}</Button>
+          <Button type="submit" size="lg" className="w-full bg-charbon text-white h-12 text-sm font-bold tracking-[0.2em] uppercase hover:bg-charbon/90 transition-all shadow-md mt-4" disabled={loading || !formData.customerName || !formData.phone || !formData.address || !formData.city}>{loading ? 'Traitement...' : 'Confirmer la commande'}</Button>
         </form>
       </Card>
       <div className="grid grid-cols-2 gap-6 px-4">
@@ -73,10 +75,10 @@ function CheckoutSummarySection({ items, total }: { items: CartItem[]; total: nu
         <h2 className="text-2xl font-serif mb-8 border-b pb-4">Résumé</h2>
         <div className="space-y-6 mb-8 max-h-[40vh] overflow-y-auto pr-2 scrollbar-hide">
           {items.map((item) => (
-            <div key={`${item.id}-${item.couleur}-${item.taille}`} className="flex gap-4 items-center">
-              <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-muted border"><Image src={item.image_url || item.image || '/placeholder.jpg'} alt={item.nom} fill className="object-cover" sizes="80px" /></div>
-              <div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{item.nom}</p><p className="text-xs text-muted-foreground uppercase">{item.quantite} × {item.prix.toLocaleString('fr-MA')} MAD</p></div>
-              <p className="font-serif font-bold text-sm">{(item.prix * item.quantite).toLocaleString('fr-MA')} MAD</p>
+            <div key={`${item.id}-${item.color}-${item.size}`} className="flex gap-4 items-center">
+              <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-muted border"><Image src={item.image_url || item.image || '/placeholder.jpg'} alt={item.name} fill className="object-cover" sizes="80px" /></div>
+              <div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{item.name}</p><p className="text-xs text-muted-foreground uppercase">{item.quantity} × {item.price.toLocaleString('fr-MA')} MAD</p></div>
+              <p className="font-serif font-bold text-sm">{(item.price * item.quantity).toLocaleString('fr-MA')} MAD</p>
             </div>
           ))}
         </div>

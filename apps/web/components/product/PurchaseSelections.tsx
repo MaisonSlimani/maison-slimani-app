@@ -7,30 +7,30 @@ import { Product, ProductVariation } from '@maison/domain'
 interface PurchaseSelectionsProps {
   hasColors: boolean
   variations: ProductVariation[] | null
-  selectedCouleur: string
-  setSelectedCouleur: (val: string) => void
-  taillesDisponibles: string[]
-  selectedTaille: string
-  setSelectedTaille: (val: string) => void
-  quantite: number
-  setQuantite: (val: number) => void
+  selectedColor: string
+  setSelectedColor: (val: string) => void
+  availableSizes: string[]
+  selectedSize: string
+  setSelectedSize: (val: string) => void
+  quantity: number
+  setQuantity: (val: number) => void
   _produit: Product
 }
 
 export function PurchaseSelections({
-  hasColors, variations, selectedCouleur, setSelectedCouleur,
-  taillesDisponibles, selectedTaille, setSelectedTaille,
-  quantite, setQuantite, _produit
+  hasColors, variations, selectedColor, setSelectedColor,
+  availableSizes, selectedSize, setSelectedSize,
+  quantity, setQuantity, _produit
 }: PurchaseSelectionsProps) {
   // Determine which sizes to show:
   // 1. If colors are active, show sizes for the selected color
   // 2. Otherwise show the root product sizes
-  let currentTailles = taillesDisponibles;
+  let currentSizes = availableSizes;
 
-  if (hasColors && selectedCouleur && variations) {
-    const selectedVar = variations.find(v => v.nom === selectedCouleur);
-    if (selectedVar && selectedVar.tailles) {
-      currentTailles = selectedVar.tailles.map(t => t.nom);
+  if (hasColors && selectedColor && variations) {
+    const selectedVar = variations.find(v => v.name === selectedColor);
+    if (selectedVar && selectedVar.sizes) {
+      currentSizes = selectedVar.sizes.map(t => t.name);
     }
   }
 
@@ -42,15 +42,15 @@ export function PurchaseSelections({
           <div className="flex flex-wrap gap-3">
             {variations.map((c) => (
               <button
-                key={c.nom}
+                key={c.name}
                 onClick={() => {
-                  setSelectedCouleur(c.nom);
+                  setSelectedColor(c.name);
                   // Reset size to first available for this color
-                  if (c.tailles && c.tailles.length > 0) {
-                    setSelectedTaille(c.tailles[0].nom);
+                  if (c.sizes && c.sizes.length > 0) {
+                    setSelectedSize(c.sizes[0].name);
                   }
                 }}
-                className={cn("w-10 h-10 rounded-full border-2 transition-all", selectedCouleur === c.nom ? "border-charbon scale-110" : "border-transparent")}
+                className={cn("w-10 h-10 rounded-full border-2 transition-all", selectedColor === c.name ? "border-charbon scale-110" : "border-transparent")}
                 style={{ backgroundColor: c.code || '#000' }}
               />
             ))}
@@ -58,12 +58,12 @@ export function PurchaseSelections({
         </div>
       )}
 
-      {currentTailles.length > 0 && (
+      {currentSizes.length > 0 && (
         <div className="space-y-3">
           <label className="text-sm font-medium uppercase tracking-wider">Taille</label>
           <div className="flex flex-wrap gap-2">
-            {currentTailles.map((t) => (
-              <button key={t} onClick={() => setSelectedTaille(t)} className={cn("px-4 py-2 border-2 rounded-lg transition-all", selectedTaille === t ? "bg-charbon text-white border-charbon" : "border-gray-200")}>{t}</button>
+            {currentSizes.map((t) => (
+              <button key={t} onClick={() => setSelectedSize(t)} className={cn("px-4 py-2 border-2 rounded-lg transition-all", selectedSize === t ? "bg-charbon text-white border-charbon" : "border-gray-200")}>{t}</button>
             ))}
           </div>
         </div>
@@ -72,9 +72,9 @@ export function PurchaseSelections({
       <div className="space-y-3">
         <label className="text-sm font-medium uppercase tracking-wider">Quantité</label>
         <div className="flex items-center gap-4">
-          <button onClick={() => setQuantite(Math.max(1, quantite - 1))} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center font-bold">-</button>
-          <span className="text-xl font-serif w-8 text-center">{quantite}</span>
-          <button onClick={() => setQuantite(quantite + 1)} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center font-bold">+</button>
+          <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center font-bold">-</button>
+          <span className="text-xl font-serif w-8 text-center">{quantity}</span>
+          <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center font-bold">+</button>
         </div>
       </div>
     </div>

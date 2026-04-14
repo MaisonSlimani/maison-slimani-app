@@ -7,35 +7,35 @@ export class CartService {
    */
   addItem(items: CartItem[], newItem: CartItem): DomainResult<CartItem[]> {
     // 1. Validation: Stock check
-    if (newItem.stock !== undefined && newItem.stock !== null && newItem.stock < newItem.quantite) {
+    if (newItem.stock !== undefined && newItem.stock !== null && newItem.stock < newItem.quantity) {
       return { 
         success: false, 
-        error: `Stock insuffisant pour "${newItem.nom}". Stock disponible: ${newItem.stock}` 
+        error: `Stock insuffisant pour "${newItem.name}". Stock disponible: ${newItem.stock}` 
       };
     }
 
     // 2. Add or Update
     const existingIndex = items.findIndex(i => 
       i.id === newItem.id && 
-      i.couleur === newItem.couleur && 
-      i.taille === newItem.taille
+      i.color === newItem.color && 
+      i.size === newItem.size
     );
 
     let updatedItems: CartItem[];
     if (existingIndex > -1) {
       const existing = items[existingIndex];
-      const newTotalQuantity = existing.quantite + newItem.quantite;
+      const newTotalQuantity = existing.quantity + newItem.quantity;
 
       // Re-validate stock for total quantity
       if (newItem.stock !== undefined && newItem.stock !== null && newItem.stock < newTotalQuantity) {
         return { 
           success: false, 
-          error: `Stock insuffisant pour "${newItem.nom}". Stock disponible: ${newItem.stock}` 
+          error: `Stock insuffisant pour "${newItem.name}". Stock disponible: ${newItem.stock}` 
         };
       }
 
       updatedItems = [...items];
-      updatedItems[existingIndex] = { ...existing, quantite: newTotalQuantity };
+      updatedItems[existingIndex] = { ...existing, quantity: newTotalQuantity };
     } else {
       updatedItems = [...items, newItem];
     }
@@ -48,8 +48,8 @@ export class CartService {
    */
   validateCart(items: CartItem[]): DomainResult<void> {
     for (const item of items) {
-      if (item.stock !== undefined && item.stock !== null && item.stock < item.quantite) {
-        return { success: false, error: `Le produit "${item.nom}" n'est plus en stock suffisant.` };
+      if (item.stock !== undefined && item.stock !== null && item.stock < item.quantity) {
+        return { success: false, error: `Le produit "${item.name}" n'est plus en stock suffisant.` };
       }
     }
     return { success: true };

@@ -1,16 +1,13 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { env } from '../utils/env'
 
+/**
+ * Creates a typed Supabase client for use in browser environments.
+ * Uses validated environment variables.
+ */
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Variables d\'environnement Supabase manquantes. ' +
-      'Assurez-vous que NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY sont définies dans vos variables d\'environnement Vercel.'
-    )
-  }
-
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  return createBrowserClient(
+    env.supabase.url,
+    env.supabase.anonKey
+  )
 }
-

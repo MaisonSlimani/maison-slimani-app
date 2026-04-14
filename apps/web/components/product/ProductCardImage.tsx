@@ -7,13 +7,13 @@ import OptimizedImage from '@/components/OptimizedImage'
 import { cn } from '@maison/shared'
 
 interface ColorImage {
-  couleur: string
+  color: string
   image: string | null
 }
 
 interface ProductCardImageProps {
   imageUrl: string | null
-  nom: string
+  name: string
   hasMultipleColors: boolean
   colorImages: ColorImage[]
   currentColorIndex: number
@@ -26,7 +26,7 @@ interface ProductCardImageProps {
 
 const ProductCardImage = ({
   imageUrl,
-  nom,
+  name,
   hasMultipleColors,
   colorImages,
   currentColorIndex,
@@ -41,7 +41,7 @@ const ProductCardImage = ({
       <OptimizedImage
         key={imageUrl || 'placeholder'}
         src={imageUrl || '/placeholder.jpg'}
-        alt={nom}
+        alt={name}
         fill
         className="object-cover transition-transform duration-300 group-hover:scale-105"
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"

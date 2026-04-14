@@ -29,10 +29,10 @@ function SummaryCard({ items, total }: { items: CartItem[]; total: number }) {
       <h2 className="text-lg font-serif mb-4">Votre Panier</h2>
       <div className="space-y-4 mb-4">
         {items.map((item) => (
-          <div key={`${item.id}-${item.couleur}-${item.taille}`} className="flex gap-4 items-start">
-            <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-muted"><Image src={item.image_url || item.image || '/placeholder.jpg'} alt={item.nom} fill className="object-cover" sizes="56px" /></div>
-            <div className="flex-1 min-w-0"><p className="font-medium text-xs line-clamp-1">{item.nom}</p><p className="text-[10px] text-muted-foreground uppercase">{item.quantite} × {item.prix.toLocaleString('fr-MA')} MAD</p></div>
-            <p className="font-bold text-xs">{(item.prix * item.quantite).toLocaleString('fr-MA')} MAD</p>
+          <div key={`${item.id}-${item.color}-${item.size}`} className="flex gap-4 items-start">
+            <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-muted"><Image src={item.image_url || item.image || '/placeholder.jpg'} alt={item.name} fill className="object-cover" sizes="56px" /></div>
+            <div className="flex-1 min-w-0"><p className="font-medium text-xs line-clamp-1">{item.name}</p><p className="text-[10px] text-muted-foreground uppercase">{item.quantity} × {item.price.toLocaleString('fr-MA')} MAD</p></div>
+            <p className="font-bold text-xs">{(item.price * item.quantity).toLocaleString('fr-MA')} MAD</p>
           </div>
         ))}
       </div>
@@ -42,21 +42,23 @@ function SummaryCard({ items, total }: { items: CartItem[]; total: number }) {
   )
 }
 
-interface FormData {
-  nom_client: string; telephone: string; email: string; adresse: string; ville: string
+import { Dispatch, SetStateAction } from 'react'
+
+interface CheckoutFormData {
+  customerName: string; phone: string; email: string; address: string; city: string
 }
 
-function CheckoutForm({ loading, formData, setFormData, onSubmit }: { loading: boolean; formData: FormData; setFormData: (d: FormData) => void; onSubmit: (e: React.FormEvent) => void }) {
+function CheckoutForm({ loading, formData, setFormData, onSubmit }: { loading: boolean; formData: CheckoutFormData; setFormData: Dispatch<SetStateAction<CheckoutFormData>>; onSubmit: (e: React.FormEvent) => void }) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <Card className="p-5 border-0 bg-ecru/10 shadow-sm ring-1 ring-charbon/5">
         <h2 className="text-lg font-serif mb-5">Livraison</h2>
         <div className="space-y-4">
-          <Field id="nom_client" label="Nom complet *" value={formData.nom_client} onChange={(v: string) => setFormData({ ...formData, nom_client: v })} placeholder="Ex: Ahmed El Mansouri" />
-          <Field id="telephone" label="Téléphone *" type="tel" value={formData.telephone} onChange={(v: string) => setFormData({ ...formData, telephone: v })} placeholder="06XXXXXXXX" />
-          <Field id="email" label="Email (optionnel)" type="email" value={formData.email} onChange={(v: string) => setFormData({ ...formData, email: v })} placeholder="votre@email.com" />
-          <Field id="adresse" label="Adresse *" value={formData.adresse} onChange={(v: string) => setFormData({ ...formData, adresse: v })} placeholder="Ex: 45 Rue de la Liberté" />
-          <Field id="ville" label="Ville *" value={formData.ville} onChange={(v: string) => setFormData({ ...formData, ville: v })} placeholder="Ex: Casablanca" />
+          <Field id="customerName" label="Nom complet *" value={formData.customerName} onChange={(v: string) => setFormData({ ...formData, customerName: v })} placeholder="Ex: Ahmed El Mansouri" />
+          <Field id="phone" label="Téléphone *" type="tel" value={formData.phone} onChange={(v: string) => setFormData({ ...formData, phone: v })} placeholder="06XXXXXXXX" />
+          <Field id="email" label="Email (optionnel)" type="email" value={formData.email || ''} onChange={(v: string) => setFormData({ ...formData, email: v })} placeholder="votre@email.com" />
+          <Field id="address" label="Adresse *" value={formData.address} onChange={(v: string) => setFormData({ ...formData, address: v })} placeholder="Ex: 45 Rue de la Liberté" />
+          <Field id="city" label="Ville *" value={formData.city} onChange={(v: string) => setFormData({ ...formData, city: v })} placeholder="Ex: Casablanca" />
         </div>
       </Card>
       <Button type="submit" size="lg" disabled={loading} className="w-full bg-charbon text-white h-12 text-sm font-serif font-bold tracking-[0.2em] uppercase shadow-md hover:bg-charbon/90 transition-all rounded-xl">{loading ? 'Traitement...' : 'Confirmer la Commande'}</Button>

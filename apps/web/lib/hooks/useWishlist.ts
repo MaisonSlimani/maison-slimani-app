@@ -1,48 +1,82 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { CartItem } from '@maison/domain'
+import { useState, useEffect, useCallback } from 'react'
+import { CartItem, wishlistItemSchema } from '@maison/domain'
+import { createPersistentStore } from '@maison/shared'
+import { z } from 'zod'
 
 export type WishlistItem = CartItem
-const STORAGE_KEY = 'wishlist'
+
+const wishlistStore = createPersistentStore<WishlistItem[]>({
+  key: 'wishlist',
+  version: 2,
+  schema: z.array(wishlistItemSchema) as unknown as z.ZodType<WishlistItem[]>,
+  fallback: [],
+  migrate: (old: unknown, _fromVersion: number) => {
+    if (!Array.isArray(old)) return [];
+    return old.map(item => ({
+      ...item,
+      name: item.name || item.nom,
+      price: item.price || item.prix,
+      quantity: item.quantity || item.quantite || 1,
+      size: item.size || item.taille,
+      color: item.color || item.couleur
+    })) as WishlistItem[];
+  }
+});
 
 export function useWishlist() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
-  const isUpdating = useRef(false)
-
-  const load = useCallback(() => {
-    if (typeof window === 'undefined') return
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) { isUpdating.current = true; setItems(parsed); setTimeout(() => { isUpdating.current = false }, 100) }
-      }
-    } catch (e) { console.error(e); localStorage.removeItem(STORAGE_KEY) }
-  }, [])
-
-  useEffect(() => { if (typeof window !== 'undefined') { load(); setIsLoaded(true) } }, [load])
 
   useEffect(() => {
-    if (isLoaded && typeof window !== 'undefined' && !isUpdating.current) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-      window.dispatchEvent(new Event('wishlistUpdated'))
-    }
-  }, [items, isLoaded])
+    setItems(wishlistStore.get());
+    setIsLoaded(true);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const sync = (e?: StorageEvent) => { if (!e || (e.key === STORAGE_KEY && e.newValue)) load() }
-    window.addEventListener('storage', sync)
-    window.addEventListener('wishlistUpdated', load)
-    return () => { window.removeEventListener('storage', sync); window.removeEventListener('wishlistUpdated', load) }
-  }, [load])
+    const unsubscribe = wishlistStore.subscribe((newItems) => {
+      setItems(newItems);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const isInWishlist = useCallback((id: string) => items.some(i => i.id === id), [items])
+  
   const toggleItem = useCallback((item: WishlistItem) => {
-    setItems(prev => prev.some(i => i.id === item.id) ? prev.filter(i => i.id !== item.id) : [...prev, item])
+    const current = wishlistStore.get()
+    const exists = current.some(i => i.id === item.id)
+    const updated = exists 
+      ? current.filter(i => i.id !== item.id) 
+      : [...current, item]
+    wishlistStore.set(updated)
   }, [])
 
-  return { items, addItem: (item: WishlistItem) => setItems(prev => prev.some(i => i.id === item.id) ? prev : [...prev, item]), removeItem: (id: string) => setItems(prev => prev.filter(i => i.id !== id)), toggleItem, isInWishlist, clearWishlist: () => setItems([]), isLoaded, count: items.length }
+  const addItem = (item: WishlistItem) => {
+    const current = wishlistStore.get()
+    if (!current.some(i => i.id === item.id)) {
+      wishlistStore.set([...current, item])
+    }
+  }
+
+  const removeItem = (id: string) => {
+    const current = wishlistStore.get()
+    wishlistStore.set(current.filter(i => i.id !== id))
+  }
+
+  const clearWishlist = () => {
+    wishlistStore.clear()
+  }
+
+  return { 
+    items, 
+    addItem, 
+    removeItem, 
+    toggleItem, 
+    isInWishlist, 
+    clearWishlist, 
+    isLoaded, 
+    count: items.length 
+  }
 }

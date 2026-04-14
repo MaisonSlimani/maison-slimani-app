@@ -3,56 +3,63 @@ import { test, expect } from '@playwright/test';
 test.describe('Checkout Flow', () => {
   test('should complete a guest checkout successfully from product page', async ({ page }) => {
     // 1. Visit Boutique
-    console.log('Navigating to boutique...');
     await page.goto('/boutique/tous');
     
-    // Wait for products to load
-    console.log('Waiting for products...');
+    // Wait for product links to load
     const firstProduct = page.locator('a[href*="/boutique/"]:visible').first();
     await firstProduct.waitFor({ state: 'visible', timeout: 60000 });
     
-    // 2. Go to Product Page
-    console.log('Navigating to product page...');
-    await firstProduct.click({ force: true });
+    // 2. Navigate to Product Page
+    const productUrl = await firstProduct.getAttribute('href');
+    if (!productUrl) throw new Error('Could not find product URL');
     
-    // 3. Select options if available and click "Achat Immédiat"
-    console.log('Handling product selection...');
-    const colorButton = page.locator('button[style*="background-color"]:visible').first();
-    if (await colorButton.isVisible()) {
-      await colorButton.click({ timeout: 15000 }).catch(() => console.log('Color click timed out, but continuing...'));
+    await page.goto(productUrl);
+    await page.waitForURL('**/boutique/*/*', { timeout: 30000 });
+
+    // 3. Select color if required
+    const colorSwatch = page.locator('button').filter({ hasText: /NOIR|Marron|Bleu|Blanc|Tabac/i }).first();
+    if (await colorSwatch.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await colorSwatch.click();
+      // Wait for the color to be visually selected (scale-110 is the selected indicator)
+      await expect(colorSwatch).toHaveClass(/scale-110/, { timeout: 5000 });
     }
 
-    const sizeButton = page.locator('button:has-text("41"), button:has-text("42"), button:has-text("40"), button:has-text("S"), button:has-text("M")').filter({ visible: true }).first();
-    if (await sizeButton.isVisible()) {
-      await sizeButton.click({ timeout: 15000 }).catch(() => console.log('Size click timed out, but continuing...'));
+    // 4. Select size if required — wait for size buttons to re-render after color
+    const sizeButton = page.locator('button').filter({ hasText: /^[0-9]{2,3}$/ })
+      .filter({ has: page.locator(':not([disabled])') })
+      .first();
+    
+    if (await sizeButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await sizeButton.click();
+      // Confirm the size button now has the selected style
+      await expect(sizeButton).toHaveClass(/bg-charbon/, { timeout: 5000 });
     }
 
-    // Use "Achat Immédiat" to skip cart and go straight to checkout
-    console.log('Clicking Instant Buy...');
-    const instantBuy = page.locator('button').filter({ hasText: /Achat Immédiat/i }).first();
-    await instantBuy.waitFor({ state: 'visible', timeout: 30000 });
-    await instantBuy.click({ force: true });
+    // 5. Click "Achat Immédiat" (Buy Now)
+    const buyNowButton = page
+      .locator('button')
+      .filter({ hasText: /Achat Immédiat/i })
+      .first();
     
-    // 4. Verify Checkout Page
-    console.log('Verifying checkout page...');
+    await expect(buyNowButton).toBeVisible();
+    await buyNowButton.click();
+
+    // 6. Verify navigation to checkout
     await page.waitForURL('**/checkout', { timeout: 30000 });
-    
-    // 5. Fill Checkout Form
-    console.log('Filling checkout form...');
+    await expect(page.locator('h1')).toHaveText(/Finaliser votre commande/i);
+
+    // 7. Fill Checkout Form
     await page.fill('#nom_client', 'Test User');
     await page.fill('#telephone', '0600000000');
     await page.fill('#adresse', '123 Test Street');
     await page.fill('#ville', 'Casablanca');
-    
-    // 6. Submit Order
-    console.log('Submitting order...');
-    const submitButton = page.locator('button[type="submit"]');
+
+    // 8. Submit Order
+    const submitButton = page.locator('button').filter({ hasText: /Confirmer la commande/i });
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
-    
-    // 7. Verify Success
-    console.log('Verifying completion...');
-    // The exact success URL or message might vary, but we expect progress or a status page
-    await expect(page).toHaveURL(/.*success|.*confirmation|.*thank-you|.*commandes/, { timeout: 30000 });
+
+    // 9. Verify Success — redirects to confirmation page
+    await expect(page).toHaveURL(/.*confirme|.*success|.*confirmation/, { timeout: 30000 });
   });
 });

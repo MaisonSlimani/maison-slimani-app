@@ -6,11 +6,11 @@ import ProductCardSkeleton from '@/components/skeletons/ProductCardSkeleton'
 import { Product } from '@maison/domain'
 
 interface HomeFeaturedProps {
-  produits: Product[]
+  products: Product[]
   loading: boolean
 }
 
-export function HomeFeatured({ produits, loading }: HomeFeaturedProps) {
+export function HomeFeatured({ products, loading }: HomeFeaturedProps) {
   return (
     <section className="py-24 px-6 bg-white">
       <div className="container max-w-6xl mx-auto text-center mb-16">
@@ -19,8 +19,8 @@ export function HomeFeatured({ produits, loading }: HomeFeaturedProps) {
       </div>
       {!loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 container max-w-6xl mx-auto">
-          {produits.map((p) => (
-            <CarteProduit key={p.id} produit={p} showActions={true} />
+          {products.map((p) => (
+            <CarteProduit key={p.id} product={p} showActions={true} />
           ))}
         </div>
       ) : (

@@ -4,6 +4,9 @@ import {
   commentaireSchema, 
   updateCommentaireSchema, 
   adminCommentActionSchema,
+  contactSchema,
+  searchSuggestionsQuerySchema,
+  categoryQuerySchema,
   commandeProduitSchema
 } from '../validation/schemas';
 
@@ -12,15 +15,18 @@ export type CommandeProduit = z.infer<typeof commandeProduitSchema>;
 export type CommentairePayload = z.infer<typeof commentaireSchema>;
 export type UpdateCommentairePayload = z.infer<typeof updateCommentaireSchema>;
 export type AdminCommentActionPayload = z.infer<typeof adminCommentActionSchema>;
+export type ContactPayload = z.infer<typeof contactSchema>;
+export type SearchSuggestionsQueryPayload = z.infer<typeof searchSuggestionsQuerySchema>;
+export type CategoryQueryPayload = z.infer<typeof categoryQuerySchema>;
 
 /**
  * Single source of truth for a Product variation (color/size combo)
  */
 export interface ProductVariation {
-  nom: string;
+  name: string;
   code?: string;
   stock?: number;
-  tailles?: { nom: string; stock: number }[];
+  sizes?: { name: string; stock: number }[];
   images?: string[];
 }
 
@@ -29,42 +35,42 @@ export interface ProductVariation {
  */
 export interface CartItem {
   id: string;
-  nom: string;
-  prix: number;
-  quantite: number;
+  name: string;
+  price: number;
+  quantity: number;
   image_url: string | null;
   image?: string; // Legacy support
-  taille?: string | null;
-  couleur?: string | null;
+  size?: string | null;
+  color?: string | null;
   stock?: number | null;
-  categorie?: string | null;
+  category?: string | null;
   slug?: string | null;
   categorySlug?: string | null;
 }
 
 /**
  * Domain-level Product model
- * Strictly aligned with database schema but with typed JSON fields.
+ * Fully decoupled from infrastructure naming.
  */
 export interface Product {
   id: string;
-  nom: string;
+  name: string;
   description: string;
-  prix: number;
+  price: number;
   stock: number | null;
-  total_stock: number | null;
+  totalStock: number | null;
   image_url: string | null;
   images: string[] | null;
-  categorie: string | null;
-  vedette: boolean | null;
-  has_colors: boolean | null;
-  couleurs: ProductVariation[] | null;
-  tailles: { nom: string; stock: number }[] | null;
-  taille: string | null;
+  category: string | null;
+  featured: boolean | null;
+  hasColors: boolean | null;
+  colors: ProductVariation[] | null;
+  sizes: { name: string; stock: number }[] | null;
+  size: string | null;
   slug: string | null;
-  average_rating: number | null;
-  rating_count: number | null;
-  date_ajout: string | null;
+  averageRating: number | null;
+  ratingCount: number | null;
+  createdAt: string | null;
 }
 
 /**
@@ -72,12 +78,12 @@ export interface Product {
  */
 export interface ProductSearchParams {
   search?: string;
-  categorie?: string;
+  category?: string | string[];
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
-  couleur?: string | string[];
-  taille?: string | string[];
+  color?: string | string[];
+  size?: string | string[];
   sort?: 'prix_asc' | 'prix_desc' | string;
   limit?: number;
   offset?: number;
@@ -89,16 +95,16 @@ export interface ProductSearchParams {
  */
 export interface Order {
   id: string;
-  nom_client: string;
-  telephone: string;
-  adresse: string;
-  ville: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  city: string;
   email: string | null;
-  produits: CommandeProduit[];
+  items: CommandeProduit[];
   total: number;
-  statut: 'En attente' | 'Expédiée' | 'Livrée' | 'Annulée' | string | null;
-  date_commande: string | null;
-  idempotency_key?: string | null;
+  status: 'En attente' | 'Expédiée' | 'Livrée' | 'Annulée' | string | null;
+  orderedAt: string | null;
+  idempotencyKey?: string | null;
 }
 
 /**
@@ -106,14 +112,14 @@ export interface Order {
  */
 export interface Category {
   id: string;
-  nom: string;
+  name: string;
   slug: string;
   description: string | null;
   image_url: string | null;
-  active: boolean | null;
-  ordre: number | null;
-  date_creation: string | null;
-  couleur: string | null;
+  isActive: boolean | null;
+  order: number | null;
+  createdAt: string | null;
+  color: string | null;
 }
 
 /**
@@ -121,24 +127,26 @@ export interface Category {
  */
 export interface SiteSettings {
   id?: string;
-  email_entreprise: string | null;
-  telephone: string | null;
+  companyEmail: string | null;
+  phone: string | null;
   whatsapp?: string | null;
-  adresse: string | null;
+  address: string | null;
   description?: string | null;
   facebook?: string | null;
   instagram?: string | null;
-  meta_pixel_code?: string | null;
-  google_tag_manager_header?: string | null;
-  google_tag_manager_body?: string | null;
+  metaPixelCode?: string | null;
+  gtmHeader?: string | null;
+  gtmBody?: string | null;
 }
+
+export type CategoryInput = Omit<Category, 'id' | 'createdAt'>;
 
 /**
  * Aggregated data needed for the Home page
  */
 export interface HomeData {
   categories: Category[];
-  produitsVedette: Product[];
+  featuredProducts: Product[];
   settings: SiteSettings | null;
   whatsappNumber: string | null;
 }
@@ -156,14 +164,14 @@ export interface CategoryPageData {
  * Payload for creating a new order
  */
 export interface OrderPlacementPayload {
-  nom_client: string;
-  telephone: string;
-  adresse: string;
-  ville: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  city: string;
   email: string | null;
-  produits: CommandeProduit[];
+  items: CommandeProduit[];
   total: number;
-  idempotency_key: string;
+  idempotencyKey?: string;
 }
 
 export interface DomainResult<T> {

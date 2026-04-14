@@ -12,9 +12,13 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@maison/shared": ["./src/index.ts"]
+      "@maison/shared": ["./src/index.ts"],
+      "@maison/domain": ["../domain/src/index.ts"]
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "references": [
+    { "path": "../domain" }
+  ]
 }

@@ -1,26 +1,14 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { createApiHandler } from '@/lib/api/handler';
 import { createClient } from '@/lib/supabase/server';
 import { SearchRepository } from '@maison/db';
-
-const querySchema = z.object({
-  q: z.string().trim().min(0).max(100).optional(),
-  type: z.enum(['all', 'products', 'categories', 'trending']).optional(),
-  limit: z
-    .string()
-    .transform((value) => Number(value))
-    .pipe(z.number().int().positive().max(20))
-    .optional(),
-});
+import { searchSuggestionsQuerySchema } from '@maison/domain';
 
 export const dynamic = 'force-dynamic';
 
 export const GET = createApiHandler(async (req: Request) => {
   const url = new URL(req.url);
-  const validated = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
-
-  const { q: query, type = 'all', limit = 5 } = validated;
+  const { q: query, type = 'all', limit = 5 } = searchSuggestionsQuerySchema.parse(Object.fromEntries(url.searchParams.entries()));
   
   const supabase = await createClient();
   const repo = new SearchRepository(supabase);

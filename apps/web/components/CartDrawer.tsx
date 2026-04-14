@@ -42,13 +42,13 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           <>
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {items.map((item) => {
-                const key = `${item.id}-${item.couleur || ''}-${item.taille || ''}`
+                const key = `${item.id}-${item.color || ''}-${item.size || ''}`
                 return (
                   <CartItem 
                     key={key} item={item} error={stockErrors[key]}
                     productUrl={`/boutique/${item.categorySlug || 'cat'}/${item.slug || 'slug'}`}
-                    onQuantityChange={(i, q) => updateQuantity(i.id, q, i.couleur, i.taille)}
-                    onRemove={(i) => removeItem(i.id, i.couleur, i.taille)}
+                    onQuantityChange={(i, q) => updateQuantity(i.id, q, i.color, i.size)}
+                    onRemove={(i) => removeItem(i.id, i.color, i.size)}
                     onClose={() => onOpenChange(false)}
                   />
                 )

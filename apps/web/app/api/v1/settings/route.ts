@@ -17,5 +17,6 @@ export const GET = createApiHandler(async () => {
     throw { status: 404, message: 'Paramètres introuvables' };
   }
 
+  // Returning directly as createApiHandler handles the envelope
   return data;
 });

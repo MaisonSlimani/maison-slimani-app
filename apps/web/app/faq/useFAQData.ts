@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
 import { SiteSettings } from '@maison/domain'
 
 export function useFAQData(initialSettings?: SiteSettings | null) {
@@ -19,7 +18,9 @@ export function useFAQData(initialSettings?: SiteSettings | null) {
             setSettings(mapFaqSettings(result.data))
           }
         }
-      } catch (err) { console.error(err) } finally {
+      } catch (err) { 
+        console.error(err) 
+      } finally {
         setLoading(false)
       }
     }
@@ -32,26 +33,26 @@ export function useFAQData(initialSettings?: SiteSettings | null) {
 function mapFaqSettings(data: SiteSettings | null | undefined): SiteSettings {
   const defaultEmail = 'Maisondeslimani@gmail.com'
   if (!data) return { 
-    email_entreprise: defaultEmail, 
-    telephone: null, 
+    companyEmail: defaultEmail, 
+    phone: null, 
     facebook: null, 
     instagram: null,
-    adresse: null,
+    address: null,
     description: null,
-    meta_pixel_code: null,
-    google_tag_manager_header: null,
-    google_tag_manager_body: null
+    metaPixelCode: null,
+    gtmHeader: null,
+    gtmBody: null
   }
   return {
-    email_entreprise: data.email_entreprise || defaultEmail,
-    telephone: data.telephone || null,
+    companyEmail: data.companyEmail || defaultEmail,
+    phone: data.phone || null,
     facebook: data.facebook || null,
     instagram: data.instagram || null,
-    adresse: data.adresse || null,
+    address: data.address || null,
     description: data.description || null,
-    meta_pixel_code: data.meta_pixel_code || null,
-    google_tag_manager_header: data.google_tag_manager_header || null,
-    google_tag_manager_body: data.google_tag_manager_body || null
+    metaPixelCode: data.metaPixelCode || null,
+    gtmHeader: data.gtmHeader || null,
+    gtmBody: data.gtmBody || null
   }
 }
 

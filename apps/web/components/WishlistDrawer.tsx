@@ -20,9 +20,9 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
   const [showModal, setShowModal] = useState(false)
   const [productData, setProductData] = useState<Product | null>(null)
   const [loading, setLoading] = useState(false)
-  const [selectedCouleur, setSelectedCouleur] = useState('')
-  const [selectedTaille, setSelectedTaille] = useState('')
-  const [quantite, setQuantite] = useState(1)
+  const [selectedColor, setSelectedColor] = useState('')
+  const [selectedSize, setSelectedSize] = useState('')
+  const [quantity, setQuantity] = useState(1)
 
   const handleAddToCart = async (item: CartItem) => {
     setLoading(true)
@@ -36,7 +36,7 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
   const onConfirm = async () => {
     try {
       if (!productData) return
-      await addToCart({ ...productData, quantite, taille: selectedTaille, couleur: selectedCouleur, image_url: productData.image_url }, false)
+      await addToCart({ ...productData, quantity, size: selectedSize, color: selectedColor, image_url: productData.image_url }, false)
       setShowModal(false); toast.success('Ajouté')
     } catch (err) { toast.error((err as Error).message) }
   }
@@ -52,7 +52,7 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
           <WishlistContent isLoaded={isLoaded} items={items} cartItems={cartItems} loading={loading} onAddToCart={handleAddToCart} onRemove={removeItem} onClose={() => onOpenChange(false)} />
         </SheetContent>
       </Sheet>
-      {productData && <ProductPurchaseDialog showModal={showModal} setShowModal={setShowModal} produit={productData} selectedCouleur={selectedCouleur} setSelectedCouleur={setSelectedCouleur} selectedTaille={selectedTaille} setSelectedTaille={setSelectedTaille} quantite={quantite} setQuantite={setQuantite} taillesDisponibles={productData.tailles?.map(t => t.nom) || []} onConfirm={onConfirm} isAddingToCart={false} />}
+      {productData && <ProductPurchaseDialog showModal={showModal} setShowModal={setShowModal} produit={productData} selectedColor={selectedColor} setSelectedColor={setSelectedColor} selectedSize={selectedSize} setSelectedSize={setSelectedSize} quantity={quantity} setQuantity={setQuantity} sizesAvailable={productData.colors?.flatMap(c => c.sizes?.map(s => s.name) || []) || []} onConfirm={onConfirm} isAddingToCart={false} />}
     </>
   )
 }

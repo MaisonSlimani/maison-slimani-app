@@ -3,39 +3,39 @@
 import { useMemo } from 'react'
 import { Product } from '@maison/domain'
 
-export function useProductGalleries(produit: Product) {
+export function useProductGalleries(product: Product) {
   return useMemo(() => {
-    const images: { url: string; couleur?: string | null }[] = []
+    const images: { url: string; color?: string | null }[] = []
     
-    if (!produit.image_url && (!produit.images || produit.images.length === 0)) {
+    if (!product.image_url && (!product.images || product.images.length === 0)) {
       return images;
     }
 
     // Add main image
-    if (produit.image_url) {
-      images.push({ url: produit.image_url, couleur: null })
+    if (product.image_url) {
+      images.push({ url: product.image_url, color: null })
     }
     
     // Add gallery images
-    if (produit.images && Array.isArray(produit.images)) {
-      produit.images.forEach(img => {
-        if (img && img !== produit.image_url) {
-          images.push({ url: img, couleur: null })
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach(img => {
+        if (img && img !== product.image_url) {
+          images.push({ url: img, color: null })
         }
       })
     }
     
     // Add variation images
-    if (produit.couleurs && Array.isArray(produit.couleurs)) {
-      produit.couleurs.forEach(v => {
+    if (product.colors && Array.isArray(product.colors)) {
+      product.colors.forEach(v => {
         if (v.images && Array.isArray(v.images)) {
           v.images.forEach(img => {
-            images.push({ url: img, couleur: v.nom })
+            images.push({ url: img, color: v.name })
           })
         }
       })
     }
     
     return images;
-  }, [produit])
+  }, [product])
 }

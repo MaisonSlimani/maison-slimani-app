@@ -4,7 +4,7 @@ import { Settings } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { LuxuryLoading } from '@maison/ui'
 import { useProductsCategories } from '@/hooks/admin/useProductsCategories'
-import { CategoryCard } from '@/components/products/CategoryCard'
+import CategoryCard from '@/components/products/CategoryCard'
 
 export default function ProductsPage() {
   const navigate = useNavigate()
@@ -37,8 +37,8 @@ export default function ProductsPage() {
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
-          {categories.map((categorie, index) => (
-            <CategoryCard key={categorie.id} category={categorie} index={index} />
+          {categories.map((categorie, idx) => (
+            <CategoryCard key={categorie.id} category={categorie} index={idx} />
           ))}
         </div>
       )}

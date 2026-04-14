@@ -16,50 +16,50 @@ import { useProductGalleries } from './useProductGalleries'
 export function useProductDetail(produitInitial: Product) {
   const params = useParams()
   const [produit, setProduit] = useState<Product>(produitInitial)
-  const [quantite, setQuantite] = useState(1)
-  const [couleur, setCouleur] = useState<string>('')
-  const [taille, setTaille] = useState<string>('')
+  const [quantity, setQuantity] = useState(1)
+  const [color, setColor] = useState<string>('')
+  const [size, setSize] = useState<string>('')
   const [addedToCart, setAddedToCart] = useState(false)
 
   const { items } = useCart()
   const isInCart = items.some(item => 
     item.id === produit.id && 
-    (produit.has_colors ? item.couleur === couleur : true) &&
-    ((produit.tailles?.length || 0) > 0 ? item.taille === taille : true)
+    (produit.hasColors ? item.color === color : true) &&
+    ((produit.sizes?.length || 0) > 0 ? item.size === size : true)
   )
 
   // Side Effects: Stock & Analytics
   useProductStock(produit.id, setProduit)
-  useProductAnalytics(produit, couleur, setCouleur)
+  useProductAnalytics(produit, color, setColor)
 
   // Actions: Cart & Wishlist
   const { handleAddToCart, handleToggleWishlist, isInWishlist } = useProductActions({
     produit, 
-    quantite, 
-    couleur, 
-    taille, 
+    quantity, 
+    color, 
+    size, 
     setAddedToCart, 
     params: params as Record<string, string>
   })
 
-  // Derived Data: Gallerie & Tailles
+  // Derived Data: Gallery & Sizes
   const allImages = useProductGalleries(produit)
-  const variations = produit.couleurs as ProductVariation[] | null
-  const taillesData = (produit?.has_colors && couleur && variations) 
-    ? (variations.find((cl) => cl.nom === couleur)?.tailles || []) 
-    : (produit?.tailles || [])
+  const variations = produit.colors as ProductVariation[] | null
+  const sizesData = (produit?.hasColors && color && variations) 
+    ? (variations.find((cl) => cl.name === color)?.sizes || []) 
+    : (produit?.sizes || [])
 
   return { 
     produit, 
-    quantite, setQuantite, 
-    couleur, setCouleur, 
-    taille, setTaille, 
+    quantity, setQuantity, 
+    color, setColor, 
+    size, setSize, 
     addedToCart, 
     isInCart, 
     inWishlist: isInWishlist, 
     handleAddToCart, 
     handleToggleWishlist,
-    taillesData, 
+    sizesData, 
     allImages
   }
 }

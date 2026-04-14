@@ -4,7 +4,12 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Mail, Phone, MapPin, Clock, Instagram } from 'lucide-react'
 import ContactForm from '@/app/contact/ContactForm'
-import { ContactViewData } from '@/types/views'
+import { SiteSettings } from '@maison/domain'
+
+interface ContactViewData {
+  settings: SiteSettings;
+  loading: boolean;
+}
 
 export default function DesktopContactView({ data }: { data: ContactViewData }) {
   const { settings, loading } = data
@@ -26,9 +31,9 @@ export default function DesktopContactView({ data }: { data: ContactViewData }) 
           <div className="space-y-8">
             <h2 className="text-3xl font-serif text-charbon">Informations</h2>
             <div className="space-y-6">
-              <InfoCard icon={Phone} label="Téléphone" value={settings.telephone} isLarge />
-              <InfoCard icon={Mail} label="Email" value={settings.email_entreprise} isLarge />
-              <InfoCard icon={MapPin} label="Atelier" value={settings.adresse} />
+              <InfoCard icon={Phone} label="Téléphone" value={settings.phone} isLarge />
+              <InfoCard icon={Mail} label="Email" value={settings.companyEmail} isLarge />
+              <InfoCard icon={MapPin} label="Atelier" value={settings.address} />
               <InfoCard icon={Clock} label="Horaires" value="Lun - Sam : 09:00 - 19:00" />
             </div>
           </div>
