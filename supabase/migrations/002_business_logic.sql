@@ -1,11 +1,7 @@
--- 002_business_logic.sql: Inventory & Order Automation
--- Consolidates all stock triggers and atomic handling.
+-- 002_business_logic.sql
+-- Stock triggers and atomic handling.
 
---------------------------------------------------------------------------------
--- 1. TOTAL STOCK MANAGEMENT
---------------------------------------------------------------------------------
-
--- Calculates total stock across single stock, sizes, or nested color-sizes
+-- 1. Total Stock Calculation
 CREATE OR REPLACE FUNCTION calculate_total_stock(
   p_has_colors BOOLEAN,
   p_stock INTEGER,
@@ -18,7 +14,7 @@ DECLARE
   color_obj JSONB;
   size_obj JSONB;
 BEGIN
-  IF p_has_colors = true AND p_colors IS NOT NULL AND jsonb_typeof(p_colors) = 'array' THEN
+  IF p_has_colors = true AND p_colors NOT NULL AND jsonb_typeof(p_colors) = 'array' THEN
     FOR color_obj IN SELECT * FROM jsonb_array_elements(p_colors)
     LOOP
       IF color_obj ? 'sizes' AND jsonb_typeof(color_obj->'sizes') = 'array' THEN
@@ -42,6 +38,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
+
+-- 2. Trigger Function
 CREATE OR REPLACE FUNCTION update_total_stock_trigger_fn()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -55,17 +53,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_update_total_stock ON produits;
+
+-- 3. The Trigger
 CREATE TRIGGER trigger_update_total_stock
   BEFORE INSERT OR UPDATE OF stock, colors, has_colors, sizes ON produits
   FOR EACH ROW
   EXECUTE FUNCTION update_total_stock_trigger_fn();
 
---------------------------------------------------------------------------------
--- 2. ATOMIC INVENTORY MANIPULATION
---------------------------------------------------------------------------------
 
--- DECREMENT HELPER
+-- 4. Decrement Helper
 CREATE OR REPLACE FUNCTION decrement_product_stock_atomic(
   p_product_id UUID,
   p_quantity INTEGER,
@@ -111,7 +107,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- INCREMENT HELPER (RESTOCK)
+
+-- 5. Increment Helper
 CREATE OR REPLACE FUNCTION increment_product_stock_atomic(
   p_product_id UUID,
   p_quantity INTEGER,
@@ -152,10 +149,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---------------------------------------------------------------------------------
--- 3. ORDER PLACEMENT RPC
---------------------------------------------------------------------------------
 
+-- 6. Order Placement
 CREATE OR REPLACE FUNCTION create_order_v2_atomic(
   p_customer_name TEXT,
   p_phone TEXT,
@@ -193,10 +188,8 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
---------------------------------------------------------------------------------
--- 4. RESTOCK ON CANCEL TRIGGER
---------------------------------------------------------------------------------
 
+-- 7. Restock Logic
 CREATE OR REPLACE FUNCTION restore_stock_on_cancel()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -217,16 +210,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_restock_on_cancel ON commandes;
+
+-- 8. The Restock Trigger
 CREATE TRIGGER trigger_restock_on_cancel
   AFTER UPDATE OF status ON commandes
   FOR EACH ROW
   EXECUTE FUNCTION restore_stock_on_cancel();
 
---------------------------------------------------------------------------------
--- 5. RATING AGGREGATION
---------------------------------------------------------------------------------
 
+-- 9. Rating Aggregation
 CREATE OR REPLACE FUNCTION update_product_rating()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -239,7 +231,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_update_rating ON commentaires;
+
+-- 10. Rating Trigger
 CREATE TRIGGER trigger_update_rating
   AFTER INSERT OR UPDATE OF status OR DELETE ON commentaires
   FOR EACH ROW
