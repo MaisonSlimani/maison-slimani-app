@@ -19,7 +19,11 @@ export const GET = createApiHandler(async (_req: Request, context: { params: Pro
   
   const products = await repo.getSimilarProducts(id);
 
-  const response = NextResponse.json({ data: products });
+  const response = NextResponse.json({ 
+    success: true, 
+    data: products 
+  });
+  
   response.headers.set('x-vercel-cache-tags', PRODUCTS_CACHE_TAG);
   response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   

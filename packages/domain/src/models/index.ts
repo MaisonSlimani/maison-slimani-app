@@ -39,7 +39,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image_url: string | null;
-  image?: string; // Legacy support
+  image?: string; 
   size?: string | null;
   color?: string | null;
   stock?: number | null;
@@ -69,6 +69,8 @@ export interface Product {
   size: string | null;
   slug: string | null;
   createdAt: string | null;
+  material?: string; // Integrated into SSOT
+  rank?: number;     // Integrated into SSOT
 }
 
 /**
@@ -87,7 +89,7 @@ export interface ProductSearchParams {
   inStock?: boolean;
   color?: string | string[];
   size?: string | string[];
-  sort?: 'prix_asc' | 'prix_desc' | string;
+  sort?: 'price_asc' | 'price_desc' | 'newest' | string; // Normalized to English
   limit?: number;
   offset?: number;
   useFullText?: boolean;
@@ -105,7 +107,7 @@ export interface Order {
   email: string | null;
   items: CommandeProduit[];
   total: number;
-  status: 'En attente' | 'Expédiée' | 'Livrée' | 'Annulée' | string | null;
+  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled' | string | null; // Normalized Status
   orderedAt: string | null;
   idempotencyKey?: string | null;
 }
@@ -140,6 +142,7 @@ export interface SiteSettings {
   metaPixelCode?: string | null;
   gtmHeader?: string | null;
   gtmBody?: string | null;
+  gtmId?: string | null;
 }
 
 export type CategoryInput = Omit<Category, 'id' | 'createdAt'>;

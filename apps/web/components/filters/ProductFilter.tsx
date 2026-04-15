@@ -25,7 +25,7 @@ export default function ProductFilter({ onFilterChange, currentFilters, category
   const { data: options } = useQuery({
     queryKey: ['filter-options', categoryName],
     queryFn: async () => {
-      const resp = await fetch(`/api/produits/filter-options${categoryName ? `?categorie=${categoryName}` : ''}`)
+      const resp = await fetch(`/api/v1/produits/filter-options${categoryName ? `?category=${categoryName}` : ''}`)
       const res = await resp.json()
       return res.data
     }
@@ -45,17 +45,17 @@ export default function ProductFilter({ onFilterChange, currentFilters, category
         </DialogHeader>
         
         <div className="space-y-8 py-6">
-          {options?.couleurs && (
+          {options?.colors && (
             <ColorFilter 
-              options={options.couleurs} selected={localFilters.couleur || []} 
-              onChange={(val) => setLocalFilters({...localFilters, couleur: val})} 
+              options={options.colors} selected={localFilters.color || []} 
+              onChange={(val) => setLocalFilters({...localFilters, color: val})} 
             />
           )}
           
-          {options?.tailles && (
+          {options?.sizes && (
             <SizeFilter 
-              options={options.tailles} selected={localFilters.taille || []} 
-              onChange={(val) => setLocalFilters({...localFilters, taille: val})} 
+              options={options.sizes} selected={localFilters.size || []} 
+              onChange={(val) => setLocalFilters({...localFilters, size: val})} 
             />
           )}
 

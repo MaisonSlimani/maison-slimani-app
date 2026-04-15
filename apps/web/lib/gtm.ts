@@ -3,6 +3,7 @@ import { Product, CartItem } from '@maison/domain'
 /**
  * A product-like object that can be mapped to a GA4 GTM item.
  * Standardizes access to clean Domain properties.
+ * Refactored to remove all legacy French fallback fields.
  */
 export interface GTMProductInput {
   id: string
@@ -11,10 +12,6 @@ export interface GTMProductInput {
   quantity?: number
   category?: string | null
   list_name?: string
-  // Legacy support for older analytics calls
-  nom?: string
-  prix?: number
-  quantite?: number
 }
 
 type GTMEvent = {
@@ -45,9 +42,9 @@ declare global {
 export const mapProductToGTM = (product: GTMProductInput, index?: number) => {
     return {
         item_id: product.id,
-        item_name: product.name ?? product.nom,
-        price: product.price ?? product.prix,
-        quantity: product.quantity ?? product.quantite ?? 1,
+        item_name: product.name,
+        price: product.price,
+        quantity: product.quantity ?? 1,
         item_category: product.category,
         item_list_name: product.list_name,
         index,

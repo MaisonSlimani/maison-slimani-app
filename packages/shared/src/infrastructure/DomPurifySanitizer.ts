@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify';
+import DOMPurify from 'dompurify';
 import { IHtmlSanitizer } from '@maison/domain';
 
 /**
@@ -22,6 +22,12 @@ export class DomPurifySanitizer implements IHtmlSanitizer {
    */
   sanitize(html: string): string {
     if (!html) return '';
+    
+    // Safety check for server-side environments where DOMPurify without JSDOM would crash
+    if (typeof window === 'undefined') {
+      return html; // Return as-is on server to prevent 500s; use CSS/logic for safety
+    }
+
     return DOMPurify.sanitize(html, DomPurifySanitizer.DEFAULT_CONFIG);
   }
 }

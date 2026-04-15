@@ -17,19 +17,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const categoryPages: MetadataRoute.Sitemap = (categories || []).map((cat) => ({
       url: `${baseUrl}/boutique/${cat.slug}`,
-      lastModified: cat.date_creation ? new Date(cat.date_creation) : new Date(),
+      lastModified: cat.created_at ? new Date(cat.created_at) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
     categoryPages.push({ url: `${baseUrl}/boutique/tous`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.8 })
  
-    const categoryMap = new Map((categories || []).map((c) => [c.nom, c.slug]))
+    const categoryMap = new Map((categories || []).map((c) => [c.name, c.slug]))
     const productPages: MetadataRoute.Sitemap = (produits || []).flatMap((p) => {
-      const categorySlug = p.categorie ? categoryMap.get(p.categorie) : null
+      const categorySlug = p.category ? categoryMap.get(p.category) : null
       if (!categorySlug) return []
       return [{
         url: `${baseUrl}/boutique/${categorySlug}/${p.slug || p.id}`,
-        lastModified: p.date_ajout ? new Date(p.date_ajout) : new Date(),
+        lastModified: p.created_at ? new Date(p.created_at) : new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.9,
       }]

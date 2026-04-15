@@ -1,64 +1,65 @@
+import { SiteSettings as DomainSiteSettings } from '@maison/domain'
+
 export interface FilterState {
   minPrice?: number
   maxPrice?: number
-  taille?: string[]
+  size?: string[]
   inStock?: boolean
-  couleur?: string[]
-  categorie?: string[]
+  color?: string[]
+  category?: string[]
 }
 
 export interface Taille {
-    nom: string;
+    name: string; // Was 'nom'
     stock: number;
 }
 
 export interface Couleur {
-    nom: string;
+    name: string; // Was 'nom'
     code?: string;
     stock?: number;
-    taille?: string; // Backward compatibility
-    tailles?: Taille[];
-    images?: string[] | string; // Can be array of URLs or single URL string
+    sizes?: Taille[]; // Was 'tailles'
+    images?: string[] | string;
 }
 
 export interface Product {
     id: string;
-    nom: string;
+    name: string; // Was 'nom'
     slug?: string;
     description?: string;
-    prix: number;
+    price: number; // Was 'prix'
     image_url?: string;
-    image?: string; // Sometimes used as alias for image_url
-    images?: string[] | { url: string }[]; // Can be array of strings or objects
-    matiere?: string;
+    image?: string; 
+    images?: string[] | { url: string }[]; 
+    material?: string; // Was 'matiere'
     stock: number;
-    total_stock?: number;
-    categorie?: string;
+    totalStock?: number; // Was 'total_stock'
+    category?: string; // Was 'categorie'
     categorySlug?: string;
-    vedette?: boolean;
-    date_ajout?: string;
+    featured?: boolean; // Was 'vedette'
+    createdAt?: string; // Was 'date_ajout'
     rank?: number;
 
     // Variations
-    has_colors?: boolean;
-    couleurs?: Couleur[];
-    taille?: string; // Backward compatibility (comma separated string)
-    tailles?: Taille[]; // New standard
+    hasColors?: boolean; // Was 'has_colors'
+    colors?: Couleur[]; // Was 'couleurs'
+    size?: string; 
+    sizes?: Taille[]; 
 
     // Ratings
-    average_rating?: number | null;
-    rating_count?: number;
+    averageRating?: number | null; // Was 'average_rating'
+    ratingCount?: number; // Was 'rating_count'
 }
 
 export interface ProductSearchParams {
     search?: string;
-    categorie?: string;
+    category?: string; // Was 'categorie'
     minPrice?: number;
     maxPrice?: number;
     inStock?: boolean;
-    couleur?: string[];
-    taille?: string[];
-    sort?: 'prix_asc' | 'prix_desc';
+    color?: string[]; // Was 'couleur'
+    size?: string[]; // Was 'taille'
+    sort?: 'price_asc' | 'price_desc' | 'price-asc' | 'price-desc' | 'prix_asc' | 'prix_desc';
     limit?: number;
     offset?: number;
     useFullText?: boolean;
@@ -71,21 +72,20 @@ export interface FAQItem {
 
 export interface Commentaire {
   id: string;
-  produit_id: string;
-  nom: string;
+  productId: string; // Was 'produit_id'
+  name: string; // Was 'nom'
   email?: string;
   rating: number;
-  commentaire: string;
+  content: string; // Was 'commentaire'
   images: string[];
   approved?: boolean;
   flagged?: boolean;
   canEdit?: boolean;
-  created_at: string;
-  updated_at?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
-import { SiteSettings } from '@maison/domain'
-export type { SiteSettings }
+export type SiteSettings = DomainSiteSettings
 
 export interface ApiResponse<T> {
     success: boolean;

@@ -9,6 +9,7 @@ const logger = createLogger('api.handler');
  * Standardized API Response format
  */
 export interface ApiResponse<T = unknown> {
+  success: boolean;
   data?: T;
   error?: string;
   details?: Record<string, string[] | undefined>;
@@ -36,7 +37,7 @@ export function createApiHandler<T, P = ParamsRecord>(
       }
 
       // Otherwise wrap the result in our standard envelope
-      const response = NextResponse.json({ data: result });
+      const response = NextResponse.json({ success: true, data: result });
       response.headers.set('X-Request-Id', requestId);
       return response;
     } catch (error: unknown) {
@@ -51,24 +52,25 @@ export function createApiHandler<T, P = ParamsRecord>(
       // Handle Standardized Repository Errors
       if (error instanceof RepositoryError) {
         const errResp = NextResponse.json(
-          { error: error.message },
+          { success: false, error: error.message },
           { status: error.status }
         );
         errResp.headers.set('X-Request-Id', requestId);
-        return errResp as NextResponse<ApiResponse<T>>;
+        return errResp as unknown as NextResponse<ApiResponse<T>>;
       }
 
       // Handle Zod validation errors
       if (error instanceof z.ZodError) {
         const errResp = NextResponse.json(
           { 
+            success: false,
             error: 'Erreur de validation', 
             details: error.flatten().fieldErrors 
           },
           { status: 400 }
         );
         errResp.headers.set('X-Request-Id', requestId);
-        return errResp;
+        return errResp as unknown as NextResponse<ApiResponse<T>>;
       }
 
       // Handle other errors
@@ -76,11 +78,11 @@ export function createApiHandler<T, P = ParamsRecord>(
       const message = typeof err.message === 'string' ? err.message : 'Une erreur inattendue est survenue';
 
       const errResp = NextResponse.json(
-        { error: message },
+        { success: false, error: message },
         { status }
       );
       errResp.headers.set('X-Request-Id', requestId);
-      return errResp as NextResponse<ApiResponse<T>>;
+      return errResp as unknown as NextResponse<ApiResponse<T>>;
     }
   };
 }

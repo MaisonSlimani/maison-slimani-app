@@ -30,22 +30,22 @@ export function ProductPreviewGallery({ images, selectedIndex, onSelect, showSta
 }
 
 interface InfoProps {
-  formData: { nom: string; description: string; prix: string; has_colors: boolean }
-  couleurs: Array<{ nom: string; code: string; stock: number }>
+  formData: { name: string; description: string; price: string; hasColors: boolean }
+  colors: Array<{ name: string; code: string; stock: number }>
   selectedColor: string
   onColorSelect: (c: string) => void
   stock: number
 }
 
-export function ProductPreviewInfo({ formData, couleurs, selectedColor, onColorSelect, stock }: InfoProps) {
-  const prix = parseFloat(formData.prix) || 0
+export function ProductPreviewInfo({ formData, colors, selectedColor, onColorSelect, stock }: InfoProps) {
+  const price = parseFloat(formData.price) || 0
   return (
     <div className="space-y-6">
-      <div><h1 className="text-3xl font-serif mb-2">{formData.nom || 'Produit'}</h1><p className="text-2xl font-bold text-dore">{prix.toFixed(2)} DH</p></div>
-      {formData.has_colors && !!couleurs.length && (
+      <div><h1 className="text-3xl font-serif mb-2">{formData.name || 'Produit'}</h1><p className="text-2xl font-bold text-dore">{price.toFixed(2)} DH</p></div>
+      {formData.hasColors && !!colors.length && (
         <div><h3 className="text-xs font-semibold mb-3 uppercase tracking-wider">Couleurs</h3>
-          <div className="flex gap-2 flex-wrap">{couleurs.map(c => (
-            <button key={c.nom} onClick={() => onColorSelect(c.nom)} style={{ backgroundColor: c.code }} className={cn("w-10 h-10 rounded-lg border-2", selectedColor === c.nom ? "border-charbon ring-1 ring-charbon ring-offset-2" : "border-gray-200")} title={c.nom} />
+          <div className="flex gap-2 flex-wrap">{colors.map(c => (
+            <button key={c.name} onClick={() => onColorSelect(c.name)} style={{ backgroundColor: c.code }} className={cn("w-10 h-10 rounded-lg border-2", selectedColor === c.name ? "border-charbon ring-1 ring-charbon ring-offset-2" : "border-gray-200")} title={c.name} />
           ))}</div>
         </div>
       )}

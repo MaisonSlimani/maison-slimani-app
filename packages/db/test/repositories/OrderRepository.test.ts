@@ -6,8 +6,8 @@ import { OrderPlacementPayload } from '@maison/domain';
 
 test('OrderRepository', async (t) => {
   await t.test('placeOrder() handles successful atomic RPC transaction', async () => {
-    const mockClient = createMockSupabaseClient();
-    const repo = new OrderRepository(mockClient);
+    const { client, builder } = createMockSupabaseClient();
+    const repo = new OrderRepository(client);
 
     const payload: OrderPlacementPayload = {
       customerName: 'John Doe',
@@ -20,65 +20,47 @@ test('OrderRepository', async (t) => {
       idempotencyKey: 'ik_123'
     };
 
-    mockClient.rpc = ((funcName: string, args: unknown) => {
-      const rpcArgs = args as Record<string, unknown>;
-      assert.strictEqual(funcName, 'create_order_v2_atomic');
-      assert.strictEqual(rpcArgs.p_nom_client, 'John Doe');
-      assert.strictEqual(rpcArgs.p_idempotency_key, 'ik_123');
-
-      return {
-         then: (resolve: (value: unknown) => void) => {
-          resolve({
-            data: {
-              success: true,
-              data: {
-                id: 'order_1',
-                nom_client: 'John Doe',
-                telephone: '0600000000',
-                adresse: '123 Fake St',
-                ville: 'Casablanca',
-                email: 'john@example.com',
-                produits: [],
-                total: 100,
-                statut: 'en_attente',
-                date_commande: new Date().toISOString()
-              }
-            },
-            error: null
-          });
-        }
-      };
-    }) as unknown as typeof mockClient.rpc;
+    builder.setResponse({
+      success: true,
+      data: {
+        id: 'order_1',
+        customer_name: 'John Doe',
+        phone: '0600000000',
+        address: '123 Fake St',
+        city: 'Casablanca',
+        email: 'john@example.com',
+        items: [],
+        total: 100,
+        status: 'en_attente',
+        created_at: new Date().toISOString()
+      }
+    });
 
     const result = await repo.placeOrder(payload);
     
+    // Using Record<string, unknown> to avoid 'any'
+    const rpcArgs = builder.lastRpcArgs as Record<string, unknown>;
+    assert.ok(builder.lastRpcArgs !== null);
+    assert.strictEqual(rpcArgs.p_customer_name, 'John Doe');
+    assert.strictEqual(rpcArgs.p_idempotency_key, 'ik_123');
+
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.data?.id, 'order_1');
   });
 
   await t.test('placeOrder() returns domain error gracefully if RPC explicitly fails (e.g. stock missing)', async () => {
-    const mockClient = createMockSupabaseClient();
-    const repo = new OrderRepository(mockClient);
+    const { client, builder } = createMockSupabaseClient();
+    const repo = new OrderRepository(client);
 
     const payload: OrderPlacementPayload = {
        customerName: 'John', phone: '00', address: 'addr', city: 'city', email: 'e@mail.com',
        items: [], total: 100, idempotencyKey: 'ik_123'
     };
 
-    // Mock RPC returning an application error (data.success = false)
-    mockClient.rpc = ((_funcName: string, _args: unknown) => {
-      return {
-         then: (resolve: (value: unknown) => void) => {
-          resolve({
-            data: {
-              success: false,
-              error: 'Stock insuffisant pour: Article A'
-            },
-            error: null
-          });
-        }
-      };
-    }) as unknown as typeof mockClient.rpc;
+    builder.setResponse({
+      success: false,
+      error: 'Stock insuffisant pour: Article A'
+    });
 
     const result = await repo.placeOrder(payload);
     

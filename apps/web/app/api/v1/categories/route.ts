@@ -23,7 +23,10 @@ export const GET = createApiHandler(async (req: Request) => {
     data = isActive !== undefined ? await repo.findAllActive() : await repo.findAll();
   }
 
-  const response = NextResponse.json({ data });
+  const response = NextResponse.json({ 
+    success: true, 
+    data 
+  });
   
   // Set Caching Headers
   response.headers.set('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=900');

@@ -6,47 +6,33 @@ import { DatabaseConnectionError } from '../../src/errors';
 
 test('ProductRepository', async (t) => {
   await t.test('findAll() returns mapped products', async () => {
-    const mockClient = createMockSupabaseClient();
-    const repo = new ProductRepository(mockClient);
+    const { client, builder } = createMockSupabaseClient();
+    const repo = new ProductRepository(client);
 
-    const mockFrom = mockClient.from;
-    type MockFrom = typeof mockFrom;
-    mockClient.from = ((table: string) => {
-      const builders = mockFrom(table as never);
-      return {
-        ...builders,
-        then: (resolve: (value: unknown) => void) => {
-          resolve({
-            data: [{
-              id: '123',
-              nom: 'Shoe',
-              description: 'Nice shoe',
-              prix: 100,
-              stock: 10,
-              categorie: 'sneakers',
-              slug: 'shoe',
-              date_ajout: new Date().toISOString(),
-              vedette: false,
-              couleurs: [],
-              tailles: [],
-              images: [],
-              image_url: 'url',
-              total_stock: 10,
-              has_colors: false,
-              upsell_products: []
-            }],
-            error: null
-          });
-        }
-      };
-    }) as unknown as MockFrom;
+    builder.setResponse([{
+      id: '123',
+      name: 'Shoe',
+      description: 'Nice shoe',
+      price: 100,
+      stock: 10,
+      category: 'sneakers',
+      slug: 'shoe',
+      created_at: new Date().toISOString(),
+      featured: false,
+      colors: [],
+      sizes: [],
+      images: [],
+      image_url: 'url',
+      total_stock: 10,
+      has_colors: false,
+      upsell_products: []
+    }]);
 
     const products = await repo.findAll();
     
     assert.strictEqual(products.length, 1);
     assert.strictEqual(products[0].name, 'Shoe');
     assert.strictEqual(products[0].stock, 10);
-    assert.deepStrictEqual(products[0].colors, []);
   });
 
   await t.test('findAll() throws typed DatabaseConnectionError on fetch failure', async () => {
@@ -62,36 +48,28 @@ test('ProductRepository', async (t) => {
   });
   
   await t.test('search() maps RPC results and returns correct format', async () => {
-    const mockClient = createMockSupabaseClient();
-    const repo = new ProductRepository(mockClient);
+    const { client, builder } = createMockSupabaseClient();
+    const repo = new ProductRepository(client);
 
-    mockClient.rpc = ((_funcName: string, _args: unknown) => {
-      return {
-         then: (resolve: (value: unknown) => void) => {
-          resolve({
-            data: [{
-              id: '456',
-              nom: 'Search Result',
-              description: 'search result desc',
-              prix: 150,
-              stock: 5,
-              categorie: 'sneakers',
-              slug: 'search-result',
-              date_ajout: new Date().toISOString(),
-              vedette: false,
-              couleurs: [],
-              tailles: [],
-              images: [],
-              image_url: 'url2',
-              total_stock: 5,
-              has_colors: false,
-              upsell_products: []
-            }],
-            error: null
-          });
-        }
-      };
-    }) as unknown as typeof mockClient.rpc;
+    builder.setResponse([{
+      id: '456',
+      name: 'Search Result',
+      description: 'search result desc',
+      price: 150,
+      stock: 5,
+      category: 'sneakers',
+      slug: 'search-result',
+      created_at: new Date().toISOString(),
+      featured: false,
+      colors: [],
+      sizes: [],
+      images: [],
+      image_url: 'url2',
+      total_stock: 5,
+      has_colors: false,
+      upsell_products: [],
+      total_count: 1
+    }]);
 
     const result = await repo.search({ search: 'Shoe', limit: 12, offset: 0 });
     

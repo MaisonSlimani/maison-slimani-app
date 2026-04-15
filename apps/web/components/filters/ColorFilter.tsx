@@ -6,7 +6,7 @@ import { Check } from 'lucide-react'
 import { cn } from '@maison/shared'
 
 interface ColorOption {
-  nom: string
+  name: string // Was 'nom'
   code: string
 }
 
@@ -17,11 +17,11 @@ interface ColorFilterProps {
 }
 
 export const ColorFilter = ({ options, selected, onChange }: ColorFilterProps) => {
-  const toggle = (nom: string) => {
-    if (selected.includes(nom)) {
-      onChange(selected.filter(s => s !== nom))
+  const toggle = (name: string) => {
+    if (selected.includes(name)) {
+      onChange(selected.filter(s => s !== name))
     } else {
-      onChange([...selected, nom])
+      onChange([...selected, name])
     }
   }
 
@@ -30,11 +30,11 @@ export const ColorFilter = ({ options, selected, onChange }: ColorFilterProps) =
       <Label className="text-base font-semibold">Couleurs</Label>
       <div className="flex flex-wrap gap-3">
         {options.map((c: ColorOption) => {
-          const isSelected = selected.includes(c.nom)
+          const isSelected = selected.includes(c.name)
           return (
             <button
-              key={c.nom}
-              onClick={() => toggle(c.nom)}
+              key={c.name}
+              onClick={() => toggle(c.name)}
               className={cn("relative w-10 h-10 rounded-lg border-2", isSelected ? "border-charbon scale-110" : "border-gray-200")}
               style={{ backgroundColor: c.code || '#000' }}
             >

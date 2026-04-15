@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ThumbnailList } from './gallery/ThumbnailList'
 import { MobileGalleryDialog } from './gallery/MobileGalleryDialog'
 
-interface ImageItem { url: string; couleur?: string | null }
+interface ImageItem { url: string; color?: string | null }
 interface GalerieProduitProps { 
   images?: (string | ImageItem)[]; 
   imageUrl?: string; 
@@ -28,12 +28,12 @@ export default function GalerieProduit({
   const [galleryOpen, setGalleryOpen] = useState(false)
   
   const normalized: ImageItem[] = images.length > 0 
-    ? images.map((img) => typeof img === 'string' ? { url: img, couleur: null } : img) 
-    : (imageUrl ? [{ url: imageUrl, couleur: null }] : [])
+    ? images.map((img) => typeof img === 'string' ? { url: img, color: null } : img) 
+    : (imageUrl ? [{ url: imageUrl, color: null }] : [])
     
   // Filter by color IF there are images matching that specific color, otherwise show everything
-  const filtered = (selectedColor && normalized.some(img => img.couleur === selectedColor))
-    ? normalized.filter((img) => img.couleur === selectedColor) 
+  const filtered = (selectedColor && normalized.some(img => img.color === selectedColor))
+    ? normalized.filter((img) => img.color === selectedColor) 
     : normalized;
 
   useEffect(() => setCurrentIndex(0), [selectedColor])

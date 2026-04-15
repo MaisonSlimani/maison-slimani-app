@@ -11,12 +11,12 @@ import { hapticFeedback } from '@/lib/haptics'
 export function useProductCardState(produit: Product) {
   const { addItem: addToCart, items } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
-  
+
   const [currentColorIndex, setCurrentColorIndex] = useState(0)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  
+
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -25,12 +25,12 @@ export function useProductCardState(produit: Product) {
   const isInCart = items.some(item => item.id === produit.id)
 
   const variations = (produit.colors as ProductVariation[]) || []
-  
-  const colorImages = variations.map((c) => ({ 
-    color: c.name, 
-    image: Array.isArray(c.images) ? c.images[0] : (c.images || produit.image_url) 
+
+  const colorImages = variations.map((c) => ({
+    color: c.name,
+    image: Array.isArray(c.images) ? c.images[0] : (c.images || produit.image_url)
   })).filter(ci => ci.image) as { color: string; image: string }[]
-  
+
   const imageUrl = (colorImages.length > 0 && colorImages[currentColorIndex]?.image) || produit.image_url || ''
 
   // Auto-select first available options when modal opens
@@ -38,7 +38,7 @@ export function useProductCardState(produit: Product) {
     if (!selectedColor && variations.length > 0) {
       const firstColor = variations[0].name
       setSelectedColor(firstColor)
-      
+
       const firstColorVariation = variations[0]
       if (firstColorVariation.sizes && firstColorVariation.sizes.length > 0) {
         setSelectedSize(firstColorVariation.sizes[0].name)
@@ -62,9 +62,9 @@ export function useProductCardState(produit: Product) {
 
   const addBasicToCart = async () => {
     hapticFeedback('medium')
-    if (produit.hasColors || (produit.sizes && produit.sizes.length > 0)) { 
+    if (produit.hasColors || (produit.sizes && produit.sizes.length > 0)) {
       openModal()
-      return 
+      return
     }
     setIsAddingToCart(true)
     try {

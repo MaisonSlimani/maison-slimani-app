@@ -18,26 +18,26 @@ export function OrderListItem({
 }: OrderListItemProps) {
   const ActionButtons = (
     <>
-      {commande.status === 'En attente' && (
+      {commande.status === 'en_attente' && (
         <>
           <Button variant="default" size="sm" onClick={() => onActionClick(commande.id, 'Expédier')} className="w-full bg-blue-600 text-white" disabled={operationLoading}><Truck className="w-4 h-4 mr-2" /> Expédier</Button>
           <Button variant="destructive" size="sm" onClick={() => onActionClick(commande.id, 'Annuler')} className="w-full" disabled={operationLoading}><XCircle className="w-4 h-4 mr-2" /> Annuler</Button>
         </>
       )}
-      {commande.status === 'Expédiée' && (
+      {commande.status === 'expediee' && (
         <>
           <Button variant="default" size="sm" onClick={() => onActionClick(commande.id, 'Livrée')} className="w-full bg-green-600 text-white" disabled={operationLoading}><CheckCircle className="w-4 h-4 mr-2" /> Livrée</Button>
           <Button variant="destructive" size="sm" onClick={() => onActionClick(commande.id, 'Annuler')} className="w-full" disabled={operationLoading}><XCircle className="w-4 h-4 mr-2" /> Annuler</Button>
         </>
       )}
-      {(commande.status === 'Livrée' || commande.status === 'Annulée') && (
+      {(commande.status === 'livree' || commande.status === 'annulee') && (
         <div className="text-sm text-muted-foreground flex items-center justify-center px-3 py-2 w-full border rounded-md">{commande.status}</div>
       )}
     </>
   )
 
   return (
-    <Card className={`p-6 bg-card border-2 transition-all hover:shadow-lg ${commande.status === 'En attente' ? 'border-yellow-400/50 bg-yellow-50/30' : 'border-border'}`}>
+    <Card className={`p-6 bg-card border-2 transition-all hover:shadow-lg ${commande.status === 'en_attente' ? 'border-yellow-400/50 bg-yellow-50/30' : 'border-border'}`}>
       <div className="flex gap-6">
         <div className="flex gap-2 flex-shrink-0">
           {(commande.items ?? []).slice(0, 3).map((p, idx) => (

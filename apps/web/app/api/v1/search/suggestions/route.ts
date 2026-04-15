@@ -36,7 +36,12 @@ export const GET = createApiHandler(async (req: Request) => {
     }
   }
 
-  const response = NextResponse.json({ data: suggestions, query });
+  const response = NextResponse.json({ 
+    success: true, 
+    data: suggestions, 
+    query 
+  });
+  
   response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=30');
   
   return response;

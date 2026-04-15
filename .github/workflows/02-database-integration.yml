@@ -1,0 +1,25 @@
+name: 02 - Database Integration
+
+on:
+  workflow_run:
+    workflows: ["01 - Core Verification"]
+    types:
+      - completed
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Start Supabase Local
+        run: supabase db start
+
+      - name: Run Database Tests
+        run: supabase test db

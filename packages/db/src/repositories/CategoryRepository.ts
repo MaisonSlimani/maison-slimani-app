@@ -1,6 +1,7 @@
 import { AppSupabaseClient } from '../client.types';
 import { Category, CategoryInput, DomainResult, ICategoryRepository } from '@maison/domain';
 import { Database, TablesUpdate } from '../database.types';
+import { mapDatabaseError } from '../errors';
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
@@ -10,42 +11,25 @@ export class CategoryRepository implements ICategoryRepository {
     this.supabase = supabase;
   }
 
-  /**
-   * Maps a raw database row to a clean Domain Category model.
-   */
-  private mapCategory(data: CategoryRow): Category {
-    return {
-      id: data.id,
-      name: data.nom,
-      slug: data.slug,
-      description: data.description || null,
-      image_url: data.image_url || null,
-      isActive: data.active ?? false,
-      order: data.ordre ?? 0,
-      createdAt: data.date_creation,
-      color: data.couleur || null,
-    };
-  }
-
   async findAll(): Promise<Category[]> {
     const { data, error } = await this.supabase
       .from('categories')
       .select('*')
-      .order('ordre', { ascending: true });
+      .order('order', { ascending: true });
 
-    if (error) throw error;
-    return (data || []).map(d => this.mapCategory(d));
+    if (error) throw mapDatabaseError(error);
+    return (data || []).map(mapCategoryRow);
   }
 
   async findAllActive(): Promise<Category[]> {
     const { data, error } = await this.supabase
       .from('categories')
       .select('*')
-      .eq('active', true)
-      .order('ordre', { ascending: true });
+      .eq('is_active', true)
+      .order('order', { ascending: true });
 
-    if (error) throw error;
-    return (data || []).map(d => this.mapCategory(d));
+    if (error) throw mapDatabaseError(error);
+    return (data || []).map(mapCategoryRow);
   }
 
   async findBySlug(slug: string): Promise<Category | null> {
@@ -53,40 +37,40 @@ export class CategoryRepository implements ICategoryRepository {
       .from('categories')
       .select('*')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
 
-    if (error) return null;
-    return data ? this.mapCategory(data) : null;
+    if (error) throw mapDatabaseError(error);
+    return data ? mapCategoryRow(data) : null;
   }
 
   async create(payload: CategoryInput): Promise<DomainResult<Category>> {
     const { data, error } = await this.supabase
       .from('categories')
       .insert({
-        nom: payload.name,
+        name: payload.name,
         slug: payload.slug,
         description: payload.description,
         image_url: payload.image_url,
-        active: payload.isActive,
-        ordre: payload.order,
-        couleur: payload.color
+        is_active: payload.isActive,
+        order: payload.order,
+        color: payload.color
       })
       .select()
       .single();
 
     if (error) return { success: false, error: error.message };
-    return { success: true, data: data ? this.mapCategory(data) : undefined };
+    return { success: true, data: data ? mapCategoryRow(data) : undefined };
   }
 
   async update(id: string, payload: Partial<CategoryInput>): Promise<DomainResult<Category>> {
     const dbPayload: TablesUpdate<'categories'> = {};
-    if (payload.name !== undefined) dbPayload.nom = payload.name;
+    if (payload.name !== undefined) dbPayload.name = payload.name;
     if (payload.slug !== undefined) dbPayload.slug = payload.slug;
     if (payload.description !== undefined) dbPayload.description = payload.description;
     if (payload.image_url !== undefined) dbPayload.image_url = payload.image_url;
-    if (payload.isActive !== undefined) dbPayload.active = payload.isActive;
-    if (payload.order !== undefined) dbPayload.ordre = payload.order;
-    if (payload.color !== undefined) dbPayload.couleur = payload.color;
+    if (payload.isActive !== undefined) dbPayload.is_active = payload.isActive;
+    if (payload.order !== undefined) dbPayload.order = payload.order;
+    if (payload.color !== undefined) dbPayload.color = payload.color;
 
     const { data, error } = await this.supabase
       .from('categories')
@@ -96,7 +80,7 @@ export class CategoryRepository implements ICategoryRepository {
       .single();
 
     if (error) return { success: false, error: error.message };
-    return { success: true, data: data ? this.mapCategory(data) : undefined };
+    return { success: true, data: data ? mapCategoryRow(data) : undefined };
   }
 
   async delete(id: string): Promise<DomainResult<void>> {
@@ -108,4 +92,18 @@ export class CategoryRepository implements ICategoryRepository {
     if (error) return { success: false, error: error.message };
     return { success: true };
   }
+}
+
+function mapCategoryRow(data: CategoryRow): Category {
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    description: data.description || null,
+    image_url: data.image_url || null,
+    isActive: data.is_active ?? false,
+    order: data.order ?? 0,
+    createdAt: data.created_at,
+    color: data.color || null,
+  };
 }

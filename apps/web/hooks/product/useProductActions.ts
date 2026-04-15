@@ -1,6 +1,5 @@
 'use client'
 
-
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
@@ -8,7 +7,7 @@ import { toast } from 'sonner'
 import { Product, validateProductSelections, getSelectedStock } from '@maison/domain'
 
 interface ProductActionProps {
-  produit: Product;
+  product: Product;
   quantity: number;
   color: string;
   size: string;
@@ -20,19 +19,19 @@ interface ProductActionProps {
  * Hook to manage product-level actions (Cart, Wishlist)
  * Orchestrates domain services and UI state.
  */
-export function useProductActions({ produit, quantity, color, size, setAddedToCart, params }: ProductActionProps) {
+export function useProductActions({ product, quantity, color, size, setAddedToCart, params }: ProductActionProps) {
   const router = useRouter()
   const { addItem } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
 
   const handleAddToCart = async (buyNow = false) => {
-    if (!produit) return
+    if (!product) return
     
-    const error = validateProductSelections(produit, color, size)
+    const error = validateProductSelections(product, color, size)
     if (error) return toast.error(error)
 
     try {
-      const item = prepareCartItem(produit, quantity, color, size, params)
+      const item = prepareCartItem(product, quantity, color, size, params)
 
       if (buyNow) {
         persistBuyNowItem(item)
@@ -49,29 +48,29 @@ export function useProductActions({ produit, quantity, color, size, setAddedToCa
   }
 
   const handleToggleWishlist = () => {
-    if (!produit) return
-    if (isInWishlist(produit.id)) {
-      removeFromWishlist(produit.id)
+    if (!product) return
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id)
       toast.success('Retiré des favoris')
     } else {
-      addToWishlist({ ...produit, quantity: 1, image_url: produit.image_url, size: null, color: null })
+      addToWishlist({ ...product, quantity: 1, image_url: product.image_url, size: null, color: null })
       toast.success('Ajouté aux favoris')
     }
   }
 
-  return { handleAddToCart, handleToggleWishlist, isInWishlist: isInWishlist(produit.id) }
+  return { handleAddToCart, handleToggleWishlist, isInWishlist: isInWishlist(product.id) }
 }
 
-function prepareCartItem(produit: Product, quantity: number, color: string, size: string, params: Record<string, string>) {
+function prepareCartItem(product: Product, quantity: number, color: string, size: string, params: Record<string, string>) {
   return {
-    ...produit, 
+    ...product, 
     quantity, 
     size: size || null, 
     color: color || null,
-    stock: getSelectedStock(produit, color, size),
-    image_url: produit.image_url, 
-    slug: produit.slug || params.slug,
-    categorySlug: params.categorie
+    stock: getSelectedStock(product, color, size),
+    image_url: product.image_url, 
+    slug: product.slug || params.slug,
+    categorySlug: params.category || params.categorie // Support both while transitioning
   }
 }
 
@@ -84,4 +83,3 @@ function persistBuyNowItem(item: ReturnType<typeof prepareCartItem>) {
   localStorage.setItem('cart', cartItems)
   window.dispatchEvent(new Event('cartUpdated'))
 }
-

@@ -13,7 +13,7 @@ export class ProductQueryRepository {
     const { data, error } = await this.supabase
       .from('produits')
       .select('*')
-      .order('date_ajout', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw mapDatabaseError(error);
     return (data || []).map(mapProductRow);
@@ -45,8 +45,8 @@ export class ProductQueryRepository {
     const { data, error } = await this.supabase
       .from('produits')
       .select('*')
-      .eq('categorie', category)
-      .order('date_ajout', { ascending: false });
+      .eq('category', category)
+      .order('created_at', { ascending: false });
 
     if (error) throw mapDatabaseError(error);
     return (data || []).map(mapProductRow);
@@ -59,7 +59,7 @@ export class ProductQueryRepository {
 
     const { data: cat, error: catErr } = await this.supabase
       .from('categories')
-      .select('nom')
+      .select('name')
       .eq('slug', categorySlug)
       .maybeSingle();
 
@@ -68,7 +68,7 @@ export class ProductQueryRepository {
     const { data, error } = await this.supabase
       .from('produits')
       .select('*')
-      .eq('categorie', cat.nom)
+      .eq('category', cat.name)
       .eq('slug', productSlug)
       .maybeSingle();
 
@@ -80,8 +80,8 @@ export class ProductQueryRepository {
     let query = this.supabase
       .from('produits')
       .select('*')
-      .eq('vedette', true)
-      .order('date_ajout', { ascending: false });
+      .eq('featured', true)
+      .order('created_at', { ascending: false });
 
     if (limit) query = query.limit(limit);
 
@@ -93,9 +93,9 @@ export class ProductQueryRepository {
   async findFeaturedDTO(limit?: number): Promise<ProductCardDTO[]> {
     let query = this.supabase
       .from('produits')
-      .select('id, nom, prix, image_url, slug, categorie')
-      .eq('vedette', true)
-      .order('date_ajout', { ascending: false });
+      .select('id, name, price, image_url, slug, category')
+      .eq('featured', true)
+      .order('created_at', { ascending: false });
 
     if (limit) query = query.limit(limit);
 
@@ -106,21 +106,20 @@ export class ProductQueryRepository {
 
   async search(params: ProductSearchParams): Promise<{ data: Product[]; count: number }> {
     const { data, error } = await this.supabase.rpc('search_products', {
-      search_query: params.search || '',
-      category_filter: Array.isArray(params.category) ? params.category[0] : (params.category ?? undefined),
-      min_price: params.minPrice ?? undefined,
-      max_price: params.maxPrice ?? undefined,
-      in_stock: params.inStock ?? undefined,
-      couleur_filter: Array.isArray(params.color) ? params.color : params.color ? [params.color] : undefined,
-      taille_filter: Array.isArray(params.size) ? params.size : params.size ? [params.size] : undefined,
-      sort_by: params.sort || 'date_ajout_desc',
-      limit_count: params.limit || 50,
-      offset_count: params.offset || 0,
+      p_search: params.search || '',
+      p_category: Array.isArray(params.category) ? params.category[0] : (params.category ?? undefined),
+      p_min_price: params.minPrice ?? undefined,
+      p_max_price: params.maxPrice ?? undefined,
+      p_sort_by: params.sort?.includes('prix') ? 'price' : 'created_at',
+      p_sort_order: params.sort?.includes('desc') ? 'desc' : 'asc',
+      p_limit: params.limit || 50,
+      p_offset: params.offset || 0,
     });
 
     if (error) throw mapDatabaseError(error);
     const products = (data as unknown as ProductRow[] || []).map(mapProductRow);
-    return { data: products, count: products.length };
+    const count = products.length > 0 ? (data as unknown as { total_count: number }[])[0].total_count : 0;
+    return { data: products, count: Number(count) };
   }
 
   async getSimilarProducts(id: string, limit = 4): Promise<Product[]> {

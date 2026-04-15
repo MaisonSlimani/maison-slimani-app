@@ -6,7 +6,7 @@ import { Card } from '@maison/ui'
 import { toast } from 'sonner'
 import { hapticFeedback } from '@/lib/haptics'
 import { slugify } from '@/lib/utils/product-urls'
-import { Product } from '@maison/domain'
+import { Product, getSelectedStock } from '@maison/domain'
 import ProductCardImage from '../product/ProductCardImage'
 import ProductPurchaseDialog from '../product/ProductPurchaseDialog'
 import { useProductCardState } from '@/hooks/useProductCardState'
@@ -42,7 +42,15 @@ export default function ProductCard({ product: produit, priority = false }: { pr
         onConfirm={async () => {
           s.setIsAddingToCart(true)
           try {
-            await s.addToCart({ ...produit, quantity: s.quantity, size: s.selectedSize, color: s.selectedColor, image_url: s.imageUrl }, false)
+            const item = { 
+              ...produit, 
+              quantity: s.quantity, 
+              size: s.selectedSize || null, 
+              color: s.selectedColor || null, 
+              image_url: s.imageUrl,
+              stock: getSelectedStock(produit, s.selectedColor, s.selectedSize)
+            }
+            await s.addToCart(item, false)
             s.setShowModal(false); toast.success('Ajouté'); hapticFeedback('success')
           } finally { s.setIsAddingToCart(false) }
         }} 
