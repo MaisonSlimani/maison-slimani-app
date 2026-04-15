@@ -1,6 +1,6 @@
 import { AppSupabaseClient } from '../client.types';
 import { Category, CategoryInput, DomainResult, ICategoryRepository } from '@maison/domain';
-import { Database, TablesUpdate, TablesInsert } from '../database.types';
+import { Database, TablesUpdate } from '../database.types';
 import { mapDatabaseError } from '../errors';
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];

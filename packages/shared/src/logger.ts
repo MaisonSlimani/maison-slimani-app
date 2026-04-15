@@ -30,7 +30,7 @@ export function createLogger(moduleName: string): StructuredLogger {
 
     try {
       return JSON.stringify(logEntry);
-    } catch (e) {
+    } catch {
       // Fallback for circular references or other serialization errors
       return JSON.stringify({
         timestamp: logEntry.timestamp,
