@@ -21,10 +21,10 @@ const statusesMap: Record<string, { name: string; icon: typeof AlertCircle; colo
 
 const statusQueryMap: Record<StatutKey, string> = {
   'toutes': 'tous',
-  'en-attente': 'En attente',
-  'expediee': 'Expédiée',
-  'livree': 'Livrée',
-  'annulee': 'Annulée',
+  'en-attente': 'en_attente',
+  'expediee': 'expediee',
+  'livree': 'livree',
+  'annulee': 'annulee',
 }
 
 export default function CommandesStatutPage() {
@@ -99,9 +99,9 @@ export default function CommandesStatutPage() {
 
       <OrderStatusDialogs 
         deleteDialogOpen={deleteDialogOpen} setDeleteDialogOpen={setDeleteDialogOpen} onDelete={() => commandeToDelete && deleteOrder(commandeToDelete).then(r => r.success && setDeleteDialogOpen(false))}
-        expedierDialogOpen={expedierDialogOpen} setExpedierDialogOpen={setExpedierDialogOpen} onExpedier={() => commandeToUpdate && updateStatus(commandeToUpdate.id, 'Expédiée').then(r => r.success && setExpedierDialogOpen(false))}
-        annulerDialogOpen={annulerDialogOpen} setAnnulerDialogOpen={setAnnulerDialogOpen} onAnnuler={() => commandeToUpdate && updateStatus(commandeToUpdate.id, 'Annulée').then(r => r.success && setAnnulerDialogOpen(false))}
-        livreeDialogOpen={livreeDialogOpen} setLivreeDialogOpen={setLivreeDialogOpen} onLivree={() => commandeToUpdate && updateStatus(commandeToUpdate.id, 'Livrée').then(r => r.success && setLivreeDialogOpen(false))}
+        expedierDialogOpen={expedierDialogOpen} setExpedierDialogOpen={setExpedierDialogOpen} onExpedier={() => commandeToUpdate && updateStatus(commandeToUpdate.id, 'expediee').then(r => r.success && setExpedierDialogOpen(false))}
+        annulerDialogOpen={annulerDialogOpen} setAnnulerDialogOpen={setAnnulerDialogOpen} onAnnuler={() => commandeToUpdate && updateStatus(commandeToUpdate.id, 'annulee').then(r => r.success && setAnnulerDialogOpen(false))}
+        livreeDialogOpen={livreeDialogOpen} setLivreeDialogOpen={setLivreeDialogOpen} onLivree={() => commandeToUpdate && updateStatus(commandeToUpdate.id, 'livree').then(r => r.success && setLivreeDialogOpen(false))}
       />
     </div>
   )

@@ -84,13 +84,13 @@ export class SearchRepository {
         const productIds = (data as unknown as ProductSuggestionRpc[]).map(p => p.product_id);
         const { data: products } = await this.supabase
           .from('produits')
-          .select('id, nom, prix, image_url')
+          .select('id, name, price, image_url')
           .in('id', productIds);
         
         return (products || []).map(p => ({
             id: p.id,
-            name: p.nom,
-            price: p.prix,
+            name: p.name,
+            price: p.price,
             image_url: p.image_url
         }));
       }
@@ -98,15 +98,15 @@ export class SearchRepository {
 
     const { data: fallback } = await this.supabase
       .from('produits')
-      .select('id, nom, prix, image_url')
-      .or(`nom.ilike.${query}%,nom.ilike.%${query}%`)
-      .order('vedette', { ascending: false })
+      .select('id, name, price, image_url')
+      .or(`name.ilike.${query}%,name.ilike.%${query}%`)
+      .order('featured', { ascending: false })
       .limit(limit);
       
     return (fallback || []).map(p => ({
         id: p.id,
-        name: p.nom,
-        price: p.prix,
+        name: p.name,
+        price: p.price,
         image_url: p.image_url
     }));
   }
@@ -128,10 +128,10 @@ export class SearchRepository {
 
     const { data: cats } = await this.supabase
       .from('categories')
-      .select('nom, slug')
-      .eq('active', true)
-      .or(`nom.ilike.%${query}%,description.ilike.%${query}%`)
-      .order('ordre')
+      .select('name, slug')
+      .eq('is_active', true)
+      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+      .order('order')
       .limit(limit);
 
     if (!cats) return [];
@@ -140,8 +140,8 @@ export class SearchRepository {
       const { count } = await this.supabase
         .from('produits')
         .select('*', { count: 'exact', head: true })
-        .eq('categorie', cat.nom);
-      results.push({ name: cat.nom, slug: cat.slug, count: count || 0 });
+        .eq('category', cat.name);
+      results.push({ name: cat.name, slug: cat.slug, count: count || 0 });
     }
     return results;
   }

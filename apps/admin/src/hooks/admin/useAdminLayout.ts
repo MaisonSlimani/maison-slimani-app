@@ -26,10 +26,10 @@ export function useAdminLayout() {
       // Parallel status counting via repo find methods (or count methods if we added them)
       // For now using the existing findAll with filtering to stay within GEMINI limits
       const [q1, q2, q3, q4] = await Promise.all([
-        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('statut', 'En attente'),
-        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('statut', 'Expédiée'),
-        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('statut', 'Livrée'),
-        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('statut', 'Annulée'),
+        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('status', 'en_attente'),
+        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('status', 'expediee'),
+        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('status', 'livree'),
+        supabase.from('commandes').select('*', { count: 'exact', head: true }).eq('status', 'annulee'),
       ])
       setCounts({
         enAttente: q1.count || 0,

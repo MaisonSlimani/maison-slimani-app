@@ -29,76 +29,76 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
       }
       categories: {
         Row: {
-          active: boolean | null
-          couleur: string | null
-          date_creation: string | null
+          is_active: boolean | null
+          color: string | null
+          created_at: string | null
           description: string | null
           id: string
           image_url: string | null
-          nom: string
-          ordre: number | null
+          name: string
+          order: number | null
           slug: string
         }
         Insert: {
-          active?: boolean | null
-          couleur?: string | null
-          date_creation?: string | null
+          is_active?: boolean | null
+          color?: string | null
+          created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
-          nom: string
-          ordre?: number | null
+          name: string
+          order?: number | null
           slug: string
         }
         Update: {
-          active?: boolean | null
-          couleur?: string | null
-          date_creation?: string | null
+          is_active?: boolean | null
+          color?: string | null
+          created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
-          nom?: string
-          ordre?: number | null
+          name?: string
+          order?: number | null
           slug?: string
         }
         Relationships: []
       }
       commandes: {
         Row: {
-          adresse: string
-          date_commande: string | null
+          address: string
+          created_at: string | null
           email: string | null
           id: string
-          nom_client: string
-          produits: Json
-          statut: string | null
-          telephone: string
+          customer_name: string
+          items: Json
+          status: string | null
+          phone: string
           total: number
-          ville: string
+          city: string
         }
         Insert: {
-          adresse: string
-          date_commande?: string | null
+          address: string
+          created_at?: string | null
           email?: string | null
           id?: string
-          nom_client: string
-          produits: Json
-          statut?: string | null
-          telephone: string
+          customer_name: string
+          items: Json
+          status?: string | null
+          phone: string
           total: number
-          ville: string
+          city: string
         }
         Update: {
-          adresse?: string
-          date_commande?: string | null
+          address?: string
+          created_at?: string | null
           email?: string | null
           id?: string
-          nom_client?: string
-          produits?: Json
-          statut?: string | null
-          telephone?: string
+          customer_name?: string
+          items?: Json
+          status?: string | null
+          phone?: string
           total?: number
-          ville?: string
+          city?: string
         }
         Relationships: []
       }
@@ -157,65 +157,65 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
       }
       produits: {
         Row: {
-          categorie: string | null
-          couleurs: Json | null
-          date_ajout: string | null
+          category: string | null
+          colors: Json | null
+          created_at: string | null
           description: string
           has_colors: boolean | null
           id: string
           image_url: string | null
           images: Json | null
-          nom: string
-          prix: number
+          name: string
+          price: number
           rating_count: number | null
           search_vector: unknown
           slug: string | null
           stock: number | null
-          taille: string | null
-          tailles: Json | null
+          size: string | null
+          sizes: Json | null
           total_stock: number | null
           upsell_products: Json | null
-          vedette: boolean | null
+          featured: boolean | null
         }
         Insert: {
-          categorie?: string | null
-          couleurs?: Json | null
-          date_ajout?: string | null
+          category?: string | null
+          colors?: Json | null
+          created_at?: string | null
           description: string
           has_colors?: boolean | null
           id?: string
           image_url?: string | null
           images?: Json | null
-          nom: string
-          prix: number
+          name: string
+          price: number
           search_vector?: unknown
           slug?: string | null
           stock?: number | null
-          taille?: string | null
-          tailles?: Json | null
+          size?: string | null
+          sizes?: Json | null
           total_stock?: number | null
           upsell_products?: Json | null
-          vedette?: boolean | null
+          featured?: boolean | null
         }
         Update: {
-          categorie?: string | null
-          couleurs?: Json | null
-          date_ajout?: string | null
+          category?: string | null
+          colors?: Json | null
+          created_at?: string | null
           description?: string
           has_colors?: boolean | null
           id?: string
           image_url?: string | null
           images?: Json | null
-          nom?: string
-          prix?: number
+          name?: string
+          price?: number
           search_vector?: unknown
           slug?: string | null
           stock?: number | null
-          taille?: string | null
-          tailles?: Json | null
+          size?: string | null
+          sizes?: Json | null
           total_stock?: number | null
           upsell_products?: Json | null
-          vedette?: boolean | null
+          featured?: boolean | null
         }
         Relationships: []
       }
@@ -352,12 +352,12 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
       }
       create_order_v2_atomic: {
         Args: {
-          p_nom_client: string
-          p_telephone: string
-          p_adresse: string
-          p_ville: string
+          p_customer_name: string
+          p_phone: string
+          p_address: string
+          p_city: string
           p_email: string | null
-          p_produits: Json
+          p_items: Json
           p_total: number
           p_idempotency_key: string
         }
@@ -446,20 +446,20 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
           product_id: string
         }
         Returns: {
-          categorie: string
-          couleurs: Json
-          date_ajout: string
+          category: string
+          colors: Json
+          created_at: string
           description: string
           has_colors: boolean
           id: string
           image_url: string
           images: Json
-          nom: string
-          prix: number
+          name: string
+          price: number
           similarity_score: number
           stock: number
-          taille: string
-          vedette: boolean
+          size: string
+          featured: boolean
         }[]
       }
       get_trending_searches: {
@@ -502,33 +502,33 @@ export type Database = { __InternalSupabase: { Relationships: { [_ in never]: ne
       }
       search_products: {
         Args: {
-          category_filter?: string
-          couleur_filter?: string[]
-          in_stock?: boolean
-          limit_count?: number
-          max_price?: number
-          min_price?: number
-          offset_count?: number
-          search_query: string
-          sort_by?: string
-          taille_filter?: string[]
+          p_category?: string
+          p_limit?: number
+          p_max_price?: number
+          p_min_price?: number
+          p_offset?: number
+          p_search: string
+          p_sort_by?: string
+          p_sort_order?: string
+          p_featured?: boolean
         }
         Returns: {
-          categorie: string
-          couleurs: Json
-          date_ajout: string
+          category: string
+          colors: Json
+          created_at: string
           description: string
           has_colors: boolean
           id: string
           image_url: string
           images: Json
-          nom: string
-          prix: number
-          rank: number
+          name: string
+          price: number
           stock: number
-          tailles: Json
-          total_stock: number
-          vedette: boolean
+          sizes: Json
+          size: string
+          slug: string
+          featured: boolean
+          total_count: number
         }[]
       }
       show_limit: { Args: never; Returns: number }

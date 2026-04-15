@@ -19,25 +19,23 @@ export class OrderRepository implements IOrderRepository {
   private mapOrder(data: OrderRow): Order {
     return {
       id: data.id,
-      customerName: data.nom_client,
-      phone: data.telephone,
-      address: data.adresse,
-      city: data.ville,
+      customerName: data.customer_name,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
       email: data.email,
-      // Map JSON produits to typed array, handling potential renames inside line items
-      items: (data.produits as unknown as Array<{ id: string, name?: string, nom?: string, price?: number, prix?: number, quantity?: number, quantite?: number, image_url?: string, size?: string, taille?: string, color?: string, couleur?: string }>)?.map(item => ({
+      items: (data.items as unknown as Array<{ id: string, name?: string, price?: number, quantity?: number, image_url?: string, size?: string, color?: string }>)?.map(item => ({
         id: item.id,
-        name: item.name || item.nom,
-        price: item.price || item.prix,
-        quantity: item.quantity || item.quantite,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
         image_url: item.image_url,
-        size: item.size || item.taille,
-        color: item.color || item.couleur
+        size: item.size,
+        color: item.color
       })) as CommandeProduit[],
       total: data.total,
-      status: data.statut as Order['status'],
-      orderedAt: data.date_commande,
-      // Idempotency key not currently stored in the row but used for RPC
+      status: data.status as Order['status'],
+      orderedAt: data.created_at,
       idempotencyKey: null,
     };
   }
@@ -46,10 +44,10 @@ export class OrderRepository implements IOrderRepository {
     let query = this.supabase
       .from('commandes')
       .select('*')
-      .order('date_commande', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (status && status !== 'tous' && status !== 'all') {
-      query = query.eq('statut', status);
+      query = query.eq('status', status);
     }
 
     const { data, error } = await query;
@@ -61,7 +59,7 @@ export class OrderRepository implements IOrderRepository {
   async updateStatus(id: string, status: string): Promise<DomainResult<Order>> {
     const { data, error } = await this.supabase
       .from('commandes')
-      .update({ statut: status })
+      .update({ status: status })
       .eq('id', id)
       .select()
       .single();
@@ -93,17 +91,15 @@ export class OrderRepository implements IOrderRepository {
 
   /**
    * Atomic Order Placement via Postgres RPC.
-   * Maps the clean Domain payload to the specific RPC arguments.
    */
   async placeOrder(payload: OrderPlacementPayload): Promise<DomainResult<Order>> {
-    // Translate domain naming back to DB-naming for the RPC parameters
     const { data, error } = await this.supabase.rpc('create_order_v2_atomic', {
-      p_nom_client: payload.customerName,
-      p_telephone: payload.phone,
-      p_adresse: payload.address,
-      p_ville: payload.city,
+      p_customer_name: payload.customerName,
+      p_phone: payload.phone,
+      p_address: payload.address,
+      p_city: payload.city,
       p_email: payload.email,
-      p_produits: payload.items.map(item => ({
+      p_items: payload.items.map(item => ({
         id: item.id,
         name: item.name,
         price: item.price,
@@ -113,7 +109,6 @@ export class OrderRepository implements IOrderRepository {
         color: item.color
       })) as unknown as Json,
       p_total: payload.total,
-      // RPC expect non-null string
       p_idempotency_key: payload.idempotencyKey || `manual_${Date.now()}`
     });
 
