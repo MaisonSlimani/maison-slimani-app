@@ -1,0 +1,39 @@
+'use client'
+
+import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { TooltipProvider } from '@maison/ui'
+import { CartDrawerProvider } from '@/lib/contexts/CartDrawerContext'
+import { WishlistDrawerProvider } from '@/lib/contexts/WishlistDrawerContext'
+import CartDrawerWrapper from '@/components/CartDrawerWrapper'
+import WishlistDrawerWrapper from '@/components/WishlistDrawerWrapper'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 2 * 60 * 1000, // 2 minutes
+            gcTime: 10 * 60 * 1000,
+            retry: 1,
+          },
+        },
+      })
+  )
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <CartDrawerProvider>
+          <WishlistDrawerProvider>
+            {children}
+            <CartDrawerWrapper />
+            <WishlistDrawerWrapper />
+          </WishlistDrawerProvider>
+        </CartDrawerProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  )
+}
+

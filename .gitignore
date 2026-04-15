@@ -4,16 +4,17 @@
 # Dependencies
 # ============================================
 # Root dependencies
-/node_modules
-/.pnp
+node_modules/
+.pnp
 .pnp.js
 .yarn/install-state.gz
+.pnpm-debug.log*
 
-# Admin app dependencies
-/admin-app/node_modules
-/admin-app/.pnp
-/admin-app/.pnp.js
-/admin-app/.yarn/install-state.gz
+# Nested package dependencies
+**/node_modules/
+**/dist/
+**/.turbo/
+**/.next/
 
 # Package manager lock files (keep package.json, ignore lock files if using different package managers)
 # Uncomment if you want to ignore lock files
@@ -29,18 +30,13 @@
 *.lcov
 .nyc_output
 
-# ============================================
-# Next.js Build Outputs
-# ============================================
-# Root Next.js
-/.next/
-/out/
-/.swc/
-
-# Admin app Next.js
-/admin-app/.next/
-/admin-app/out/
-/admin-app/.swc/
+# Build Outputs
+.next/
+out/
+.swc/
+dist/
+build/
+*.tsbuildinfo
 
 # ============================================
 # Production Builds
@@ -49,21 +45,16 @@
 /dist
 *.tsbuildinfo
 
-# ============================================
 # Environment Variables
-# ============================================
 .env
-.env*.local
+.env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Admin app env files
-/admin-app/.env
-/admin-app/.env*.local
-/admin-app/.env.development.local
-/admin-app/.env.test.local
-/admin-app/.env.production.local
+.env*.local
+**/ .env*.local
+**/ .env
+**/ .env.local
 
 # ============================================
 # TypeScript
@@ -245,4 +236,4 @@ lerna-debug.log*
 
 # Manifest files (keep them)
 # !public/manifest.json
-# !admin-app/public/manifest.json
+# !admin-app/public/manifest.json\n*:Zone.Identifier
