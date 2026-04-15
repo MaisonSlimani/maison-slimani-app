@@ -47,7 +47,7 @@ export class SearchRepository {
           count: Number(t.search_count)
         }));
       }
-    } catch (_e) { /* fallback */ }
+    } catch { /* fallback */ }
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: fallback } = await this.supabase
@@ -94,7 +94,7 @@ export class SearchRepository {
             image_url: p.image_url
         }));
       }
-    } catch (_e) { /* fallback */ }
+    } catch { /* fallback */ }
 
     const { data: fallback } = await this.supabase
       .from('produits')
@@ -124,7 +124,7 @@ export class SearchRepository {
           count: Number(c.product_count)
         }));
       }
-    } catch (_e) { /* fallback */ }
+    } catch { /* fallback */ }
 
     const { data: cats } = await this.supabase
       .from('categories')

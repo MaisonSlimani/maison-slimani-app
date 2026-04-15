@@ -44,9 +44,9 @@ test('ProductRepository', async (t) => {
     const products = await repo.findAll();
     
     assert.strictEqual(products.length, 1);
-    assert.strictEqual(products[0].nom, 'Shoe');
+    assert.strictEqual(products[0].name, 'Shoe');
     assert.strictEqual(products[0].stock, 10);
-    assert.deepStrictEqual(products[0].couleurs, []);
+    assert.deepStrictEqual(products[0].colors, []);
   });
 
   await t.test('findAll() throws typed DatabaseConnectionError on fetch failure', async () => {
@@ -65,7 +65,7 @@ test('ProductRepository', async (t) => {
     const mockClient = createMockSupabaseClient();
     const repo = new ProductRepository(mockClient);
 
-    mockClient.rpc = ((funcName: string, args: unknown) => {
+    mockClient.rpc = ((_funcName: string, _args: unknown) => {
       return {
          then: (resolve: (value: unknown) => void) => {
           resolve({
@@ -96,7 +96,7 @@ test('ProductRepository', async (t) => {
     const result = await repo.search({ search: 'Shoe', limit: 12, offset: 0 });
     
     assert.strictEqual(result.data.length, 1);
-    assert.strictEqual(result.data[0].nom, 'Search Result');
+    assert.strictEqual(result.data[0].name, 'Search Result');
     assert.strictEqual(result.count, 1);
   });
 });

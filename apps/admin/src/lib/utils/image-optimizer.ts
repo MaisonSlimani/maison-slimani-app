@@ -26,7 +26,7 @@ export async function optimizeImage(
     return file;
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {

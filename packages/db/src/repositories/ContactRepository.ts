@@ -23,11 +23,11 @@ export class ContactRepository implements IContactRepository {
     };
   }
 
-  async markAsRead(id: string): Promise<DomainResult<void>> {
+  async markAsRead(_id: string): Promise<DomainResult<void>> {
     return { success: true };
   }
 
-  async delete(id: string): Promise<DomainResult<void>> {
+  async delete(_id: string): Promise<DomainResult<void>> {
     return { success: true };
   }
 

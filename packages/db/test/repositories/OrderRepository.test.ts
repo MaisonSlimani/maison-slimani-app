@@ -10,14 +10,14 @@ test('OrderRepository', async (t) => {
     const repo = new OrderRepository(mockClient);
 
     const payload: OrderPlacementPayload = {
-      nom_client: 'John Doe',
-      telephone: '0600000000',
-      adresse: '123 Fake St',
-      ville: 'Casablanca',
+      customerName: 'John Doe',
+      phone: '0600000000',
+      address: '123 Fake St',
+      city: 'Casablanca',
       email: 'john@example.com',
-      produits: [{ id: '1', nom: 'Shoe', quantite: 1, prix: 100 }],
+      items: [{ id: '1', name: 'Shoe', quantity: 1, price: 100 }],
       total: 100,
-      idempotency_key: 'ik_123'
+      idempotencyKey: 'ik_123'
     };
 
     mockClient.rpc = ((funcName: string, args: unknown) => {
@@ -61,12 +61,12 @@ test('OrderRepository', async (t) => {
     const repo = new OrderRepository(mockClient);
 
     const payload: OrderPlacementPayload = {
-       nom_client: 'John', telephone: '00', adresse: 'addr', ville: 'city', email: 'e@mail.com',
-       produits: [], total: 100, idempotency_key: 'ik_123'
+       customerName: 'John', phone: '00', address: 'addr', city: 'city', email: 'e@mail.com',
+       items: [], total: 100, idempotencyKey: 'ik_123'
     };
 
     // Mock RPC returning an application error (data.success = false)
-    mockClient.rpc = ((funcName: string, args: unknown) => {
+    mockClient.rpc = ((_funcName: string, _args: unknown) => {
       return {
          then: (resolve: (value: unknown) => void) => {
           resolve({

@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+
 import { ChartConfig } from './chart'
 
 // Helper to extract item config from a payload.

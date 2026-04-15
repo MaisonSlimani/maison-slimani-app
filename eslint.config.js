@@ -4,7 +4,17 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', 'supabase/functions/**', '**/.next/**', '**/node_modules/**', 'scratch/**'],
+    ignores: [
+      '**/dist/**',
+      'supabase/functions/**',
+      '**/.next/**',
+      '**/node_modules/**',
+      'scratch/**',
+      '**/scripts/**',
+      '**/public/sw.js',
+      '**/tailwind.config.ts',
+      '**/next-env.d.ts',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

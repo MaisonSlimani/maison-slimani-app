@@ -1,4 +1,6 @@
-import { initializeInfrastructure } from '@maison/shared';
+import { createLogger, initializeInfrastructure } from '@maison/shared';
+
+const logger = createLogger('boot');
 
 /**
  * Boots the web application by initializing essential infrastructure.
@@ -6,11 +8,9 @@ import { initializeInfrastructure } from '@maison/shared';
  */
 export function boot() {
   if (typeof window !== 'undefined') {
-    // Client-side specific boot
-    console.debug('[Boot] Initializing client infrastructure');
+    logger.info('Initializing client infrastructure');
   } else {
-    // Server-side specific boot
-    console.debug('[Boot] Initializing server infrastructure');
+    logger.info('Initializing server infrastructure');
   }
 
   initializeInfrastructure();
@@ -18,3 +18,4 @@ export function boot() {
 
 // Auto-boot if this file is imported
 boot();
+
