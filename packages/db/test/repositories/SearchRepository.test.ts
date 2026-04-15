@@ -33,5 +33,5 @@ test('SearchRepository - getProductSuggestions handles RPC success', async () =>
   const results = await repo.getProductSuggestions('prefix');
   
   assert.strictEqual(results.length, 1);
-  assert.strictEqual(results[0].nom, 'Fallback Product');
+  assert.strictEqual(results[0].name, 'Fallback Product');
 });
