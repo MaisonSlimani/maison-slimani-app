@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import HomeClient from './HomeClient'
 
 export const metadata: Metadata = {
     title: 'Maison Slimani - Chaussures Homme Luxe Maroc | Accueil',
@@ -25,7 +24,29 @@ export default async function Page() {
     const dataPromise = fetchHomeData()
     
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maison-slimani.com'
-    const jsonLd = { /* ... omitted for brevity in chunk but will be preserved by tool ... */ }
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'Organization',
+                '@id': `${siteUrl}/#organization`,
+                name: 'Maison Slimani',
+                url: siteUrl,
+                logo: `${siteUrl}/logo-search.png`,
+                sameAs: [
+                    'https://www.instagram.com/maisonslimani/',
+                    'https://www.facebook.com/maisonslimani/'
+                ]
+            },
+            {
+                '@type': 'WebSite',
+                '@id': `${siteUrl}/#website`,
+                url: siteUrl,
+                name: 'Maison Slimani',
+                description: 'Chaussures homme haut de gamme en cuir marocain. Qualité artisanale.'
+            }
+        ]
+    }
 
     return (
         <main className="min-h-screen bg-ecru md:bg-white overflow-x-hidden">

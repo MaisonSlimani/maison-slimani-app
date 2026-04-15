@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react'
 import { HomeData } from '@maison/domain'
 import { useHomeData } from './useHomeData'
-import { HomeHero } from '@/components/home/HomeHero'
 import { HomeCategories } from '@/components/home/HomeCategories'
 import { HomeMaisonTeaser } from '@/components/home/HomeMaisonTeaser'
 import { HomeFeatured } from '@/components/home/HomeFeatured'

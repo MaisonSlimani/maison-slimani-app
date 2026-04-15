@@ -1,0 +1,68 @@
+• turbo 2.9.5
+
+   • Packages in scope: maison-slimani-web
+   • Running build in 1 packages
+   • Remote caching disabled
+
+@maison/domain:build: cache hit, replaying logs f6207007b119d2aa
+@maison/domain:build: 
+@maison/domain:build: 
+@maison/domain:build: > @maison/domain@1.0.0 build /home/maison/maison-slimani-app-main/packages/domain
+@maison/domain:build: > tsc -b
+@maison/domain:build: 
+@maison/shared:build: cache hit, replaying logs ebcac16d0433516e
+@maison/shared:build: 
+@maison/shared:build: 
+@maison/shared:build: > @maison/shared@1.0.0 build /home/maison/maison-slimani-app-main/packages/shared
+@maison/shared:build: > tsc -b
+@maison/shared:build: 
+@maison/db:build: cache hit, replaying logs df0f5b9a09b7ea66
+@maison/db:build: 
+@maison/db:build: 
+@maison/db:build: > @maison/db@1.0.0 build /home/maison/maison-slimani-app-main/packages/db
+@maison/db:build: > tsc -b
+@maison/db:build: 
+@maison/ui:build: cache hit, replaying logs 1311da555b49313a
+@maison/ui:build: 
+@maison/ui:build: 
+@maison/ui:build: > @maison/ui@1.0.0 build /home/maison/maison-slimani-app-main/packages/ui
+@maison/ui:build: > tsc -b
+@maison/ui:build: 
+maison-slimani-web:build: cache miss, executing 01ab313e82b142a4
+maison-slimani-web:build: 
+maison-slimani-web:build: > maison-slimani-web@1.0.0 build /home/maison/maison-slimani-app-main/apps/web
+maison-slimani-web:build: > next build
+maison-slimani-web:build: 
+maison-slimani-web:build:    ▲ Next.js 15.5.15
+maison-slimani-web:build:    - Environments: .env
+maison-slimani-web:build: 
+maison-slimani-web:build:    Creating an optimized production build ...
+maison-slimani-web:build:  ✓ Compiled successfully in 20.0s
+maison-slimani-web:build:    Linting and checking validity of types ...
+maison-slimani-web:build: 
+maison-slimani-web:build:  ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+maison-slimani-web:build: 
+maison-slimani-web:build: Failed to compile.
+maison-slimani-web:build: 
+maison-slimani-web:build: ./app/HomeClient.tsx
+maison-slimani-web:build: 6:10  Error: 'HomeHero' is defined but never used.  @typescript-eslint/no-unused-vars
+maison-slimani-web:build: 
+maison-slimani-web:build: ./app/page.tsx
+maison-slimani-web:build: 2:8  Error: 'HomeClient' is defined but never used.  @typescript-eslint/no-unused-vars
+maison-slimani-web:build: 
+maison-slimani-web:build: ./components/MetaPixel.tsx
+maison-slimani-web:build: 46:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+maison-slimani-web:build: 
+maison-slimani-web:build: ./components/OptimizedImage.tsx
+maison-slimani-web:build: 26:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+maison-slimani-web:build: 
+maison-slimani-web:build: info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+maison-slimani-web:build:  ELIFECYCLE  Command failed with exit code 1.
+ ERROR  maison-slimani-web#build: command (/home/maison/maison-slimani-app-main/apps/web) /usr/local/bin/pnpm run build exited (1)
+
+ Tasks:    4 successful, 5 total
+Cached:    4 cached, 5 total
+  Time:    28.599s 
+Failed:    maison-slimani-web#build
+
+ ERROR  run failed: command  exited (1)
