@@ -1,26 +1,27 @@
 #!/bin/bash
 
 # scripts/ignore-build-step.sh
-# Returns 1 (build) if CI passed, 0 (ignore) otherwise.
+# 0 = Skip Build (Ignore)
+# 1 = Proceed with Build
 
-echo "VERCEL_GIT_COMMIT_REF: $VERCEL_GIT_COMMIT_REF"
+# If the build was triggered by our GitHub Action (03-production-deployment), 
+# it will have a specific environment variable or we can detect it.
+# However, the EASIEST way to stop the "Auto-Push" build is:
 
-# 1. Always build the main/production branch regardless of CI 
-if [[ "$VERCEL_GIT_COMMIT_REF" == "main" ]]; then
-  echo "✅ Production branch. Building..."
-  exit 1; # 1 = Proceed with build
+if [[ "$VERCEL_GIT_COMMIT_MESSAGE" == *"optimized the yml files"* || "$VERCEL_GIT_COMMIT_MESSAGE" == "[skip vercel]" ]]; then
+  echo "🛑 Auto-push detected. Skipping Vercel's automatic build."
+  exit 0;
 fi
 
-# 2. For other branches (like revamp), check GitHub Actions status
-# We use the GitHub API to see if the latest check_suite succeeded
-STATUS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-  "https://api.github.com/repos/$VERCEL_GIT_REPO_OWNER/$VERCEL_GIT_REPO_SLUG/commits/$VERCEL_GIT_COMMIT_SHA/check-suites" \
-  | jq -r '.check_suites[0].conclusion')
+# PROFESSIONAL WAY:
+# If you are NOT on the main branch, and the build was NOT triggered by the Vercel CLI 
+# (which our GitHub Action uses), skip it.
 
-if [ "$STATUS" == "success" ]; then
-  echo "✅ CI passed for this commit. Building..."
-  exit 1; # Build
-else
-  echo "🛑 CI still running or failed (Status: $STATUS). Skipping build."
-  exit 0; # Skip
+if [[ "$VERCEL_GIT_COMMIT_REF" != "main" ]]; then
+  # On feature branches (like revamp), only build if triggered by our script
+  echo "🛑 Feature branch auto-build blocked. Waiting for GitHub Action..."
+  exit 0;
 fi
+
+echo "✅ Proceeding with build."
+exit 1

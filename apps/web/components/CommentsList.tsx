@@ -1,72 +1,38 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@maison/ui'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@maison/ui'
 import { CommentCard } from './comments/CommentCard'
 import { CommentEditForm } from './comments/CommentEditForm'
-import { toast } from 'sonner'
 import { cn } from '@maison/shared'
 import { Commentaire } from '@/types/index'
+import { useComments } from '@/hooks/use-comments'
 
 interface CommentsListProps {
   productId: string; // Was 'produitId'
-  onCommentUpdate?: () => void; 
+  onCommentUpdate?: () => void;
   className?: string
 }
 
 export default function CommentsList({ productId, onCommentUpdate, className }: CommentsListProps) {
-  const [comments, setComments] = useState<Commentaire[]>([])
-  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<'newest' | 'highest' | 'lowest'>('newest')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Commentaire | null>(null)
 
-  const fetchComments = useCallback(async () => {
-    setLoading(true)
-    try {
-      const resp = await fetch(`/api/v1/commentaires?productId=${productId}&sort=${sort}`)
-      const data = await resp.json()
-      if (data.success) {
-        setComments(data.data || [])
-      }
-    } catch { 
-      toast.error('Erreur de chargement') 
-    } finally { 
-      setLoading(false) 
-    }
-  }, [productId, sort])
+  const { comments, loading, handleDelete, handleUpdate } = useComments(productId, sort, onCommentUpdate)
 
-  useEffect(() => { 
-    fetchComments() 
-  }, [fetchComments])
-
-  const handleSaveEdit = async () => {
-    try {
-      const resp = await fetch(`/api/v1/commentaires/${editingId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
-      })
-      if (resp.ok) {
-        toast.success('Commentaire mis à jour')
-        setEditingId(null); fetchComments(); onCommentUpdate?.()
-      }
-    } catch { 
-      toast.error('Erreur mise à jour') 
+  const onConfirmDelete = async () => {
+    if (commentToDelete && await handleDelete(commentToDelete)) {
+      setDeleteDialogOpen(false)
     }
   }
 
-  const handleDelete = async () => {
-    try {
-      const resp = await fetch(`/api/v1/commentaires/${commentToDelete}`, { method: 'DELETE' })
-      if (resp.ok) {
-        toast.success('Supprimé'); setDeleteDialogOpen(false); fetchComments(); onCommentUpdate?.()
-      }
-    } catch { 
-      toast.error('Erreur suppression') 
+  const onSaveEdit = async () => {
+    if (editingId && editForm && await handleUpdate(editingId, editForm)) {
+      setEditingId(null)
     }
   }
 
@@ -88,14 +54,14 @@ export default function CommentsList({ productId, onCommentUpdate, className }: 
       <div className="space-y-4">
         {comments.map(comment => (
           editingId === comment.id ? (
-            <CommentEditForm 
-              key={comment.id} editForm={editForm as Commentaire} setEditForm={setEditForm} 
-              onSave={handleSaveEdit} onCancel={() => setEditingId(null)} 
-              isUploading={false} onImageUpload={() => {}} onRemoveImage={() => {}}
+            <CommentEditForm
+              key={comment.id} editForm={editForm as Commentaire} setEditForm={setEditForm}
+              onSave={onSaveEdit} onCancel={() => setEditingId(null)}
+              isUploading={false} onImageUpload={() => { }} onRemoveImage={() => { }}
             />
           ) : (
-            <CommentCard 
-              key={comment.id} comment={comment} isDeleting={false}
+            <CommentCard
+              key={comment.id} comment={comment as Commentaire} isDeleting={false}
               onEdit={(c) => { setEditingId(c.id); setEditForm(c) }}
               onDelete={(id) => { setCommentToDelete(id); setDeleteDialogOpen(true) }}
             />
@@ -103,7 +69,7 @@ export default function CommentsList({ productId, onCommentUpdate, className }: 
         ))}
       </div>
 
-      <DialogDelete open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} onConfirm={handleDelete} />
+      <DialogDelete open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} onConfirm={onConfirmDelete} />
     </div>
   )
 }

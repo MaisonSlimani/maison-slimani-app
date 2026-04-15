@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-import { Suspense } from 'react'
 import './globals.css'
 import { Toaster, SonnerToaster } from '@maison/ui'
 import { Providers } from '@/components/Providers'
@@ -110,12 +109,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }} />
         <GoogleTagManagerBody />
         <Providers>
-          <Suspense fallback={null}>
-            <AnalyticsProvider>
-              <NavigationWrapper>{children}</NavigationWrapper>
-              <Toaster /><SonnerToaster /><SpeedInsights />
-            </AnalyticsProvider>
-          </Suspense>
+          <AnalyticsProvider>
+            <NavigationWrapper>{children}</NavigationWrapper>
+            <Toaster /><SonnerToaster /><SpeedInsights />
+          </AnalyticsProvider>
         </Providers>
       </body>
     </html>

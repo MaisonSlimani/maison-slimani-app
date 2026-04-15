@@ -1,17 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { tracker } from '@/lib/mixpanel-tracker'
 
 /**
- * Analytics Provider Component
- * - Initializes Mixpanel on app load
- * - Tracks page views on route changes
- * - Tracks scroll depth
- * - Tracks time on page
+ * Analytics Tracker Component
+ * Only this component will suspend when useSearchParams() is used
  */
-export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+function AnalyticsTracker() {
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
@@ -104,5 +101,21 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
-    return <>{children}</>
+    return null
+}
+
+/**
+ * Analytics Provider Component
+ * - Renders children immediately (no suspense blocking)
+ * - Runs tracking logic in a separate suspended component
+ */
+export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+    return (
+        <>
+            {children}
+            <Suspense fallback={null}>
+                <AnalyticsTracker />
+            </Suspense>
+        </>
+    )
 }

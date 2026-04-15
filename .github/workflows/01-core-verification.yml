@@ -1,4 +1,4 @@
-name: 01 - Core Verification
+name: 01 - Core & Database Verification
 
 on:
   push:
@@ -7,7 +7,8 @@ on:
     branches: [ main, master, revamp ]
 
 jobs:
-  build:
+  core-verification:
+    name: Core Verification
     runs-on: ubuntu-latest
 
     steps:
@@ -42,3 +43,21 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  database-integration:
+    name: Database Integration
+    needs: core-verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Start Supabase Local
+        run: supabase db start
+
+      - name: Run Database Tests
+        run: supabase test db

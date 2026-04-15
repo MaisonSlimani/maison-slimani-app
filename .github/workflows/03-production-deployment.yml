@@ -2,7 +2,7 @@ name: 03 - Production Deployment
 
 on:
   workflow_run:
-    workflows: ["02 - Database Integration"]
+    workflows: ["01 - Core & Database Verification"]
     types:
       - completed
 
