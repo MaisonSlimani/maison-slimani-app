@@ -11,7 +11,6 @@ import { HomeProcess } from '@/components/home/HomeProcess'
 import { HomeContact } from '@/components/home/HomeContact'
 import { HomeTrustBar } from '@/components/home/HomeTrustBar'
 import { GoldDivider } from '@maison/ui'
-import StickyHeader from '@/components/pwa/StickyHeader'
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 
 /**
@@ -31,11 +30,6 @@ export default function AccueilPage({ initialData }: { initialData?: HomeData })
 
   return (
     <>
-      {/* Mobile Sticky Header (PWA Feel) */}
-      <div className="md:hidden">
-        <StickyHeader />
-      </div>
-
       {/* Mobile Trust Ribbon */}
       <div className="md:hidden bg-charbon text-ecru py-3 text-[11px] tracking-[0.15em] text-center uppercase font-light">
         Livraison Gratuite <span className="text-dore">•</span> Fait Main <span className="text-dore">•</span> Retours 7J
