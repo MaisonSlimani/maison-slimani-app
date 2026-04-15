@@ -32,8 +32,8 @@ export const CommentEditForm = ({
     <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
       <input
         type="text"
-        value={editForm.nom}
-        onChange={(e) => setEditForm({...editForm, nom: e.target.value})}
+        value={editForm.name}
+        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
         className="w-full px-3 py-2 border rounded-md"
         placeholder="Votre nom"
       />
@@ -49,8 +49,8 @@ export const CommentEditForm = ({
       </div>
 
       <textarea
-        value={editForm.commentaire}
-        onChange={(e) => setEditForm({...editForm, commentaire: e.target.value})}
+        value={editForm.content}
+        onChange={(e) => setEditForm({...editForm, content: e.target.value})}
         className="w-full h-24 px-3 py-2 border rounded-md"
         placeholder="Votre commentaire"
       />
@@ -60,7 +60,7 @@ export const CommentEditForm = ({
         <div className="flex flex-wrap gap-2">
           {editForm.images.map((img: string, i: number) => (
             <div key={i} className="relative w-16 h-16 rounded overflow-hidden">
-              <OptimizedImage src={img} alt="Preview" fill objectFit="cover" />
+              <OptimizedImage src={img} alt="Preview" fill className="object-cover" />
               <button onClick={() => onRemoveImage(i)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5"><X className="w-3 h-3"/></button>
             </div>
           ))}

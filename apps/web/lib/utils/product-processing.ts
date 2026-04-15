@@ -42,12 +42,12 @@ export function buildProductQueryParams(
   if (filters.minPrice !== undefined) qParams.set('minPrice', filters.minPrice.toString());
   if (filters.maxPrice !== undefined) qParams.set('maxPrice', filters.maxPrice.toString());
   
-  if (filters.taille?.length) {
-    filters.taille.forEach((t: string) => qParams.append('size', t));
+  if (filters.size?.length) {
+    filters.size.forEach((t: string) => qParams.append('size', t));
   }
   
-  if (filters.couleur?.length) {
-    filters.couleur.forEach((c: string) => qParams.append('color', c));
+  if (filters.color?.length) {
+    filters.color.forEach((c: string) => qParams.append('color', c));
   }
   
   if (filters.inStock !== undefined) {

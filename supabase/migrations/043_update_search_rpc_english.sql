@@ -38,7 +38,9 @@ BEGIN
   RETURN QUERY
   WITH filtered_products AS (
     SELECT 
-      p.*,
+      p.id, p.name, p.description, p.price, p.stock, p.total_stock,
+      p.image_url, p.images, p.category, p.featured, p.has_colors,
+      p.colors, p.sizes, p.size, p.slug, p.created_at,
       COUNT(*) OVER() as full_count
     FROM produits p
     WHERE 
@@ -51,10 +53,23 @@ BEGIN
       AND (p_max_price IS NULL OR p.price <= p_max_price)
   )
   SELECT 
-    f.id, f.name, f.description, f.price, f.stock, f.total_stock,
-    f.image_url, f.images, f.category, f.featured, f.has_colors,
-    f.colors, f.sizes, f.size, f.slug, f.created_at,
-    f.full_count
+    f.id::UUID, 
+    f.name::TEXT, 
+    f.description::TEXT, 
+    f.price::NUMERIC, 
+    f.stock::INTEGER, 
+    f.total_stock::INTEGER,
+    f.image_url::TEXT, 
+    f.images::JSONB, 
+    f.category::TEXT, 
+    f.featured::BOOLEAN, 
+    f.has_colors::BOOLEAN,
+    f.colors::JSONB, 
+    f.sizes::JSONB, 
+    f.size::TEXT, 
+    f.slug::TEXT, 
+    f.created_at::TIMESTAMP WITH TIME ZONE,
+    f.full_count::BIGINT
   FROM filtered_products f
   ORDER BY 
     CASE WHEN p_sort_by = 'price' AND p_sort_order = 'asc' THEN f.price END ASC,

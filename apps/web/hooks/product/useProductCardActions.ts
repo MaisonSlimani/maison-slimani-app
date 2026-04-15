@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Product } from '@maison/domain'
+import { Product, getSelectedStock } from '@maison/domain'
 import { useCart } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { trackAddToWishlist } from '@/lib/analytics'
@@ -54,7 +54,15 @@ export function useProductCardActions({ produit, imageUrl, isOutOfStock }: UsePr
   const onConfirmPurchase = async (buyNow: boolean) => {
     setIsAddingToCart(true)
     try {
-      await addToCart({ ...produit, quantity, size: selectedSize, color: selectedColor, image_url: imageUrl }, !buyNow)
+      const item = { 
+        ...produit, 
+        quantity, 
+        size: selectedSize || null, 
+        color: selectedColor || null, 
+        image_url: imageUrl,
+        stock: getSelectedStock(produit, selectedColor, selectedSize)
+      }
+      await addToCart(item, !buyNow)
       setShowModal(false)
       if (buyNow) { router.push('/checkout') } else { toast.success('Ajouté au panier') }
     } catch (err) {

@@ -13,9 +13,9 @@ import { useProductGalleries } from './useProductGalleries'
  * Orchestrator Hook for product detail page logic.
  * Composes specialized hooks for stock, analytics, actions, and galleries.
  */
-export function useProductDetail(produitInitial: Product) {
+export function useProductDetail(initialProduct: Product) {
   const params = useParams()
-  const [produit, setProduit] = useState<Product>(produitInitial)
+  const [product, setProduct] = useState<Product>(initialProduct)
   const [quantity, setQuantity] = useState(1)
   const [color, setColor] = useState<string>('')
   const [size, setSize] = useState<string>('')
@@ -23,18 +23,18 @@ export function useProductDetail(produitInitial: Product) {
 
   const { items } = useCart()
   const isInCart = items.some(item => 
-    item.id === produit.id && 
-    (produit.hasColors ? item.color === color : true) &&
-    ((produit.sizes?.length || 0) > 0 ? item.size === size : true)
+    item.id === product.id && 
+    (product.hasColors ? item.color === color : true) &&
+    ((product.sizes?.length || 0) > 0 ? item.size === size : true)
   )
 
   // Side Effects: Stock & Analytics
-  useProductStock(produit.id, setProduit)
-  useProductAnalytics(produit, color, setColor)
+  useProductStock(product.id, setProduct)
+  useProductAnalytics(product, color, setColor)
 
   // Actions: Cart & Wishlist
   const { handleAddToCart, handleToggleWishlist, isInWishlist } = useProductActions({
-    produit, 
+    product, 
     quantity, 
     color, 
     size, 
@@ -43,14 +43,15 @@ export function useProductDetail(produitInitial: Product) {
   })
 
   // Derived Data: Gallery & Sizes
-  const allImages = useProductGalleries(produit)
-  const variations = produit.colors as ProductVariation[] | null
-  const sizesData = (produit?.hasColors && color && variations) 
+  const allImages = useProductGalleries(product)
+  const variations = product.colors as ProductVariation[] | null
+  const sizesData = (product?.hasColors && color && variations) 
     ? (variations.find((cl) => cl.name === color)?.sizes || []) 
-    : (produit?.sizes || [])
+    : (product?.sizes || [])
 
   return { 
-    produit, 
+    product, 
+    setProduct,
     quantity, setQuantity, 
     color, setColor, 
     size, setSize, 

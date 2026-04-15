@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { WishlistItem } from './wishlist/WishlistItem'
 import { WishlistEmptyState } from './wishlist/WishlistEmptyState'
 import ProductPurchaseDialog from './product/ProductPurchaseDialog'
-import { Product, CartItem } from '@maison/domain'
+import { Product, CartItem, getSelectedStock } from '@maison/domain'
 
 import { apiFetch, ENDPOINTS } from '@/lib/api/client'
 
@@ -36,7 +36,15 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
   const onConfirm = async () => {
     try {
       if (!productData) return
-      await addToCart({ ...productData, quantity, size: selectedSize, color: selectedColor, image_url: productData.image_url }, false)
+      const item = { 
+        ...productData, 
+        quantity, 
+        size: selectedSize || null, 
+        color: selectedColor || null, 
+        image_url: productData.image_url,
+        stock: getSelectedStock(productData, selectedColor, selectedSize)
+      }
+      await addToCart(item, false)
       setShowModal(false); toast.success('Ajouté')
     } catch (err) { toast.error((err as Error).message) }
   }

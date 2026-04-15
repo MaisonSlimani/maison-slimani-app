@@ -5,12 +5,16 @@ import { Order } from '@maison/domain'
  */
 export const getStatutColor = (status: string | null) => {
   switch (status) {
+    case 'en_attente':
     case 'En attente':
       return 'bg-yellow-400/20 text-yellow-600 border-yellow-400/30'
+    case 'expediee':
     case 'Expédiée':
       return 'bg-blue-400/20 text-blue-600 border-blue-400/30'
+    case 'livree':
     case 'Livrée':
       return 'bg-green-400/20 text-green-600 border-green-400/30'
+    case 'annulee':
     case 'Annulée':
       return 'bg-red-400/20 text-red-600 border-red-400/30'
     default:

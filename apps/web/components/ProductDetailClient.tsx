@@ -7,8 +7,8 @@ import DesktopProductDetailView from '@/components/product/DesktopProductDetailV
 
 import { Product } from '@maison/domain'
 
-interface ProduitDetailClientProps {
-  produitInitial: Product
+interface ProductDetailClientProps {
+  initialProduct: Product
 }
 
 /**
@@ -17,15 +17,15 @@ interface ProduitDetailClientProps {
  * Merges high-immersion mobile PWA view with premium luxury 
  * desktop experience. Shares unified state, tracking, and stock logic.
  */
-export default function ProduitDetailClient({ produitInitial }: ProduitDetailClientProps) {
-  const data = useProductDetail(produitInitial)
-  const { produit } = data
+export default function ProductDetailClient({ initialProduct }: ProductDetailClientProps) {
+  const data = useProductDetail(initialProduct)
+  const { product } = data
 
   useEffect(() => {
     window.scrollTo(0, 0)
     
     // Inject Structured Data (Product Schema)
-    if (!produit) return
+    if (!product) return
     const existingScript = document.getElementById('product-structured-data')
     if (existingScript) existingScript.remove()
 
@@ -35,23 +35,23 @@ export default function ProduitDetailClient({ produitInitial }: ProduitDetailCli
     script.textContent = JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Product',
-      name: produit.name,
-      description: produit.description,
-      image: produit.image_url,
-      sku: produit.id,
+      name: product.name,
+      description: product.description,
+      image: product.image_url,
+      sku: product.id,
       brand: { '@type': 'Brand', name: 'Maison Slimani' },
       offers: {
         '@type': 'Offer',
-        price: produit.price,
+        price: product.price,
         priceCurrency: 'MAD',
-        availability: (produit.stock || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        availability: (product.stock || 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         url: typeof window !== 'undefined' ? window.location.href : '',
       }
     })
     document.head.appendChild(script)
-  }, [produit])
+  }, [product])
 
-  if (!produit) return null
+  if (!product) return null
 
   return (
     <main className="min-h-screen">

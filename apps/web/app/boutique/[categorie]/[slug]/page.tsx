@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import ProduitDetailClient from '@/components/ProduitDetailClient'
+import ProductDetailClient from '@/components/ProductDetailClient'
 
 import { fetchProductByPath } from '../../../data/fetchProduct'
 
@@ -84,7 +84,7 @@ export default async function ProductPage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
-      <ProduitDetailClient produitInitial={product} />
+      <ProductDetailClient initialProduct={product} />
     </>
   )
 }

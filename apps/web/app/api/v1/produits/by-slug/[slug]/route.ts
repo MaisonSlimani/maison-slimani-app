@@ -26,7 +26,11 @@ export const GET = createApiHandler(async (_req: Request, context: { params: Pro
     throw { status: 404, message: 'Produit introuvable' };
   }
 
-  const response = NextResponse.json({ data: product });
+  const response = NextResponse.json({ 
+    success: true, 
+    data: product 
+  });
+  
   response.headers.set('x-vercel-cache-tags', PRODUCTS_CACHE_TAG);
   
   return response;

@@ -29,7 +29,7 @@ export const GET = createApiHandler(async (req: Request) => {
 function parseMultiValueParams(searchParams: URLSearchParams) {
   const result: Record<string, string | string[]> = {};
   searchParams.forEach((val, key) => {
-    if (key === 'couleur' || key === 'taille') {
+    if (key === 'color' || key === 'size') {
       if (!result[key]) {
         result[key] = searchParams.getAll(key);
       }

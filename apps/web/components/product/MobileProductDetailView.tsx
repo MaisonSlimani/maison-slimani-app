@@ -11,7 +11,8 @@ import { MobileProductSelection } from './MobileProductSelection'
 
 export default function MobileProductDetailView({ data }: { data: ProductDetailViewData }) {
   const { 
-    produit, color, setColor, size, setSize, 
+    product: product, // Normalize to product
+    color, setColor, size, setSize, 
     isInCart, inWishlist, handleAddToCart, handleToggleWishlist, 
     sizesData, allImages 
   } = data
@@ -32,15 +33,15 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
 
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-serif mb-2">{produit.name}</h1>
-          <p className="text-2xl font-serif text-dore">{produit.price.toLocaleString('fr-MA')} DH</p>
+          <h1 className="text-3xl font-serif mb-2">{product.name}</h1>
+          <p className="text-2xl font-serif text-dore">{product.price.toLocaleString('fr-MA')} DH</p>
         </div>
 
-        <div className="prose prose-sm max-w-none text-charbon/80" dangerouslySetInnerHTML={{ __html: produit.description }} />
+        <div className="prose prose-sm max-w-none text-charbon/80" dangerouslySetInnerHTML={{ __html: product.description }} />
 
         <MobileProductSelection 
-          hasColors={!!produit.hasColors} 
-          colors={(produit.colors as ProductVariation[]) ?? []} 
+          hasColors={!!product.hasColors} 
+          colors={(product.colors as ProductVariation[]) ?? []} 
           selectedColor={color} 
           setSelectedColor={setColor}
           sizesData={sizesData} 
@@ -51,7 +52,7 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
         />
       </div>
       
-      <SimilarProducts productCategory={produit.category ?? ''} productId={produit.id} />
+      <SimilarProducts productCategory={product.category ?? ''} productId={product.id} />
     </div>
   )
 }

@@ -11,7 +11,7 @@ import { ProductFeatures } from './ProductFeatures'
 import { Product, ProductVariation } from '@maison/domain'
 
 export interface ProductDetailViewData {
-  produit: Product
+  product: Product
   color: string
   setColor: (c: string) => void
   size: string
@@ -22,12 +22,12 @@ export interface ProductDetailViewData {
   handleAddToCart: (checkout: boolean) => void
   handleToggleWishlist: () => void
   sizesData: ProductVariation[]
-  allImages: { url: string; couleur?: string | null }[]
+  allImages: { url: string; color?: string | null }[]
 }
 
 export default function DesktopProductDetailView({ data }: { data: ProductDetailViewData }) {
   const { 
-    produit, 
+    product, 
     color, 
     setColor, 
     size, 
@@ -40,7 +40,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
     allImages 
   } = data
 
-  if (!produit) return null
+  if (!product) return null
 
   return (
     <div className="pt-24 pb-32">
@@ -56,10 +56,10 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
           </motion.div>
 
           <motion.div className="space-y-8" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
-            <ProductInfo name={produit.name} price={produit.price} category={produit.category ?? ''} description={produit.description} />
+            <ProductInfo name={product.name} price={product.price} category={product.category ?? ''} description={product.description} />
             <ProductSelection 
-              hasColors={!!produit.hasColors} 
-              colors={(produit.colors as ProductVariation[]) ?? []} 
+              hasColors={!!product.hasColors} 
+              colors={(product.colors as ProductVariation[]) ?? []} 
               selectedColor={color} 
               setSelectedColor={setColor} 
               sizesData={sizesData} 
@@ -76,7 +76,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
 
         <section className="mt-24">
           <h2 className="text-4xl font-serif mb-12 text-center">Produits similaires</h2>
-          <SimilarProducts productCategory={produit.category ?? ''} productId={produit.id} />
+          <SimilarProducts productCategory={product.category ?? ''} productId={product.id} />
         </section>
       </div>
     </div>

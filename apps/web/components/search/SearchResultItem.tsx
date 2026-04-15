@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react'
 import { cn } from '@maison/shared'
 
 interface SearchResultItemProps {
-  product: { nom: string; image_url?: string; prix: number }
+  product: { name: string; image_url?: string; price: number }
   productHref: string
   isActive: boolean
   onClick: () => void
@@ -31,7 +31,7 @@ export const SearchResultItem = ({
       <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
         <Image
           src={product.image_url || '/assets/placeholder.jpg'}
-          alt={product.nom}
+          alt={product.name}
           fill
           className="object-cover"
           sizes="64px"
@@ -39,10 +39,10 @@ export const SearchResultItem = ({
       </div>
       <div className="flex-1 min-w-0">
         <h4 className="font-medium text-sm text-foreground line-clamp-2">
-          {product.nom}
+          {product.name}
         </h4>
         <p className="text-dore font-semibold text-sm mt-1">
-          {product.prix?.toLocaleString('fr-MA')} MAD
+          {product.price?.toLocaleString('fr-MA')} MAD
         </p>
       </div>
       <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />

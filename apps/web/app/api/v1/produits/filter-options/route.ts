@@ -6,12 +6,12 @@ export const dynamic = 'force-dynamic';
 
 export const GET = createApiHandler(async (req: Request) => {
   const url = new URL(req.url);
-  const categorie = url.searchParams.get('categorie');
+  const category = url.searchParams.get('category');
 
   const supabase = await createClient();
   const repo = new ProductFilterRepository(supabase);
   
-  const options = await repo.getFilterOptions(categorie || undefined);
+  const options = await repo.getFilterOptions(category || undefined);
 
   return options;
 });

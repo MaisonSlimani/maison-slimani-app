@@ -11,11 +11,11 @@ interface SizeFilterProps {
 }
 
 export const SizeFilter = ({ options, selected, onChange }: SizeFilterProps) => {
-  const toggle = (nom: string) => {
-    if (selected.includes(nom)) {
-      onChange(selected.filter(s => s !== nom))
+  const toggle = (name: string) => {
+    if (selected.includes(name)) {
+      onChange(selected.filter(s => s !== name))
     } else {
-      onChange([...selected, nom])
+      onChange([...selected, name])
     }
   }
 

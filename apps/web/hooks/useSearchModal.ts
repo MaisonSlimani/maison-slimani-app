@@ -9,11 +9,11 @@ import { apiFetch, ENDPOINTS } from '@/lib/api/client'
 
 export interface SearchProduct {
   id: string
-  nom: string
-  prix: number
+  name: string
+  price: number
   image_url: string
   slug?: string
-  categorie?: string
+  category?: string
 }
 
 export function useSearchModal(isOpen: boolean, onClose: () => void) {
@@ -48,8 +48,8 @@ export function useSearchModal(isOpen: boolean, onClose: () => void) {
   })
 
   const handleProductClick = (product: SearchProduct) => {
-    const productSlug = product.slug || slugify(product.nom || '')
-    const catSlug = product.categorie ? slugify(product.categorie) : null
+    const productSlug = product.slug || slugify(product.name || '')
+    const catSlug = product.category ? slugify(product.category) : null
     router.push(catSlug ? `/pwa/boutique/${catSlug}/${productSlug}` : `/pwa/produit/${product.id}`)
     onClose()
   }

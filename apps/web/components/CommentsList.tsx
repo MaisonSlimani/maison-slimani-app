@@ -10,10 +10,12 @@ import { cn } from '@maison/shared'
 import { Commentaire } from '@/types/index'
 
 interface CommentsListProps {
-  produitId: string; onCommentUpdate?: () => void; className?: string
+  productId: string; // Was 'produitId'
+  onCommentUpdate?: () => void; 
+  className?: string
 }
 
-export default function CommentsList({ produitId, onCommentUpdate, className }: CommentsListProps) {
+export default function CommentsList({ productId, onCommentUpdate, className }: CommentsListProps) {
   const [comments, setComments] = useState<Commentaire[]>([])
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<'newest' | 'highest' | 'lowest'>('newest')
@@ -25,18 +27,25 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
   const fetchComments = useCallback(async () => {
     setLoading(true)
     try {
-      const resp = await fetch(`/api/commentaires?produit_id=${produitId}&sort=${sort}`)
+      const resp = await fetch(`/api/v1/commentaires?productId=${productId}&sort=${sort}`)
       const data = await resp.json()
-      if (data.success) setComments(data.data || [])
-    } catch { toast.error('Erreur de chargement') }
-    finally { setLoading(false) }
-  }, [produitId, sort])
+      if (data.success) {
+        setComments(data.data || [])
+      }
+    } catch { 
+      toast.error('Erreur de chargement') 
+    } finally { 
+      setLoading(false) 
+    }
+  }, [productId, sort])
 
-  useEffect(() => { fetchComments() }, [fetchComments])
+  useEffect(() => { 
+    fetchComments() 
+  }, [fetchComments])
 
   const handleSaveEdit = async () => {
     try {
-      const resp = await fetch(`/api/commentaires/${editingId}`, {
+      const resp = await fetch(`/api/v1/commentaires/${editingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm)
@@ -45,16 +54,20 @@ export default function CommentsList({ produitId, onCommentUpdate, className }: 
         toast.success('Commentaire mis à jour')
         setEditingId(null); fetchComments(); onCommentUpdate?.()
       }
-    } catch { toast.error('Erreur mise à jour') }
+    } catch { 
+      toast.error('Erreur mise à jour') 
+    }
   }
 
   const handleDelete = async () => {
     try {
-      const resp = await fetch(`/api/commentaires/${commentToDelete}`, { method: 'DELETE' })
+      const resp = await fetch(`/api/v1/commentaires/${commentToDelete}`, { method: 'DELETE' })
       if (resp.ok) {
         toast.success('Supprimé'); setDeleteDialogOpen(false); fetchComments(); onCommentUpdate?.()
       }
-    } catch { toast.error('Erreur suppression') }
+    } catch { 
+      toast.error('Erreur suppression') 
+    }
   }
 
   if (loading && comments.length === 0) return <div className="animate-pulse py-8">Chargement...</div>
@@ -99,7 +112,10 @@ function DialogDelete({ open, onOpenChange, onConfirm }: { open: boolean; onOpen
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
-        <AlertDialogHeader><AlertDialogTitle>Supprimer ?</AlertDialogTitle><AlertDialogDescription>Action irréversible.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Supprimer ?</AlertDialogTitle>
+          <AlertDialogDescription>Action irréversible.</AlertDialogDescription>
+        </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-red-600">Supprimer</AlertDialogAction>

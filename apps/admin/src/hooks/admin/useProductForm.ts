@@ -12,29 +12,52 @@ interface UseProductFormParams {
 
 type VariationWithPending = ProductVariation & { pendingImages?: VariationImage[] }
 
+/**
+ * Hook to manage product form state and submission
+ */
 export function useProductForm({ product, defaultCategory, onSuccess, onOpenChange }: UseProductFormParams) {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<Partial<Product>>({ name: '', price: 0, description: '', category: defaultCategory || '', stock: 0, featured: false, hasColors: false })
-  const [imagesGenerales, setImagesGenerales] = useState<GeneralImage[]>([])
-  const [couleurs, setCouleurs] = useState<VariationWithPending[]>([])
+  const [formData, setFormData] = useState<Partial<Product>>({ 
+    name: '', 
+    price: 0, 
+    description: '', 
+    category: defaultCategory || '', 
+    stock: 0, 
+    featured: false, 
+    hasColors: false 
+  })
+  const [generalImages, setGeneralImages] = useState<GeneralImage[]>([])
+  const [colors, setColors] = useState<VariationWithPending[]>([])
 
   useEffect(() => {
     if (product) {
       setFormData(product)
       if (product.hasColors && product.colors) {
-        setCouleurs((product.colors as ProductVariation[]).map(c => ({ 
-          ...c, name: c.name || '', code: c.code || '#000000', 
-          stock: c.stock || 0, sizes: c.sizes || [], 
-          images: c.images || [], pendingImages: [] 
+        setColors((product.colors as ProductVariation[]).map(c => ({ 
+          ...c, 
+          name: c.name || '', 
+          code: c.code || '#000000', 
+          stock: c.stock || 0, 
+          sizes: c.sizes || [], 
+          images: c.images || [], 
+          pendingImages: [] 
         })))
-        setImagesGenerales([])
+        setGeneralImages([])
       } else if (!product.hasColors && product.images) {
-        setImagesGenerales(product.images.map(url => ({ file: null, url })))
-        setCouleurs([])
+        setGeneralImages(product.images.map(url => ({ file: null, url })))
+        setColors([])
       }
     } else {
-      setFormData({ name: '', price: 0, description: '', category: defaultCategory || '', stock: 0, featured: false, hasColors: false })
-      setImagesGenerales([]); setCouleurs([])
+      setFormData({ 
+        name: '', 
+        price: 0, 
+        description: '', 
+        category: defaultCategory || '', 
+        stock: 0, 
+        featured: false, 
+        hasColors: false 
+      })
+      setGeneralImages([]); setColors([])
     }
   }, [product, defaultCategory])
 
@@ -55,9 +78,9 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
   }
 
   const buildPayload = useCallback(async () => {
-    const uploadedGeneral = await uploadImages(imagesGenerales)
+    const uploadedGeneral = await uploadImages(generalImages)
     const finalColors = []
-    for (const c of couleurs) {
+    for (const c of colors) {
       const uploadedColorImages = [...(c.images || []), ...(await uploadImages(c.pendingImages || []))]
       const calStock = c.sizes?.reduce((sum, t) => sum + (t.stock || 0), 0) || c.stock || 0
       finalColors.push({ name: c.name, code: c.code, stock: calStock, sizes: c.sizes, images: uploadedColorImages })
@@ -71,7 +94,7 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
       stock: stockValue ?? 0,
       totalStock: stockValue ?? 0,
     } as Product
-  }, [formData, imagesGenerales, couleurs])
+  }, [formData, generalImages, colors])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true)
@@ -80,10 +103,28 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
       const res = product?.id
         ? await productRepo.update(product.id, p)
         : await productRepo.create(p)
-      if (res.success) { toast.success(product ? 'Mis à jour' : 'Créé'); onSuccess(); onOpenChange(false) }
-      else throw new Error(res.error || 'Erreur')
-    } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Erreur') } finally { setLoading(false) }
+      if (res.success) { 
+        toast.success(product ? 'Mis à jour' : 'Créé')
+        onSuccess()
+        onOpenChange(false) 
+      } else {
+        throw new Error(res.error || 'Erreur')
+      }
+    } catch (err: unknown) { 
+      toast.error(err instanceof Error ? err.message : 'Erreur') 
+    } finally { 
+      setLoading(false) 
+    }
   }
 
-  return { loading, formData, setFormData, imagesGenerales, setImagesGenerales, couleurs, setCouleurs, handleSubmit }
+  return { 
+    loading, 
+    formData, 
+    setFormData, 
+    generalImages, 
+    setGeneralImages, 
+    colors, 
+    setColors, 
+    handleSubmit 
+  }
 }

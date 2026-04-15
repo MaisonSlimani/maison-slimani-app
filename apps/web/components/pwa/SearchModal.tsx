@@ -34,7 +34,7 @@ export default function SearchModal({ isOpen, onClose }: { isOpen: boolean; onCl
                       {s.products.map((p: SearchProduct) => (
                         <SearchModalItem 
                           key={p.id} 
-                          product={{ id: p.id, nom: p.nom, prix: p.prix, image_url: p.image_url }} 
+                          product={{ id: p.id, name: p.name, price: p.price, image_url: p.image_url }} 
                           onClick={() => s.handleProductClick(p)} 
                         />
                       ))}

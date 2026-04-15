@@ -3,6 +3,19 @@ import { Database, TablesInsert } from '../database.types';
 
 export type ProductRow = Database["public"]["Tables"]["produits"]["Row"];
 
+interface RawVariation {
+  name?: string; nom?: string;
+  code?: string;
+  stock?: number; quantite?: number;
+  sizes?: RawSize[]; tailles?: RawSize[];
+  images?: string[];
+}
+
+interface RawSize {
+  name?: string; nom?: string;
+  stock?: number; quantite?: number;
+}
+
 /**
  * Maps a raw DB row to a clean domain Product model.
  * Single authoritative translation point for DB→Domain.
@@ -20,16 +33,22 @@ export function mapProductRow(data: ProductRow): Product {
     category: data.category,
     featured: data.featured,
     hasColors: data.has_colors,
-    colors: (data.colors as unknown as Array<{ name: string; code: string; stock: number; sizes?: Array<{ name: string; stock: number }>; images?: string[] }>)
+    colors: (data.colors as unknown as RawVariation[])
       ?.map(v => ({
-        name: v.name,
-        code: v.code,
-        stock: v.stock,
-        sizes: v.sizes?.map((t: { name: string; stock: number }) => ({ name: t.name, stock: t.stock })),
-        images: v.images,
+        name: v.name || v.nom || '',
+        code: v.code || '',
+        stock: v.stock !== undefined ? v.stock : v.quantite || 0,
+        sizes: (v.sizes || v.tailles)?.map((t: RawSize) => ({ 
+          name: t.name || t.nom || '', 
+          stock: t.stock !== undefined ? t.stock : t.quantite || 0 
+        })) || [],
+        images: v.images || [],
       })) as ProductVariation[] || null,
-    sizes: (data.sizes as unknown as Array<{ name: string; stock: number }>)
-      ?.map(t => ({ name: t.name, stock: t.stock })) || null,
+    sizes: (data.sizes as unknown as RawSize[])
+      ?.map(t => ({ 
+        name: t.name || t.nom || '', 
+        stock: t.stock !== undefined ? t.stock : t.quantite || 0 
+      })) || null,
     size: data.size,
     slug: data.slug,
     createdAt: data.created_at,
