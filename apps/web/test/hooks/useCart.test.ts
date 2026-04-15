@@ -25,12 +25,12 @@ describe('useCart Hook', () => {
 
     const mockItem: CartItem = {
       id: 'test-1',
-      nom: 'Sneaker',
-      prix: 100,
-      quantite: 1,
+      name: 'Sneaker',
+      price: 100,
+      quantity: 1,
       image_url: null,
-      couleur: 'Rouge',
-      taille: '42'
+      color: 'Rouge',
+      size: '42'
     }
 
     await act(async () => {
@@ -38,7 +38,7 @@ describe('useCart Hook', () => {
     })
 
     expect(result.current.items.length).toBe(1)
-    expect(result.current.items[0].nom).toBe('Sneaker')
+    expect(result.current.items[0].name).toBe('Sneaker')
     
     // Verify persistence
     const saved = JSON.parse(localStorage.getItem('cart_v2') || '[]')
@@ -53,9 +53,9 @@ describe('useCart Hook', () => {
 
     const mockItem: CartItem = {
       id: 'test-sync',
-      nom: 'Slipper',
-      prix: 50,
-      quantite: 1,
+      name: 'Slipper',
+      price: 50,
+      quantity: 1,
       image_url: null,
     }
 
@@ -70,8 +70,8 @@ describe('useCart Hook', () => {
 
   it('should handle removing an item with sizing properly', async () => {
     const { result } = renderHook(() => useCart())
-    const item1: CartItem = { id: 'multi-test', nom: 'Bag', prix: 50, quantite: 1, image_url: null, couleur: 'Blue' }
-    const item2: CartItem = { id: 'multi-test', nom: 'Bag', prix: 50, quantite: 1, image_url: null, couleur: 'Red' }
+    const item1: CartItem = { id: 'multi-test', name: 'Bag', price: 50, quantity: 1, image_url: null, color: 'Blue' }
+    const item2: CartItem = { id: 'multi-test', name: 'Bag', price: 50, quantity: 1, image_url: null, color: 'Red' }
 
     await act(async () => {
       await result.current.addItem(item1, false)
@@ -86,6 +86,6 @@ describe('useCart Hook', () => {
     })
 
     expect(result.current.items.length).toBe(1)
-    expect(result.current.items[0].couleur).toBe('Blue')
+    expect(result.current.items[0].color).toBe('Blue')
   })
 })
