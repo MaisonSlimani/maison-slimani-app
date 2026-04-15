@@ -1,14 +1,15 @@
-name: Database Integration Tests
+name: 02 - Database Integration
 
 on:
-  push:
-    branches: [ main, revamp ]
-  pull_request:
-    branches: [ main, revamp ]
+  workflow_run:
+    workflows: ["01 - Core Verification"]
+    types:
+      - completed
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout code
