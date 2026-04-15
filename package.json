@@ -37,7 +37,8 @@
   },
   "lint-staged": {
     "*.{js,ts,tsx}": [
-      "eslint --fix"
+      "eslint --fix",
+      "pnpm typecheck"
     ]
   },
   "packageManager": "pnpm@10.30.3"
