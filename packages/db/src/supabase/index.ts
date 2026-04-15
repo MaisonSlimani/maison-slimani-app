@@ -14,8 +14,8 @@ export const getSupabaseConfig = () => {
   // @ts-expect-error - Vite env access
   const viteAnonKey = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_ANON_KEY : null;
 
-  const url = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_URL : null) || viteUrl
-  const anonKey = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : null) || viteAnonKey
+  const url = (typeof process !== 'undefined' ? (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) : null) || viteUrl
+  const anonKey = (typeof process !== 'undefined' ? (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY) : null) || viteAnonKey
 
   if (!url || !anonKey) {
     throw new Error('Supabase environment variables are missing (checked VITE_ and NEXT_PUBLIC_ prefixes).')

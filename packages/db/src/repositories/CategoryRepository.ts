@@ -1,6 +1,7 @@
 import { AppSupabaseClient } from '../client.types';
 import { Category, CategoryInput, DomainResult, ICategoryRepository } from '@maison/domain';
 import { Database, TablesUpdate } from '../database.types';
+import { mapDatabaseError } from '../errors';
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
@@ -33,7 +34,7 @@ export class CategoryRepository implements ICategoryRepository {
       .select('*')
       .order('ordre', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw mapDatabaseError(error);
     return (data || []).map(d => this.mapCategory(d));
   }
 
@@ -44,7 +45,7 @@ export class CategoryRepository implements ICategoryRepository {
       .eq('active', true)
       .order('ordre', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw mapDatabaseError(error);
     return (data || []).map(d => this.mapCategory(d));
   }
 

@@ -17,7 +17,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export function createLogger(moduleName: string): StructuredLogger {
   const formatMessage = (level: LogLevel, message: string, context?: LogContext, error?: unknown) => {
-    const logEntry = {
+    const logEntry: Record<string, unknown> = {
       timestamp: new Date().toISOString(),
       level,
       module: moduleName,
@@ -26,7 +26,20 @@ export function createLogger(moduleName: string): StructuredLogger {
       ...(error !== undefined ? { error: error instanceof Error ? { message: error.message, stack: error.stack } : error } : {}),
     };
 
-    return isProduction ? JSON.stringify(logEntry) : logEntry;
+    if (!isProduction) return logEntry;
+
+    try {
+      return JSON.stringify(logEntry);
+    } catch (e) {
+      // Fallback for circular references or other serialization errors
+      return JSON.stringify({
+        timestamp: logEntry.timestamp,
+        level: 'error',
+        module: 'logger.safefallback',
+        message: 'Failed to stringify log entry due to circular reference',
+        originalMessage: message
+      });
+    }
   };
 
   return {
