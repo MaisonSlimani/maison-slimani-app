@@ -12,8 +12,11 @@
   "dependencies": {
     "@maison/domain": "workspace:*",
     "clsx": "^2.1.1",
-    "isomorphic-dompurify": "^3.8.0",
+    "dompurify": "^3.2.4",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.0.5"
   }
 }
