@@ -15,11 +15,10 @@ export function useBoutiqueData(categorySlug: string, search: string, initialCat
   const [categoriesWithImages, setCategoriesWithImages] = useState<CategoryCardItem[]>(() => {
     if (!initialCategories) return []
     return initialCategories
-      .filter(c => c.image_url?.trim())
       .map(c => ({ 
         title: c.name, 
         tagline: c.description || '', 
-        image: c.image_url || '', 
+        image: c.image_url || '/assets/hero-chaussures.jpg', 
         link: `/boutique/${c.slug}` 
       }))
   })
@@ -36,7 +35,7 @@ export function useBoutiqueData(categorySlug: string, search: string, initialCat
     enabled: categorySlug !== 'tous' || !!search,
     queryFn: async ({ signal }) => {
       const q = new URLSearchParams()
-      if (selectedCategoryName) q.set('categorie', selectedCategoryName)
+      if (selectedCategoryName) q.set('category', selectedCategoryName)
       if (search) { 
         q.set('search', search)
         q.set('useFullText', 'true') 
@@ -55,12 +54,12 @@ export function useBoutiqueData(categorySlug: string, search: string, initialCat
         const result = await apiFetch<Category[]>(`${ENDPOINTS.CATEGORIES}?active=true`)
         const data = result.data || []
         setCategories(data.map(c => ({ name: c.name, slug: c.slug })))
-        setCategoriesWithImages(data.filter(c => c.image_url?.trim()).map(c => ({ 
-          title: c.name, 
-          tagline: c.description || '', 
-          image: c.image_url || '', 
-          link: `/boutique/${c.slug}` 
-        })))
+    setCategoriesWithImages(data.map(c => ({ 
+      title: c.name, 
+      tagline: c.description || '', 
+      image: c.image_url || '/assets/hero-chaussures.jpg', 
+      link: `/boutique/${c.slug}` 
+    })))
         setSelectedCategoryName(data.find(c => c.slug === categorySlug)?.name || null)
       } catch (e) { 
         console.error(e) 

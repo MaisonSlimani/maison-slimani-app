@@ -67,11 +67,10 @@ export function useHomeData(initialData?: HomeData) {
 function mapCategories(data: Category[] | undefined): CategoryCardItem[] {
   if (!data) return []
   return data
-    .filter((cat) => cat.image_url?.trim())
     .map((cat) => ({
       title: cat.name,
       tagline: cat.description || '',
-      image: cat.image_url!,
+      image: cat.image_url || '/assets/hero-chaussures.jpg',
       link: `/boutique/${cat.slug}`,
     }))
 }
