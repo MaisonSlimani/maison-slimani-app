@@ -31,14 +31,11 @@ export default function AccueilPage({ initialData }: { initialData?: HomeData })
   }, [])
 
   return (
-    <main className="min-h-screen bg-ecru md:bg-white overflow-x-hidden">
+    <>
       {/* Mobile Sticky Header (PWA Feel) */}
       <div className="md:hidden">
         <StickyHeader />
       </div>
-
-      {/* Hero */}
-      <HomeHero />
 
       {/* Mobile Trust Ribbon */}
       <div className="md:hidden bg-charbon text-ecru py-3 text-[11px] tracking-[0.15em] text-center uppercase font-light">
@@ -103,6 +100,6 @@ export default function AccueilPage({ initialData }: { initialData?: HomeData })
           <WhatsAppIcon className="text-white w-7 h-7" />
         </a>
       )}
-    </main>
+    </>
   )
 }
