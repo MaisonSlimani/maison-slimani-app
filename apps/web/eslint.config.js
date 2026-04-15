@@ -7,7 +7,15 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['.next', 'node_modules', 'dist', 'scripts', 'next-env.d.ts'],
+    ignores: [
+      '**/.next/**',
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/scripts/**',
+      '**/public/**',
+      '**/next-env.d.ts',
+      '**/tailwind.config.ts'
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -29,6 +37,7 @@ export default tseslint.config(
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       ...hooksPlugin.configs.recommended.rules,
+      "@next/next/no-img-element": "warn",
       "max-lines": ["error", { "max": 300, "skipBlankLines": true, "skipComments": true }],
       "max-depth": ["error", 4],
       "max-lines-per-function": ["warn", { "max": 80, "skipBlankLines": true, "skipComments": true }],
