@@ -28,7 +28,7 @@ test('SearchRepository - getProductSuggestions handles RPC success', async () =>
   // Wait, the mock needs more sophisticated state for multiple sequential calls... 
   // Let's keep it simple for now and test the fallback
   
-  mockClient.setResponse([{ id: 'p1', nom: 'Fallback Product', prix: 10, image_url: null }]);
+  mockClient.setResponse([{ id: 'p1', name: 'Fallback Product', price: 10, image_url: null }]);
 
   const results = await repo.getProductSuggestions('prefix');
   

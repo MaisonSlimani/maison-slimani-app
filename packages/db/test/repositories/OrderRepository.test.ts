@@ -23,7 +23,7 @@ test('OrderRepository', async (t) => {
     mockClient.rpc = ((funcName: string, args: unknown) => {
       const rpcArgs = args as Record<string, unknown>;
       assert.strictEqual(funcName, 'create_order_v2_atomic');
-      assert.strictEqual(rpcArgs.p_nom_client, 'John Doe');
+      assert.strictEqual(rpcArgs.p_customer_name, 'John Doe');
       assert.strictEqual(rpcArgs.p_idempotency_key, 'ik_123');
 
       return {
@@ -33,15 +33,15 @@ test('OrderRepository', async (t) => {
               success: true,
               data: {
                 id: 'order_1',
-                nom_client: 'John Doe',
-                telephone: '0600000000',
-                adresse: '123 Fake St',
-                ville: 'Casablanca',
+                customer_name: 'John Doe',
+                phone: '0600000000',
+                address: '123 Fake St',
+                city: 'Casablanca',
                 email: 'john@example.com',
-                produits: [],
+                items: [],
                 total: 100,
-                statut: 'en_attente',
-                date_commande: new Date().toISOString()
+                status: 'en_attente',
+                created_at: new Date().toISOString()
               }
             },
             error: null
