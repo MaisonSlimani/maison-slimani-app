@@ -10,17 +10,24 @@ interface VariationItemProps {
   index: number
   onChange: (index: number, updated: VariationWithPending) => void
   onRemove: (index: number) => void
+  errors?: Record<string, string>
 }
 
 function VariationHeader({ 
   variation, 
   onUpdate, 
-  onRemove 
+  onRemove,
+  index,
+  errors = {}
 }: { 
   variation: VariationWithPending; 
   onUpdate: (u: VariationWithPending) => void; 
-  onRemove: () => void 
+  onRemove: () => void;
+  index: number;
+  errors?: Record<string, string>
 }) {
+  const nameError = errors[`color_${index}_name`]
+
   return (
     <div className="flex justify-between items-start mb-4">
       <div className="grid grid-cols-2 gap-4 flex-1">
@@ -30,7 +37,11 @@ function VariationHeader({
             value={variation.name} 
             onChange={e => onUpdate({ ...variation, name: e.target.value })} 
             placeholder="ex: Noir" 
+            className={nameError ? "border-red-500 focus-visible:ring-red-500" : ""}
           />
+          {nameError && (
+            <p className="text-xs text-red-500 mt-1">{nameError}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Code Hex</Label>
@@ -63,10 +74,14 @@ function VariationHeader({
 
 function SizeGrid({ 
   variation, 
-  onUpdate 
+  onUpdate,
+  colorIndex,
+  errors = {}
 }: { 
   variation: VariationWithPending; 
-  onUpdate: (u: VariationWithPending) => void 
+  onUpdate: (u: VariationWithPending) => void;
+  colorIndex: number;
+  errors?: Record<string, string>
 }) {
   const handleSizeChange = (i: number, name: string, stock: number) => {
     const s = [...(variation.sizes || [])]
@@ -78,33 +93,45 @@ function SizeGrid({
     <div>
       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Tailles & Stock</Label>
       <div className="grid grid-cols-1 gap-2 mt-2">
-        {(variation.sizes || []).map((t, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <Input 
-              placeholder="Taille" 
-              value={t.name} 
-              onChange={e => handleSizeChange(i, e.target.value, t.stock)} 
-              className="flex-1" 
-            />
-            <Input 
-              type="number" 
-              value={t.stock} 
-              onChange={e => handleSizeChange(i, t.name, parseInt(e.target.value) || 0)} 
-              className="w-24" 
-            />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => onUpdate({ 
-                ...variation, 
-                sizes: (variation.sizes || []).filter((_, idx) => idx !== i) 
-              })} 
-              className="h-8 w-8"
-            >
-              <X className="w-3 h-3" />
-            </Button>
-          </div>
-        ))}
+        {(variation.sizes || []).map((t, i) => {
+          const nameError = errors[`color_${colorIndex}_size_${i}_name`]
+          const stockError = errors[`color_${colorIndex}_size_${i}_stock`]
+          return (
+            <div key={i} className="flex flex-col gap-1">
+              <div className="flex gap-2 items-center">
+                <Input 
+                  placeholder="Taille" 
+                  value={t.name} 
+                  onChange={e => handleSizeChange(i, e.target.value, t.stock)} 
+                  className={nameError ? "flex-1 border-red-500 focus-visible:ring-red-500" : "flex-1"} 
+                />
+                <Input 
+                  type="number" 
+                  value={t.stock} 
+                  onChange={e => handleSizeChange(i, t.name, parseInt(e.target.value) || 0)} 
+                  className={stockError ? "w-24 border-red-500 focus-visible:ring-red-500" : "w-24"} 
+                />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => onUpdate({ 
+                    ...variation, 
+                    sizes: (variation.sizes || []).filter((_, idx) => idx !== i) 
+                  })} 
+                  className="h-8 w-8"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+              {(nameError || stockError) && (
+                <div className="flex flex-col text-[10px] text-red-500 pl-1">
+                  {nameError && <span>{nameError}</span>}
+                  {stockError && <span>{stockError}</span>}
+                </div>
+              )}
+            </div>
+          )
+        })}
         <Button 
           type="button" 
           variant="outline" 
@@ -122,7 +149,7 @@ function SizeGrid({
   )
 }
 
-export function VariationItem({ variation, index, onChange, onRemove }: VariationItemProps) {
+export function VariationItem({ variation, index, onChange, onRemove, errors = {} }: VariationItemProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
     const p = Array.from(e.target.files).map(f => ({ file: f, url: URL.createObjectURL(f) }))
@@ -131,9 +158,9 @@ export function VariationItem({ variation, index, onChange, onRemove }: Variatio
 
   return (
     <Card className="p-4 bg-muted/20 border-dashed">
-      <VariationHeader variation={variation} onUpdate={u => onChange(index, u)} onRemove={() => onRemove(index)} />
+      <VariationHeader variation={variation} onUpdate={u => onChange(index, u)} onRemove={() => onRemove(index)} index={index} errors={errors} />
       <div className="space-y-4">
-        <SizeGrid variation={variation} onUpdate={u => onChange(index, u)} />
+        <SizeGrid variation={variation} onUpdate={u => onChange(index, u)} colorIndex={index} errors={errors} />
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Images</Label>
           <div className="flex flex-wrap gap-2 mt-2">

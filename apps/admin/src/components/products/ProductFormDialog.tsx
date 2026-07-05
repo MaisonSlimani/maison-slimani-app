@@ -1,5 +1,6 @@
 import { Product, Category } from '@maison/domain'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Label, DialogDescription } from '@maison/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Label, DialogDescription, Alert } from '@maison/ui'
+import { AlertCircle } from 'lucide-react'
 import RichTextEditor from '@/components/editor/RichTextEditor'
 import { GeneralImagesForm } from './form/GeneralImagesForm'
 import { VariationsForm } from './form/VariationsForm'
@@ -19,6 +20,7 @@ interface ProductFormDialogProps {
 export function ProductFormDialog({ open, onOpenChange, product, categories, onSuccess, defaultCategory }: ProductFormDialogProps) {
   const { 
     loading, 
+    errors,
     formData, 
     setFormData, 
     generalImages, 
@@ -44,7 +46,17 @@ export function ProductFormDialog({ open, onOpenChange, product, categories, onS
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-8 py-4">
-          <ProductFormBasicFields formData={formData} setFormData={setFormData} categories={categories} />
+          {Object.keys(errors).length > 0 && (
+            <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <div>
+                <h5 className="font-semibold text-sm">Formulaire invalide</h5>
+                <p className="text-xs">Veuillez corriger les erreurs signalées dans les sections ci-dessous.</p>
+              </div>
+            </Alert>
+          )}
+
+          <ProductFormBasicFields formData={formData} setFormData={setFormData} categories={categories} errors={errors} />
           
           <div className="space-y-2">
             <Label>Description</Label>
@@ -58,7 +70,7 @@ export function ProductFormDialog({ open, onOpenChange, product, categories, onS
           </div>
           
           {formData.hasColors ? (
-            <VariationsForm colors={colors} onChange={setColors} />
+            <VariationsForm colors={colors} onChange={setColors} errors={errors} />
           ) : (
             <GeneralImagesForm images={generalImages} onChange={setGeneralImages} />
           )}

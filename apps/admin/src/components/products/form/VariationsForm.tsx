@@ -11,9 +11,10 @@ export interface VariationImage {
 interface VariationsFormProps {
   colors: (ProductVariation & { pendingImages?: VariationImage[] })[]
   onChange: (colors: (ProductVariation & { pendingImages?: VariationImage[] })[]) => void
+  errors?: Record<string, string>
 }
 
-export function VariationsForm({ colors, onChange }: VariationsFormProps) {
+export function VariationsForm({ colors, onChange, errors = {} }: VariationsFormProps) {
   const addColor = () => {
     onChange([...colors, { name: '', code: '#000000', stock: 0, sizes: [], images: [], pendingImages: [] }])
   }
@@ -40,7 +41,14 @@ export function VariationsForm({ colors, onChange }: VariationsFormProps) {
         </Button>
       </div>
 
-      {colors.length === 0 && (
+      {errors.colors && (
+        <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <p className="text-sm">{errors.colors}</p>
+        </Alert>
+      )}
+
+      {colors.length === 0 && !errors.colors && (
         <Alert variant="default" className="bg-muted/50 border-dashed">
           <AlertCircle className="h-4 w-4" />
           <p className="text-sm text-muted-foreground">Aucune couleur configurée. Ajoutez une couleur pour gérer les variations.</p>
@@ -55,6 +63,7 @@ export function VariationsForm({ colors, onChange }: VariationsFormProps) {
             variation={variation} 
             onChange={handleColorChange} 
             onRemove={removeColor} 
+            errors={errors}
           />
         ))}
       </div>

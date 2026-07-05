@@ -30,7 +30,27 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
     setLoading(true)
     try {
       const result = await apiFetch<Product>(`${ENDPOINTS.PRODUITS}/${item.id}`)
-      if (result.success && result.data) { setProductData(result.data); setShowModal(true) }
+      if (result.success && result.data) {
+        const prod = result.data
+        setProductData(prod)
+        
+        // Initialize default selected color
+        const firstColor = prod.colors?.find(c => (c.stock || 0) > 0) || prod.colors?.[0]
+        setSelectedColor(firstColor ? firstColor.name : '')
+        
+        // Initialize default selected size
+        let firstSize = ''
+        if (firstColor && firstColor.sizes) {
+          const availableSize = firstColor.sizes.find(s => (s.stock || 0) > 0) || firstColor.sizes[0]
+          if (availableSize) firstSize = availableSize.name
+        } else if (prod.sizes) {
+          const availableSize = prod.sizes.find(s => (s.stock || 0) > 0) || prod.sizes[0]
+          if (availableSize) firstSize = availableSize.name
+        }
+        setSelectedSize(firstSize)
+        setQuantity(1)
+        setShowModal(true)
+      }
     } catch { toast.error('Erreur chargement') }
     finally { setLoading(false) }
   }
@@ -67,7 +87,7 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
           <WishlistContent isLoaded={isLoaded} items={items} cartItems={cartItems} loading={loading} onAddToCart={handleAddToCart} onRemove={removeItem} onClose={() => onOpenChange(false)} />
         </SheetContent>
       </Sheet>
-      {productData && <ProductPurchaseDialog showModal={showModal} setShowModal={setShowModal} produit={productData} selectedColor={selectedColor} setSelectedColor={setSelectedColor} selectedSize={selectedSize} setSelectedSize={setSelectedSize} quantity={quantity} setQuantity={setQuantity} sizesAvailable={productData.colors?.flatMap(c => c.sizes?.map(s => s.name) || []) || []} onConfirm={onConfirm} isAddingToCart={false} />}
+      {productData && <ProductPurchaseDialog showModal={showModal} setShowModal={setShowModal} produit={productData} selectedColor={selectedColor} setSelectedColor={setSelectedColor} selectedSize={selectedSize} setSelectedSize={setSelectedSize} quantity={quantity} setQuantity={setQuantity} sizesAvailable={productData.sizes?.map(s => s.name) || []} onConfirm={onConfirm} isAddingToCart={false} />}
     </>
   )
 }
