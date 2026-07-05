@@ -15,7 +15,7 @@ export class DashboardService {
    */
   calculateMetrics(commandes: Order[], produits: Product[]): IDashboardMetrics {
     const totalRevenus = commandes.reduce((acc, curr) => acc + (curr.total || 0), 0);
-    const enAttente = commandes.filter(c => c.status === 'En attente').length;
+    const enAttente = commandes.filter(c => c.status === 'En attente' || c.status === 'en_attente').length;
     
     const totalStock = produits.reduce((acc, curr) => acc + (curr.totalStock || 0), 0);
     const produitsRupture = produits.filter(p => (p.totalStock || 0) <= 0).length;
