@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Package, ShoppingBag, Mail, LayoutGrid } from 'lucide-react'
@@ -10,19 +10,7 @@ import { useCart } from '@/lib/hooks/useCart'
 const MenuBasNavigation = () => {
   const pathname = usePathname()
   const { items, isLoaded } = useCart()
-  const [cartCount, setCartCount] = useState(0)
-
-  useEffect(() => { if (isLoaded) setCartCount(items.length) }, [items, isLoaded])
-
-  useEffect(() => {
-    const sync = () => {
-      const saved = localStorage.getItem('cart')
-      if (saved) { try { setCartCount(JSON.parse(saved).length) } catch { /* ignore */ } } 
-      else setCartCount(0)
-    }
-    window.addEventListener('cartUpdated', sync)
-    return () => window.removeEventListener('cartUpdated', sync)
-  }, [])
+  const cartCount = isLoaded ? items.length : 0
 
   const navItems = [
     { href: '/', icon: Home, label: 'Accueil' },

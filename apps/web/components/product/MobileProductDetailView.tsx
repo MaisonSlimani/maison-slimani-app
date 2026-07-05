@@ -47,8 +47,11 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
           setSelectedSize={setSize}
           isInCart={isInCart}
           onAddToCart={handleAddToCart}
-          description={product.description}
         />
+
+        {product.description && (
+          <div className="prose prose-sm max-w-none text-charbon/80 pt-6 border-t border-charbon/5" dangerouslySetInnerHTML={{ __html: product.description }} />
+        )}
       </div>
       
       <SimilarProducts productCategory={product.category ?? ''} productId={product.id} />

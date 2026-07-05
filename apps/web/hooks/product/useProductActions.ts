@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCart } from '@/lib/hooks/useCart'
+import { useCart, cartStore } from '@/lib/hooks/useCart'
 import { useWishlist } from '@/lib/hooks/useWishlist'
 import { toast } from 'sonner'
 import { Product, validateProductSelections, getSelectedStock } from '@maison/domain'
@@ -79,7 +79,5 @@ function prepareCartItem(product: Product, quantity: number, color: string, size
  * Bypasses React state to prevent race conditions with hard navigation.
  */
 function persistBuyNowItem(item: ReturnType<typeof prepareCartItem>) {
-  const cartItems = JSON.stringify([{ ...item, quantity: item.quantity || 1 }])
-  localStorage.setItem('cart', cartItems)
-  window.dispatchEvent(new Event('cartUpdated'))
+  cartStore.set([{ ...item, quantity: item.quantity || 1 }])
 }

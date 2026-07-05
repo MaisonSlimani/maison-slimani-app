@@ -3,7 +3,7 @@ import { Underline } from '@tiptap/extension-underline'
 import { Link } from '@tiptap/extension-link'
 import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
-import Image from '@tiptap/extension-image'
+import { CustomImage } from './CustomImageExtension'
 
 export const EDITOR_EXTENSIONS = [
   StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
@@ -14,7 +14,7 @@ export const EDITOR_EXTENSIONS = [
   }),
   Color,
   TextStyle.configure({ HTMLAttributes: { style: null } }),
-  Image.configure({
+  CustomImage.configure({
     HTMLAttributes: {
       class: 'rounded-xl max-w-full my-6 mx-auto shadow-sm border border-border/40 object-cover',
     },

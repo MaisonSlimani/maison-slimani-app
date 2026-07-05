@@ -22,13 +22,12 @@ interface MobileProductSelectionProps {
   setSelectedSize: (t: string) => void
   isInCart: boolean
   onAddToCart: (checkout: boolean) => void
-  description?: string | null
 }
 
 export function MobileProductSelection({
   hasColors, colors, selectedColor, setSelectedColor,
   sizesData, selectedSize, setSelectedSize,
-  isInCart, onAddToCart, description
+  isInCart, onAddToCart
 }: MobileProductSelectionProps) {
   return (
     <div className="space-y-6">
@@ -70,9 +69,6 @@ export function MobileProductSelection({
         </div>
       )}
 
-      {description && (
-        <div className="prose prose-sm max-w-none text-charbon/80 pt-2 border-t border-charbon/5" dangerouslySetInnerHTML={{ __html: description }} />
-      )}
 
       <div className="flex flex-col gap-3 pt-4">
         <Button 

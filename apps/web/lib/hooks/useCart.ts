@@ -6,7 +6,7 @@ import { CartItem, cartItemSchema } from '@maison/domain'
 import { createPersistentStore } from '@maison/shared'
 import { z } from 'zod'
 
-const cartStore = createPersistentStore<CartItem[]>({
+export const cartStore = createPersistentStore<CartItem[]>({
   key: 'cart',
   version: 2,
   schema: z.array(cartItemSchema) as z.ZodType<CartItem[]>,

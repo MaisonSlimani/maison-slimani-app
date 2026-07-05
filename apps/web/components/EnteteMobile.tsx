@@ -1,6 +1,4 @@
 'use client'
-
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingBag, Heart } from 'lucide-react'
@@ -34,29 +32,11 @@ const EnteteMobile = () => {
 function useHeaderData() {
   const { items: cartItems, isLoaded: cartLoaded } = useCart()
   const { items: wishlistItems, isLoaded: wishlistLoaded } = useWishlist()
-  const [cartCount, setCartCount] = useState(0)
-  const [wishlistCount, setWishlistCount] = useState(0)
 
-  useEffect(() => { if (cartLoaded) setCartCount(cartItems.length) }, [cartItems, cartLoaded])
-  useEffect(() => { if (wishlistLoaded) setWishlistCount(wishlistItems.length) }, [wishlistItems, wishlistLoaded])
-
-  useEffect(() => {
-    const sync = () => {
-      const savedCart = localStorage.getItem('cart'), savedWish = localStorage.getItem('wishlist')
-      if (savedCart) try { setCartCount(JSON.parse(savedCart).length) } catch { /* ignore */ }
-      if (savedWish) try { setWishlistCount(JSON.parse(savedWish).length) } catch { /* ignore */ }
-    }
-    window.addEventListener('cartUpdated', sync)
-    window.addEventListener('wishlistUpdated', sync)
-    window.addEventListener('storage', sync)
-    return () => {
-      window.removeEventListener('cartUpdated', sync)
-      window.removeEventListener('wishlistUpdated', sync)
-      window.removeEventListener('storage', sync)
-    }
-  }, [])
-
-  return { cartCount, wishlistCount }
+  return {
+    cartCount: cartLoaded ? cartItems.length : 0,
+    wishlistCount: wishlistLoaded ? wishlistItems.length : 0
+  }
 }
 
 function HeaderAction({ href, count, icon: Icon, label }: { href: string; count: number; icon: React.ElementType; label: string }) {

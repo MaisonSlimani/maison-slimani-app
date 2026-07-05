@@ -26,18 +26,18 @@ export interface ProductDetailViewData {
 }
 
 export default function DesktopProductDetailView({ data }: { data: ProductDetailViewData }) {
-  const { 
-    product, 
-    color, 
-    setColor, 
-    size, 
-    setSize, 
+  const {
+    product,
+    color,
+    setColor,
+    size,
+    setSize,
     isInCart,
-    inWishlist, 
-    handleAddToCart, 
-    handleToggleWishlist, 
-    sizesData, 
-    allImages 
+    inWishlist,
+    handleAddToCart,
+    handleToggleWishlist,
+    sizesData,
+    allImages
   } = data
 
   if (!product) return null
@@ -47,33 +47,40 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
       <div className="container max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-[38%_62%] gap-12 lg:gap-16">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
-            <GalerieProduit 
-              images={allImages} 
-              enableZoom={true} 
-              showThumbnails={true} 
-              selectedColor={color ?? undefined} 
+            <GalerieProduit
+              images={allImages}
+              enableZoom={true}
+              showThumbnails={true}
+              selectedColor={color ?? undefined}
             />
           </motion.div>
 
           <motion.div className="space-y-8" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
             <ProductInfo name={product.name} price={product.price} category={product.category ?? ''} />
-            <ProductSelection 
-              hasColors={!!product.hasColors} 
-              colors={(product.colors as ProductVariation[]) ?? []} 
-              selectedColor={color} 
-              setSelectedColor={setColor} 
-              sizesData={sizesData} 
-              selectedSize={size} 
-              setSelectedSize={setSize} 
+            <ProductSelection
+              hasColors={!!product.hasColors}
+              colors={(product.colors as ProductVariation[]) ?? []}
+              selectedColor={color}
+              setSelectedColor={setColor}
+              sizesData={sizesData}
+              selectedSize={size}
+              setSelectedSize={setSize}
               isInCart={isInCart}
-              inWishlist={inWishlist} 
-              onAddToCart={handleAddToCart} 
-              onToggleWishlist={handleToggleWishlist} 
-              description={product.description}
+              inWishlist={inWishlist}
+              onAddToCart={handleAddToCart}
+              onToggleWishlist={handleToggleWishlist}
             />
             <ProductFeatures />
           </motion.div>
         </div>
+
+        {product.description && (
+          <section className="mt-20 pt-16 border-t border-charbon/5">
+            <div className="prose prose-lg max-w-none text-charbon/80 leading-relaxed">
+              <div dangerouslySetInnerHTML={{ __html: product.description }} />
+            </div>
+          </section>
+        )}
 
         <section className="mt-24">
           <h2 className="text-4xl font-serif mb-12 text-center">Produits similaires</h2>
