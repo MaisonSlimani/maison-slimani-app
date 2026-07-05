@@ -46,10 +46,7 @@ export function ProductSelection({
 
       {sizesData.length > 0 && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold uppercase tracking-widest text-charbon/60">Tailles</span>
-            <button className="text-[11px] text-muted-foreground underline hover:text-charbon transition-colors">Guide des tailles</button>
-          </div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-charbon/60">Tailles</span>
           <div className="flex flex-wrap gap-2.5">
             {sizesData.map((t) => (
               <button key={t.name} disabled={(t.stock ?? 0) <= 0} onClick={() => setSelectedSize(t.name)} className={cn("w-12 h-12 rounded-lg border font-medium text-sm flex items-center justify-center transition-all", (t.stock ?? 0) <= 0 ? "opacity-20 cursor-not-allowed bg-muted" : selectedSize === t.name ? "bg-charbon text-white border-charbon shadow-md" : "hover:border-charbon/40 hover:text-charbon")}>{t.name}</button>

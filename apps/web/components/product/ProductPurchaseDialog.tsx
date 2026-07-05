@@ -63,7 +63,7 @@ const ProductPurchaseDialog = ({
             onClick={() => onConfirm(false)}
             disabled={!canPurchase}
           >
-            {isAddingToCart ? "..." : "Panier"}
+            {isAddingToCart ? "..." : "Ajouter au panier"}
           </Button>
           <Button 
             className="flex-[2] h-12 bg-dore text-charbon hover:bg-dore/90 text-lg font-serif" 

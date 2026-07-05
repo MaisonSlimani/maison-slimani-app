@@ -41,7 +41,7 @@ export function useBoutiqueData(categorySlug: string, search: string, initialCat
         q.set('useFullText', 'true') 
       }
       const result = await apiFetch<Product[]>(`${ENDPOINTS.PRODUITS}?${q.toString()}`, { signal })
-      return result.data || []
+      return Array.isArray(result.data) ? result.data : []
     },
   })
 
@@ -52,7 +52,7 @@ export function useBoutiqueData(categorySlug: string, search: string, initialCat
       try {
         setLoadingCategories(true)
         const result = await apiFetch<Category[]>(`${ENDPOINTS.CATEGORIES}?active=true`)
-        const data = result.data || []
+        const data = Array.isArray(result.data) ? result.data : []
         setCategories(data.map(c => ({ name: c.name, slug: c.slug })))
     setCategoriesWithImages(data.map(c => ({ 
       title: c.name, 

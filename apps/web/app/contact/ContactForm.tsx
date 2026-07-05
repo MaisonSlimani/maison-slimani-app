@@ -1,6 +1,5 @@
 'use client'
 
-import { ContactCards } from '@/components/contact/ContactCards'
 import { ContactFormBody } from '@/components/contact/ContactFormBody'
 import { ContactFormSkeleton } from '@/components/contact/ContactFormSkeleton'
 
@@ -11,15 +10,8 @@ interface ContactFormProps {
   loading?: boolean
 }
 
-export default function ContactForm({ settings, loading = false }: ContactFormProps) {
+export default function ContactForm({ loading = false }: ContactFormProps) {
   if (loading) return <ContactFormSkeleton />
 
-  return (
-    <>
-      <ContactCards settings={settings} />
-      <div className="mt-12">
-        <ContactFormBody />
-      </div>
-    </>
-  )
+  return <ContactFormBody />
 }

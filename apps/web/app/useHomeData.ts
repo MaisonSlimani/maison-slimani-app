@@ -18,7 +18,7 @@ export function useHomeData(initialData?: HomeData) {
     initialData: initialData?.categories,
     queryFn: async ({ signal }) => {
       const result = await apiFetch<Category[]>(`${ENDPOINTS.CATEGORIES}?active=true`, { signal })
-      return result.data || []
+      return Array.isArray(result.data) ? result.data : []
     },
   })
 
@@ -37,7 +37,7 @@ export function useHomeData(initialData?: HomeData) {
     queryFn: async ({ signal }) => {
       const result = await apiFetch<Product[]>(`${ENDPOINTS.PRODUITS}?vedette=true&limit=6`, { signal })
       if (!result.success) throw new Error(result.error || 'Erreur API')
-      return result.data || []
+      return Array.isArray(result.data) ? result.data : []
     },
   })
 

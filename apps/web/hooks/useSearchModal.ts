@@ -41,7 +41,7 @@ export function useSearchModal(isOpen: boolean, onClose: () => void) {
         { signal }
       )
       if (!result.success) throw new Error(result.error || 'Erreur recherche')
-      return result.data || []
+      return Array.isArray(result.data) ? result.data : []
     },
     enabled: debouncedQuery.trim().length > 0,
     staleTime: 30 * 1000,

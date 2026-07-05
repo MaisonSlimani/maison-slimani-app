@@ -19,7 +19,18 @@ export default defineConfig({
                     vendor: ['react', 'react-dom', 'react-router-dom'],
                     ui: ['lucide-react', 'clsx', 'tailwind-merge'],
                     supabase: ['@supabase/supabase-js'],
-                    forms: ['react-hook-form', 'zod']
+                    forms: ['react-hook-form', 'zod'],
+                    editor: [
+                        '@tiptap/core', '@tiptap/react', '@tiptap/starter-kit',
+                        '@tiptap/extension-code-block-lowlight', '@tiptap/extension-color',
+                        '@tiptap/extension-image', '@tiptap/extension-link',
+                        '@tiptap/extension-table', '@tiptap/extension-table-cell',
+                        '@tiptap/extension-table-header', '@tiptap/extension-table-row',
+                        '@tiptap/extension-task-item', '@tiptap/extension-task-list',
+                        '@tiptap/extension-text-style', '@tiptap/extension-underline',
+                        'lowlight'
+                    ],
+                    motion: ['framer-motion']
                 }
             }
         }

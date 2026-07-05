@@ -24,7 +24,7 @@ export default function SimilarProducts({ productId, productCategory, limit = RE
         const response = await fetch(`/api/produits/${productId}/similar?limit=${limit}`)
         if (!response.ok) throw new Error('Failed')
         const payload = await response.json()
-        setProducts(payload.success ? payload.data || [] : [])
+        setProducts(payload.success && Array.isArray(payload.data) ? payload.data : [])
       } catch { setProducts([]) }
       finally { setLoading(false) }
     }

@@ -3,9 +3,11 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Search, ShoppingBag, LucideIcon } from 'lucide-react'
+import { Search, ShoppingBag, Heart, LucideIcon } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
+import { useWishlist } from '@/lib/hooks/useWishlist'
 import { useCartDrawer } from '@/lib/contexts/CartDrawerContext'
+import { useWishlistDrawer } from '@/lib/contexts/WishlistDrawerContext'
 import SearchOverlay from '@/components/search/SearchOverlay'
 import { hapticFeedback } from '@/lib/haptics'
 import { cn } from '@maison/shared'
@@ -13,7 +15,9 @@ import { cn } from '@maison/shared'
 export default function HeaderMobile() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { totalItems } = useCart()
+  const { count: wishlistCount } = useWishlist()
   const { openDrawer } = useCartDrawer()
+  const { openDrawer: openWishlistDrawer } = useWishlistDrawer()
 
   return (
     <>
@@ -47,6 +51,14 @@ export default function HeaderMobile() {
               icon={Search} 
               onClick={() => { hapticFeedback('light'); setIsSearchOpen(true); }}
               label="Rechercher"
+            />
+
+            <HeaderIconButton 
+              icon={Heart} 
+              onClick={() => { hapticFeedback('light'); openWishlistDrawer(); }}
+              label="Favoris"
+              badgeCount={wishlistCount}
+              active={wishlistCount > 0}
             />
             
             <HeaderIconButton 

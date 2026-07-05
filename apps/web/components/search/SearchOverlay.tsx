@@ -10,19 +10,19 @@ import { useRecentSearches } from './useRecentSearches'
 import { SearchHeader } from './SearchHeader'
 import { SearchResultItem } from './SearchResultItem'
 
-interface SearchOverlayProps { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  basePath?: string 
+interface SearchOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  basePath?: string
 }
 
-interface SimpleProduct { 
-  id: string; 
-  name: string; // Was 'nom'
-  price: number; 
-  image_url?: string; 
-  slug: string; 
-  category?: string; // Was 'categorie'
+interface SimpleProduct {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  slug: string;
+  category?: string;
 }
 
 export default function SearchOverlay({ isOpen, onClose, basePath = '' }: SearchOverlayProps) {
@@ -48,7 +48,8 @@ export default function SearchOverlay({ isOpen, onClose, basePath = '' }: Search
       if (!debouncedQuery.trim()) return []
       const resp = await fetch(`/api/v1/produits?search=${encodeURIComponent(debouncedQuery)}&limit=8`)
       const res = await resp.json()
-      return res.data || res.items || [] // Handle different API response structures
+      const items = res.data?.items
+      return Array.isArray(items) ? items : []
     },
     enabled: isOpen && debouncedQuery.length > 0
   })
@@ -66,24 +67,24 @@ export default function SearchOverlay({ isOpen, onClose, basePath = '' }: Search
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]" />
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-0 inset-x-0 bg-background border-b shadow-xl max-h-[85vh] overflow-hidden flex flex-col z-[70]">
-            <SearchHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} onClose={onClose} inputRef={inputRef} onSubmit={(e) => { e.preventDefault(); handleSearch() }} onKeyDown={(e) => { if(e.key === 'Enter') handleSearch() }} />
+            <SearchHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} onClose={onClose} inputRef={inputRef} onSubmit={(e) => { e.preventDefault(); handleSearch() }} onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }} />
             <div className="flex-1 overflow-y-auto p-4">
               {debouncedQuery.trim() ? (
                 isLoading ? <div className="flex justify-center py-12"><Loader2 className="animate-spin text-dore" /></div> :
-                (results && results.length > 0) ? (
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-medium uppercase text-muted-foreground">Produits</h3>
-                    {results.map((p) => (
-                      <SearchResultItem 
-                        key={p.id} 
-                        product={{ name: p.name, image_url: p.image_url, price: p.price }} 
-                        productHref={`${basePath}/boutique/${slugify(p.category || 'v')}/${p.slug}`} 
-                        isActive={false} 
-                        onClick={onClose} 
-                      />
-                    ))}
-                  </div>
-                ) : <div className="text-center py-12 text-muted-foreground">Aucun résultat</div>
+                  (results && results.length > 0) ? (
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-medium uppercase text-muted-foreground">Produits</h3>
+                      {results.map((p) => (
+                        <SearchResultItem
+                          key={p.id}
+                          product={{ name: p.name, image_url: p.image_url, price: p.price }}
+                          productHref={`${basePath}/boutique/${slugify(p.category || 'v')}/${p.slug}`}
+                          isActive={false}
+                          onClick={onClose}
+                        />
+                      ))}
+                    </div>
+                  ) : <div className="text-center py-12 text-muted-foreground">Aucun résultat</div>
               ) : (
                 <div className="space-y-6">
                   {recentSearches.length > 0 && <section>

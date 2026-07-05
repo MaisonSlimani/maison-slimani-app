@@ -34,17 +34,19 @@ export function useCategoryData(initialData?: CategoryPageData | null) {
     charge()
   }, [categorySlug, initialData])
 
-  const { data: products = initialData?.products || [], isPending, isFetching } = useQuery<Product[]>({
+  const initialProducts = Array.isArray(initialData?.products) ? initialData.products : []
+  const { data: products = initialProducts, isPending, isFetching } = useQuery<Product[]>({
     queryKey: ['category-products', categorySlug, categoryName, triPrice, searchQuery, filters],
     staleTime: 2 * 60 * 1000,
-    initialData: (!searchQuery && !triPrice && Object.keys(filters).length === 0) ? initialData?.products : undefined,
+    initialData: (!searchQuery && !triPrice && Object.keys(filters).length === 0) ? initialProducts : undefined,
     enabled: categorySlug === 'tous' || !!categoryName,
     queryFn: async () => {
       const qParams = buildProductQueryParams(categorySlug, categoryName || '', triPrice, searchQuery, filters)
       const response = await fetch(`/api/v1/produits?${qParams.toString()}`)
       if (!response.ok) throw new Error(`Erreur: ${response.status}`)
       const payload = await response.json()
-      return payload?.data || payload?.items || []
+      const items = payload?.data?.items
+      return Array.isArray(items) ? items : []
     },
   })
 

@@ -30,7 +30,7 @@ export default function CommentsList({ productId, onCommentUpdate, className }: 
       const resp = await fetch(`/api/v1/commentaires?productId=${productId}&sort=${sort}`)
       const data = await resp.json()
       if (data.success) {
-        setComments(data.data || [])
+        setComments(Array.isArray(data.data) ? data.data : [])
       }
     } catch { 
       toast.error('Erreur de chargement') 
