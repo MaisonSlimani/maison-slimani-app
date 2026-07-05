@@ -3,7 +3,6 @@
 import React from 'react'
 import { Heart } from 'lucide-react'
 import GalerieProduit from '@/components/GalerieProduit'
-import SimilarProducts from '@/components/SimilarProducts'
 import { cn } from '@maison/shared'
 import { ProductDetailViewData } from './DesktopProductDetailView'
 import { ProductVariation } from '@maison/domain'
@@ -53,8 +52,6 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
           <div className="prose prose-sm max-w-none text-charbon/80 pt-6 border-t border-charbon/5" dangerouslySetInnerHTML={{ __html: product.description }} />
         )}
       </div>
-      
-      <SimilarProducts productCategory={product.category ?? ''} productId={product.id} />
     </div>
   )
 }

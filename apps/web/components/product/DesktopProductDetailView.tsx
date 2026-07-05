@@ -3,7 +3,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import GalerieProduit from '@/components/GalerieProduit'
-import SimilarProducts from '@/components/SimilarProducts'
 import { ProductInfo } from './ProductInfo'
 import { ProductSelection } from './ProductSelection'
 import { ProductFeatures } from './ProductFeatures'
@@ -82,10 +81,6 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
           </section>
         )}
 
-        <section className="mt-24">
-          <h2 className="text-4xl font-serif mb-12 text-center">Produits similaires</h2>
-          <SimilarProducts productCategory={product.category ?? ''} productId={product.id} />
-        </section>
       </div>
     </div>
   )

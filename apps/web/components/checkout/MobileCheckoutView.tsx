@@ -14,7 +14,6 @@ export default function MobileCheckoutView() {
   return (
     <div className="w-full min-h-screen pb-20 bg-background">
       <CheckoutLoading isLoading={loading} />
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border safe-area-top"><div className="h-14 px-4 flex items-center"><h1 className="text-xl font-serif">Finaliser la commande</h1></div></header>
       <div className="px-4 py-6 space-y-6 max-w-md mx-auto">
         <SummaryCard items={items} total={total} />
         <CheckoutForm loading={loading} formData={formData} setFormData={setFormData} onSubmit={handleSubmit} />

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import NavigationDesktop from '@/components/NavigationDesktop'
 import HeaderMobile from '@/components/HeaderMobile'
 import Footer from '@/components/Footer'
@@ -47,6 +48,22 @@ export default function NavigationWrapper({ children }: NavigationWrapperProps) 
             <HeaderMobile />
           </div>
         </>
+      )}
+      {pathname === '/checkout' && (
+        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/40 py-4 px-6">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <Link href="/" className="font-serif text-lg md:text-xl tracking-wide">
+              Maison <span className="text-dore">Slimani</span>
+            </Link>
+            
+            <Link 
+              href="/boutique" 
+              className="text-[11px] md:text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-1"
+            >
+              <span>←</span> <span className="hidden sm:inline">Retour à la </span>boutique
+            </Link>
+          </div>
+        </header>
       )}
 
       <main>{children}</main>
