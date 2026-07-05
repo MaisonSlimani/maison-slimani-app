@@ -69,7 +69,7 @@ function CheckoutForm({ loading, formData, setFormData, onSubmit }: { loading: b
 function Field({ id, label, value, onChange, placeholder, type = 'text' }: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs uppercase tracking-wider text-muted-foreground ml-1">{label}</Label>
+      <Label htmlFor={id} className="text-xs uppercase tracking-wider text-muted-foreground ml-1 font-bold">{label}</Label>
       <Input id={id} required={label.includes('*')} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="bg-background border-border/50 h-11" />
     </div>
   )

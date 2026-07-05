@@ -47,15 +47,15 @@ function CheckoutFormSection({ loading, formData, setFormData, onSubmit }: { loa
           <div className="grid grid-cols-2 gap-6">
             {fields.map(f => (
               <div key={f.id} className="space-y-2">
-                <Label htmlFor={f.id} className="text-sm font-semibold">{f.label}</Label>
+                <Label htmlFor={f.id} className="text-sm font-bold">{f.label}</Label>
                 <Input id={f.id} required type={f.type} className="h-12" value={formData[f.id] || ''} onChange={(e) => setFormData({ ...formData, [f.id]: e.target.value })} placeholder={f.placeholder} />
               </div>
             ))}
           </div>
-          <div className="space-y-2"><Label htmlFor="email" className="text-sm font-semibold">Email (optionnel)</Label><Input id="email" type="email" className="h-12" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="votre@email.com" /></div>
+          <div className="space-y-2"><Label htmlFor="email" className="text-sm font-bold">Email (optionnel)</Label><Input id="email" type="email" className="h-12" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="votre@email.com" /></div>
           <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2"><Label htmlFor="address" className="text-sm font-semibold">Adresse complète *</Label><Input id="address" required className="h-12" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
-            <div className="space-y-2"><Label htmlFor="city" className="text-sm font-semibold">Ville *</Label><Input id="city" required className="h-12" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Casablanca, Rabat..." /></div>
+            <div className="space-y-2"><Label htmlFor="address" className="text-sm font-bold">Adresse complète *</Label><Input id="address" required className="h-12" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
+            <div className="space-y-2"><Label htmlFor="city" className="text-sm font-bold">Ville *</Label><Input id="city" required className="h-12" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Casablanca, Rabat..." /></div>
           </div>
           <Button type="submit" size="lg" className="w-full bg-charbon text-white h-12 text-sm font-bold tracking-[0.2em] uppercase hover:bg-charbon/90 transition-all shadow-md mt-4" disabled={loading || !formData.customerName || !formData.phone || !formData.address || !formData.city}>{loading ? 'Traitement...' : 'Confirmer la commande'}</Button>
         </form>
