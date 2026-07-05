@@ -56,7 +56,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
           </motion.div>
 
           <motion.div className="space-y-8" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
-            <ProductInfo name={product.name} price={product.price} category={product.category ?? ''} description={product.description} />
+            <ProductInfo name={product.name} price={product.price} category={product.category ?? ''} />
             <ProductSelection 
               hasColors={!!product.hasColors} 
               colors={(product.colors as ProductVariation[]) ?? []} 
@@ -69,6 +69,7 @@ export default function DesktopProductDetailView({ data }: { data: ProductDetail
               inWishlist={inWishlist} 
               onAddToCart={handleAddToCart} 
               onToggleWishlist={handleToggleWishlist} 
+              description={product.description}
             />
             <ProductFeatures />
           </motion.div>

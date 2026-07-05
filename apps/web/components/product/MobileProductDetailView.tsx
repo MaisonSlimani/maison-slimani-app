@@ -37,8 +37,6 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
           <p className="text-2xl font-serif text-dore">{product.price.toLocaleString('fr-MA')} DH</p>
         </div>
 
-        <div className="prose prose-sm max-w-none text-charbon/80" dangerouslySetInnerHTML={{ __html: product.description }} />
-
         <MobileProductSelection 
           hasColors={!!product.hasColors} 
           colors={(product.colors as ProductVariation[]) ?? []} 
@@ -49,6 +47,7 @@ export default function MobileProductDetailView({ data }: { data: ProductDetailV
           setSelectedSize={setSize}
           isInCart={isInCart}
           onAddToCart={handleAddToCart}
+          description={product.description}
         />
       </div>
       

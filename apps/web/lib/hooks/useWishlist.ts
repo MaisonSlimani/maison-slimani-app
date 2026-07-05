@@ -20,7 +20,9 @@ const wishlistStore = createPersistentStore<WishlistItem[]>({
       price: item.price || item.prix,
       quantity: item.quantity || item.quantite || 1,
       size: item.size || item.taille,
-      color: item.color || item.couleur
+      color: item.color || item.couleur,
+      image: item.image || item.image_url || item.imageUrl,
+      image_url: item.image_url || item.image || item.imageUrl
     })) as WishlistItem[];
   }
 });

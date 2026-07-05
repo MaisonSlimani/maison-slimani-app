@@ -6,6 +6,7 @@ import { Heart, ShoppingBag, Trash2, ShoppingCart } from 'lucide-react'
 import { Button } from '@maison/ui'
 import { Card } from '@maison/ui'
 import OptimizedImage from '@/components/OptimizedImage'
+import { cn } from '@maison/shared'
 
 import { FavorisViewData } from '@/types/views'
 import { CartItem } from '@maison/domain'
@@ -46,9 +47,20 @@ export default function MobileFavorisView({ data }: { data: FavorisViewData }) {
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
-                        className="flex-1 bg-dore text-charbon rounded-xl h-10"
-                        onClick={() => handleAddToCart(item)}
-                        disabled={loadingProduct}
+                        className={cn(
+                          "flex-1 rounded-xl h-10 transition-all duration-300",
+                          isInCart(item.id) 
+                            ? "bg-charbon text-white hover:bg-charbon/95" 
+                            : "bg-dore text-charbon hover:bg-dore/90"
+                        )}
+                        onClick={() => {
+                          if (isInCart(item.id)) {
+                            window.dispatchEvent(new CustomEvent('openCartDrawer'));
+                          } else {
+                            handleAddToCart(item);
+                          }
+                        }}
+                        disabled={!isInCart(item.id) && loadingProduct}
                       >
                         {isInCart(item.id) ? <ShoppingCart className="w-4 h-4 mr-2" /> : <ShoppingBag className="w-4 h-4 mr-2" />}
                         {isInCart(item.id) ? "Voir" : "Ajouter"}

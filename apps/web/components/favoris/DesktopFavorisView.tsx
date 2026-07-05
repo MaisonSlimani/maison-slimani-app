@@ -3,14 +3,15 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react'
+import { Heart, ShoppingBag, Trash2, ArrowRight, ShoppingCart } from 'lucide-react'
 import { Button, Card } from '@maison/ui'
 import OptimizedImage from '@/components/OptimizedImage'
+import { cn } from '@maison/shared'
 import { FavorisViewData } from '@/types/views'
 import { CartItem } from '@maison/domain'
 
 export default function DesktopFavorisView({ data }: { data: FavorisViewData }) {
-  const { items, removeItem, handleAddToCart, loadingProduct } = data
+  const { items, removeItem, isInCart, handleAddToCart, loadingProduct } = data
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-6">
@@ -20,7 +21,7 @@ export default function DesktopFavorisView({ data }: { data: FavorisViewData }) 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {items.map((item: CartItem) => (
-            <FavorisCard key={item.id} item={item} onRemove={removeItem} onAdd={handleAddToCart} loading={loadingProduct} />
+            <FavorisCard key={item.id} item={item} onRemove={removeItem} onAdd={handleAddToCart} loading={loadingProduct} isInCart={isInCart(item.id)} />
           ))}
         </div>
       )}
@@ -51,7 +52,7 @@ function EmptyState() {
   )
 }
 
-function FavorisCard({ item, onRemove, onAdd, loading }: { item: CartItem; onRemove: (id: string) => void; onAdd: (i: CartItem) => void; loading: boolean }) {
+function FavorisCard({ item, onRemove, onAdd, loading, isInCart }: { item: CartItem; onRemove: (id: string) => void; onAdd: (i: CartItem) => void; loading: boolean; isInCart: boolean }) {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="group">
       <Card className="p-8 rounded-[2.5rem] border-charbon/5 hover:shadow-2xl transition-all h-full flex flex-col">
@@ -64,7 +65,25 @@ function FavorisCard({ item, onRemove, onAdd, loading }: { item: CartItem; onRem
           <p className="text-charbon/60 text-sm mb-6 uppercase tracking-widest">{item.category}</p>
           <div className="mt-auto flex items-center justify-between gap-6">
             <p className="text-3xl font-serif text-dore">{item.price.toLocaleString('fr-MA')} DH</p>
-            <Button size="lg" className="rounded-2xl bg-charbon text-white hover:bg-dore hover:text-charbon h-16 w-16 p-0" onClick={() => onAdd(item)} disabled={loading}><ShoppingBag className="w-6 h-6" /></Button>
+            <Button 
+              size="lg" 
+              className={cn(
+                "rounded-2xl h-16 w-16 p-0 transition-all duration-300",
+                isInCart 
+                  ? "bg-dore text-charbon hover:bg-dore/90" 
+                  : "bg-charbon text-white hover:bg-dore hover:text-charbon"
+              )} 
+              onClick={() => {
+                if (isInCart) {
+                  window.dispatchEvent(new CustomEvent('openCartDrawer'));
+                } else {
+                  onAdd(item);
+                }
+              }} 
+              disabled={!isInCart && loading}
+            >
+              {isInCart ? <ShoppingCart className="w-6 h-6" /> : <ShoppingBag className="w-6 h-6" />}
+            </Button>
           </div>
         </div>
       </Card>

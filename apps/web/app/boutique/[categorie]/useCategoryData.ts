@@ -44,7 +44,7 @@ export function useCategoryData(initialData?: CategoryPageData | null) {
       const response = await fetch(`/api/v1/produits?${qParams.toString()}`)
       if (!response.ok) throw new Error(`Erreur: ${response.status}`)
       const payload = await response.json()
-      return payload?.data || []
+      return payload?.data || payload?.items || []
     },
   })
 

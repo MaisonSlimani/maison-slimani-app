@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@maison/ui'
 import { Button } from '@maison/ui'
 import { Heart } from 'lucide-react'
@@ -15,6 +16,7 @@ import { Product, CartItem, getSelectedStock } from '@maison/domain'
 import { apiFetch, ENDPOINTS } from '@/lib/api/client'
 
 export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const router = useRouter()
   const { items, removeItem, isLoaded } = useWishlist()
   const { addItem: addToCart, items: cartItems } = useCart()
   const [showModal, setShowModal] = useState(false)
@@ -33,7 +35,7 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
     finally { setLoading(false) }
   }
 
-  const onConfirm = async () => {
+  const onConfirm = async (buyNow: boolean) => {
     try {
       if (!productData) return
       const item = { 
@@ -44,8 +46,13 @@ export default function WishlistDrawer({ open, onOpenChange }: { open: boolean; 
         image_url: productData.image_url,
         stock: getSelectedStock(productData, selectedColor, selectedSize)
       }
-      await addToCart(item, false)
-      setShowModal(false); toast.success('Ajouté')
+      await addToCart(item, !buyNow)
+      setShowModal(false)
+      if (buyNow) {
+        router.push('/checkout')
+      } else {
+        toast.success('Ajouté au panier')
+      }
     } catch (err) { toast.error((err as Error).message) }
   }
 

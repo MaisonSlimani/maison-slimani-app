@@ -47,7 +47,14 @@ export function useProductCardActions({ produit, imageUrl, isOutOfStock }: UsePr
   const onToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
     if (inWishlist) return removeFromWishlist(produit.id)
-    addToWishlist({ ...produit, quantity: 1, image_url: imageUrl, size: null, color: null })
+    addToWishlist({ 
+      ...produit, 
+      quantity: 1, 
+      image_url: imageUrl, 
+      image: imageUrl, 
+      size: null, 
+      color: null 
+    })
     trackAddToWishlist({ content_name: produit.name, content_ids: [produit.id], content_type: 'product', value: produit.price, currency: 'MAD' })
   }
 

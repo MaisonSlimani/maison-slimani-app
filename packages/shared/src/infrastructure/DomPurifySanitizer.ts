@@ -1,4 +1,3 @@
-import DOMPurify from 'dompurify';
 import { IHtmlSanitizer } from '@maison/domain';
 
 /**
@@ -28,6 +27,17 @@ export class DomPurifySanitizer implements IHtmlSanitizer {
       return html; // Return as-is on server to prevent 500s; use CSS/logic for safety
     }
 
-    return DOMPurify.sanitize(html, DomPurifySanitizer.DEFAULT_CONFIG);
+    try {
+      // Dynamically load dompurify only on the client side
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const DOMPurifyModule = require('dompurify');
+      const purify = DOMPurifyModule.default || DOMPurifyModule;
+      const sanitizer = typeof purify === 'function' ? purify(window) : purify;
+      
+      return sanitizer.sanitize(html, DomPurifySanitizer.DEFAULT_CONFIG);
+    } catch (err) {
+      console.error('Error during client-side DOMPurify sanitization:', err);
+      return html;
+    }
   }
 }

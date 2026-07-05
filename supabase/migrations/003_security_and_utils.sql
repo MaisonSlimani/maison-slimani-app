@@ -46,6 +46,11 @@ CREATE POLICY "Admin Full Access Comments" ON commentaires ALL USING (EXISTS (SE
 -- 2. DISCOVERY RPCs
 --------------------------------------------------------------------------------
 
+-- Drop the legacy, outdated search overloads
+DROP FUNCTION IF EXISTS search_products(TEXT, TEXT, INTEGER, INTEGER);
+DROP FUNCTION IF EXISTS search_products(TEXT, TEXT, NUMERIC, NUMERIC, TEXT, TEXT, INTEGER, INTEGER, BOOLEAN);
+
+-- Recreate the correct 4-parameter version
 CREATE OR REPLACE FUNCTION search_products(
   p_search TEXT,
   p_category TEXT DEFAULT NULL,
@@ -53,15 +58,44 @@ CREATE OR REPLACE FUNCTION search_products(
   p_offset INTEGER DEFAULT 0
 )
 RETURNS TABLE (
-  id UUID, name TEXT, slug TEXT, price NUMERIC, image_url TEXT, category TEXT, total_count BIGINT
+  category TEXT,
+  colors JSONB,
+  created_at TIMESTAMP,
+  description TEXT,
+  has_colors BOOLEAN,
+  id UUID,
+  image_url TEXT,
+  images JSONB,
+  name TEXT,
+  price NUMERIC,
+  stock INTEGER,
+  sizes JSONB,
+  size TEXT,
+  slug TEXT,
+  featured BOOLEAN,
+  total_count BIGINT
 ) AS $$
 BEGIN
   RETURN QUERY
   SELECT 
-    p.id, p.name, p.slug, p.price, p.image_url, p.category,
+    p.category,
+    p.colors,
+    p.created_at,
+    p.description,
+    p.has_colors,
+    p.id,
+    p.image_url,
+    p.images,
+    p.name,
+    p.price,
+    p.stock,
+    p.sizes,
+    p.size,
+    p.slug,
+    p.featured,
     COUNT(*) OVER() as total_count
   FROM produits p
-  WHERE (p_search IS NULL OR p.name ILIKE '%' || p_search || '%' OR p.description ILIKE '%' || p_search || '%')
+  WHERE (p_search IS NULL OR p_search = '' OR p.name ILIKE '%' || p_search || '%' OR p.description ILIKE '%' || p_search || '%')
     AND (p_category IS NULL OR p.category = p_category)
   ORDER BY p.created_at DESC
   LIMIT p_limit OFFSET p_offset;

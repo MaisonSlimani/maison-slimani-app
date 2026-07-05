@@ -234,6 +234,22 @@ lerna-debug.log*
 # !capacitor.config.json
 # !admin-app/capacitor.config.json
 
-# Manifest files (keep them)
-# !public/manifest.json
-# !admin-app/public/manifest.json\n*:Zone.Identifier
+# !admin-app/public/manifest.json
+
+# Windows zone identifier files
+*:Zone.Identifier
+*.Identifier
+
+# Test artifacts
+playwright-report/
+test-results/
+apps/web/playwright-report/
+apps/web/test-results/
+
+# Build logs
+build.log
+*.log
+
+# Scratch directory
+scratch/
+

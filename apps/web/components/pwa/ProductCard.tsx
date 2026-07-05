@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card } from '@maison/ui'
 import { toast } from 'sonner'
 import { hapticFeedback } from '@/lib/haptics'
@@ -13,6 +14,7 @@ import { useProductCardState } from '@/hooks/useProductCardState'
 import { ProductCardActions } from './ProductCardActions'
 
 export default function ProductCard({ product: produit, priority = false }: { product: Product; priority?: boolean }) {
+  const router = useRouter()
   const s = useProductCardState(produit)
   const href = `/boutique/${produit.category ? slugify(produit.category) : 'cat'}/${produit.slug || slugify(produit.name)}`
   const isOutOfStock = produit.stock !== null && produit.stock <= 0 && (!produit.hasColors || !produit.colors?.some(c => (c.stock || 0) > 0))
@@ -33,13 +35,27 @@ export default function ProductCard({ product: produit, priority = false }: { pr
           <p className="text-base font-serif text-dore font-semibold mt-1">{produit.price.toLocaleString('fr-MA')} MAD</p>
         </div>
       </Link>
-      <ProductCardActions addedToCart={s.addedToCart} isInCart={s.isInCart} inWishlist={s.inWishlist} onAddToCart={(e) => { e.preventDefault(); e.stopPropagation(); s.addBasicToCart() }} onToggleWishlist={(e) => { e.preventDefault(); e.stopPropagation(); s.toggleWishlist() }} />
+      <ProductCardActions 
+        addedToCart={s.addedToCart} 
+        isInCart={s.isInCart} 
+        inWishlist={s.inWishlist} 
+        onAddToCart={(e) => { 
+          e.preventDefault(); 
+          e.stopPropagation(); 
+          if (s.isInCart) {
+            window.dispatchEvent(new CustomEvent('openCartDrawer'));
+          } else {
+            s.addBasicToCart();
+          }
+        }} 
+        onToggleWishlist={(e) => { e.preventDefault(); e.stopPropagation(); s.toggleWishlist() }} 
+      />
 
       <ProductPurchaseDialog 
         showModal={s.showModal} setShowModal={s.setShowModal} produit={produit} selectedColor={s.selectedColor} setSelectedColor={s.setSelectedColor}
         selectedSize={s.selectedSize} setSelectedSize={s.setSelectedSize} quantity={s.quantity} setQuantity={s.setQuantity}
         sizesAvailable={produit.sizes?.map(t => t.name) || []}
-        onConfirm={async () => {
+        onConfirm={async (buyNow) => {
           s.setIsAddingToCart(true)
           try {
             const item = { 
@@ -50,8 +66,14 @@ export default function ProductCard({ product: produit, priority = false }: { pr
               image_url: s.imageUrl,
               stock: getSelectedStock(produit, s.selectedColor, s.selectedSize)
             }
-            await s.addToCart(item, false)
-            s.setShowModal(false); toast.success('Ajouté'); hapticFeedback('success')
+            await s.addToCart(item, !buyNow)
+            s.setShowModal(false)
+            if (buyNow) {
+              router.push('/checkout')
+            } else {
+              toast.success('Ajouté au panier')
+              hapticFeedback('success')
+            }
           } finally { s.setIsAddingToCart(false) }
         }} 
         isAddingToCart={s.isAddingToCart}

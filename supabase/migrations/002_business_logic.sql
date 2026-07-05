@@ -76,6 +76,7 @@ DECLARE
   v_c_idx INTEGER;
   v_s_idx INTEGER;
   v_current_stock INTEGER;
+  v_updated JSONB;
 BEGIN
   SELECT colors, sizes, stock INTO v_colors, v_sizes, v_stock
   FROM produits WHERE id = p_product_id FOR UPDATE;
@@ -90,7 +91,17 @@ BEGIN
     v_current_stock := (v_colors->v_c_idx->'sizes'->v_s_idx->>'stock')::INT;
     IF v_current_stock < p_quantity THEN RETURN FALSE; END IF;
 
-    UPDATE produits SET colors = jsonb_set(colors, ARRAY[v_c_idx::TEXT, 'sizes', v_s_idx::TEXT, 'stock'], to_jsonb(v_current_stock - p_quantity)) WHERE id = p_product_id;
+    -- Update size stock
+    v_updated := jsonb_set(v_colors, ARRAY[v_c_idx::TEXT, 'sizes', v_s_idx::TEXT, 'stock'], to_jsonb(v_current_stock - p_quantity));
+    
+    -- Recalculate parent color stock by summing sizes
+    SELECT COALESCE(SUM(s.stock), 0) INTO v_current_stock
+    FROM jsonb_to_recordset(v_updated->v_c_idx->'sizes') AS s(stock INT);
+    
+    -- Update parent color stock key
+    v_updated := jsonb_set(v_updated, ARRAY[v_c_idx::TEXT, 'stock'], to_jsonb(v_current_stock));
+
+    UPDATE produits SET colors = v_updated WHERE id = p_product_id;
   ELSIF p_size_name IS NOT NULL THEN
     SELECT (idx - 1) INTO v_s_idx FROM jsonb_array_elements(v_sizes) WITH ORDINALITY AS t(val, idx) WHERE val->>'name' = p_size_name;
     IF v_s_idx IS NULL THEN RETURN FALSE; END IF;
@@ -123,6 +134,7 @@ DECLARE
   v_c_idx INTEGER;
   v_s_idx INTEGER;
   v_current_stock INTEGER;
+  v_updated JSONB;
 BEGIN
   SELECT colors, sizes, stock INTO v_colors, v_sizes, v_stock
   FROM produits WHERE id = p_product_id FOR UPDATE;
@@ -135,7 +147,18 @@ BEGIN
     IF v_s_idx IS NULL THEN RETURN FALSE; END IF;
 
     v_current_stock := (v_colors->v_c_idx->'sizes'->v_s_idx->>'stock')::INT;
-    UPDATE produits SET colors = jsonb_set(colors, ARRAY[v_c_idx::TEXT, 'sizes', v_s_idx::TEXT, 'stock'], to_jsonb(v_current_stock + p_quantity)) WHERE id = p_product_id;
+    
+    -- Update size stock
+    v_updated := jsonb_set(v_colors, ARRAY[v_c_idx::TEXT, 'sizes', v_s_idx::TEXT, 'stock'], to_jsonb(v_current_stock + p_quantity));
+    
+    -- Recalculate parent color stock by summing sizes
+    SELECT COALESCE(SUM(s.stock), 0) INTO v_current_stock
+    FROM jsonb_to_recordset(v_updated->v_c_idx->'sizes') AS s(stock INT);
+    
+    -- Update parent color stock key
+    v_updated := jsonb_set(v_updated, ARRAY[v_c_idx::TEXT, 'stock'], to_jsonb(v_current_stock));
+
+    UPDATE produits SET colors = v_updated WHERE id = p_product_id;
   ELSIF p_size_name IS NOT NULL THEN
     SELECT (idx - 1) INTO v_s_idx FROM jsonb_array_elements(v_sizes) WITH ORDINALITY AS t(val, idx) WHERE val->>'name' = p_size_name;
     IF v_s_idx IS NULL THEN RETURN FALSE; END IF;

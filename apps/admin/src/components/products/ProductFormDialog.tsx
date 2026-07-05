@@ -5,6 +5,7 @@ import { GeneralImagesForm } from './form/GeneralImagesForm'
 import { VariationsForm } from './form/VariationsForm'
 import { ProductFormBasicFields } from './form/ProductFormBasicFields'
 import { useProductForm } from '@/hooks/admin/useProductForm'
+import { useEditorImageUpload } from '@/hooks/admin/useEditorImageUpload'
 
 interface ProductFormDialogProps {
   open: boolean
@@ -32,6 +33,8 @@ export function ProductFormDialog({ open, onOpenChange, product, categories, onS
     onOpenChange
   })
 
+  const uploadImage = useEditorImageUpload()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -49,6 +52,7 @@ export function ProductFormDialog({ open, onOpenChange, product, categories, onS
               <RichTextEditor 
                 content={formData.description || ''} 
                 onChange={html => setFormData({ ...formData, description: html })} 
+                onImageUpload={uploadImage}
               />
             </div>
           </div>

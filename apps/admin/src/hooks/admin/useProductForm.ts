@@ -89,7 +89,9 @@ export function useProductForm({ product, defaultCategory, onSuccess, onOpenChan
     return {
       ...formData,
       images: formData.hasColors ? null : (uploadedGeneral.length > 0 ? uploadedGeneral : (formData.images || null)),
-      image_url: formData.hasColors ? null : (uploadedGeneral[0] || formData.image_url || null),
+      image_url: formData.hasColors 
+        ? (finalColors[0]?.images?.[0] || null) 
+        : (uploadedGeneral[0] || formData.image_url || null),
       colors: formData.hasColors ? finalColors : null,
       stock: stockValue ?? 0,
       totalStock: stockValue ?? 0,

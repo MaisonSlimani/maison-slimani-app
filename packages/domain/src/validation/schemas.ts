@@ -124,6 +124,7 @@ export const wishlistItemSchema = z.object({
   name: z.string(),
   price: z.number().nonnegative(),
   image: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   slug: z.string().optional().nullable(),
   categorySlug: z.string().optional().nullable(),

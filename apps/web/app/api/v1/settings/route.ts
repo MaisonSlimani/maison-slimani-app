@@ -12,11 +12,17 @@ export const GET = createApiHandler(async () => {
   const settingsRepo = new SettingsRepository(supabase);
   
   const data = await settingsRepo.getEnterpriseSettings();
-  
-  if (!data) {
-    throw { status: 404, message: 'Paramètres introuvables' };
-  }
 
-  // Returning directly as createApiHandler handles the envelope
-  return data;
+  // Return defaults when no settings row exists yet (first deploy)
+  return data ?? {
+    companyEmail: '',
+    phone: '',
+    address: '',
+    description: '',
+    facebook: '',
+    instagram: '',
+    metaPixelCode: null,
+    gtmHeader: null,
+    gtmBody: null,
+  };
 });

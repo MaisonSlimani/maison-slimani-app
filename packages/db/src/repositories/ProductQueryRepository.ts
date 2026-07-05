@@ -108,15 +108,14 @@ export class ProductQueryRepository {
     const { data, error } = await this.supabase.rpc('search_products', {
       p_search: params.search || '',
       p_category: Array.isArray(params.category) ? params.category[0] : (params.category ?? undefined),
-      p_min_price: params.minPrice ?? undefined,
-      p_max_price: params.maxPrice ?? undefined,
-      p_sort_by: params.sort?.includes('prix') ? 'price' : 'created_at',
-      p_sort_order: params.sort?.includes('desc') ? 'desc' : 'asc',
       p_limit: params.limit || 50,
       p_offset: params.offset || 0,
     });
 
-    if (error) throw mapDatabaseError(error);
+    if (error) {
+      console.error('ProductQueryRepository.search error:', error);
+      throw mapDatabaseError(error);
+    }
     const products = (data as unknown as ProductRow[] || []).map(mapProductRow);
     const count = products.length > 0 ? (data as unknown as { total_count: number }[])[0].total_count : 0;
     return { data: products, count: Number(count) };

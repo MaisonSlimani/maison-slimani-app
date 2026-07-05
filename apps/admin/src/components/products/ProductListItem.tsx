@@ -14,6 +14,10 @@ export default function ProductListItem({ product, onEdit, onDelete }: ProductLi
     ? product.colors.reduce((sum, c) => sum + (c.stock || 0), 0)
     : product.stock || 0
 
+  const mainImage = product.image_url || 
+    (product.hasColors && product.colors && Array.isArray(product.colors) && product.colors[0]?.images?.[0]) || 
+    null
+
   return (
     <Card className="p-4 relative group hover:shadow-md transition-shadow h-full flex flex-col justify-between">
       {product.featured && (
@@ -23,8 +27,8 @@ export default function ProductListItem({ product, onEdit, onDelete }: ProductLi
       )}
       <div className="flex gap-4">
         <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-muted flex items-center justify-center">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+          {mainImage ? (
+            <img src={mainImage} alt={product.name} className="w-full h-full object-cover" />
           ) : (
             <ImageIcon className="w-8 h-8 text-muted-foreground opacity-50" />
           )}

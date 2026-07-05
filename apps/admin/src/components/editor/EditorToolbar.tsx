@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/react'
 import { Button } from '@maison/ui'
-import { LucideIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, Heading1, Heading2, Heading3, Link as LinkIcon, Undo, Redo } from 'lucide-react'
+import { LucideIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, Heading1, Heading2, Heading3, Link as LinkIcon, Image as ImageIcon, Undo, Redo } from 'lucide-react'
 import { cn } from '@maison/shared'
 
 interface TBProps { click: () => void; icon: LucideIcon; active?: boolean; disabled?: boolean; title?: string }
@@ -8,7 +8,7 @@ const TB = ({ click, icon: Icon, active, disabled, title }: TBProps) => (
   <Button type="button" variant="ghost" size="sm" onClick={click} disabled={disabled} title={title} className={cn('h-8 w-8 p-0', active && 'bg-muted')}><Icon className="h-4 w-4" /></Button>
 )
 
-export function EditorToolbar({ editor, onLinkClick }: { editor: Editor; onLinkClick: () => void }) {
+export function EditorToolbar({ editor, onLinkClick, onImageClick }: { editor: Editor; onLinkClick: () => void; onImageClick: () => void }) {
   const h = (level: 1 | 2 | 3) => (
     <Button type="button" variant="ghost" size="sm" onClick={() => editor.chain().focus().toggleHeading({ level }).run()} className={cn('h-8 px-2 text-xs', editor.isActive('heading', { level }) && 'bg-muted')}>
       {level === 1 ? <Heading1 className="h-3 w-3 mr-1" /> : level === 2 ? <Heading2 className="h-3 w-3 mr-1" /> : <Heading3 className="h-3 w-3 mr-1" />} H{level}
@@ -28,6 +28,7 @@ export function EditorToolbar({ editor, onLinkClick }: { editor: Editor; onLinkC
       <TB click={() => editor.chain().focus().toggleOrderedList().run()} icon={ListOrdered} active={editor.isActive('orderedList')} title="Ordered" />
       <div className="h-6 w-[1px] bg-border mx-1" />
       <TB click={onLinkClick} icon={LinkIcon} active={editor.isActive('link')} />
+      <TB click={onImageClick} icon={ImageIcon} active={editor.isActive('image')} title="Insérer une image" />
       <div className="h-6 w-[1px] bg-border mx-1" />
       <TB click={() => editor.chain().focus().undo().run()} icon={Undo} disabled={!editor.can().chain().focus().undo().run()} />
       <TB click={() => editor.chain().focus().redo().run()} icon={Redo} disabled={!editor.can().chain().focus().redo().run()} />

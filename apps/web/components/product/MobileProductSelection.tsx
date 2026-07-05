@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ShoppingBag, ShoppingCart, CheckCircle } from 'lucide-react'
+import { ShoppingBag, Zap, CheckCircle } from 'lucide-react'
 import { Button } from '@maison/ui'
 import { cn } from '@maison/shared'
 
@@ -22,12 +22,13 @@ interface MobileProductSelectionProps {
   setSelectedSize: (t: string) => void
   isInCart: boolean
   onAddToCart: (checkout: boolean) => void
+  description?: string | null
 }
 
 export function MobileProductSelection({
   hasColors, colors, selectedColor, setSelectedColor,
   sizesData, selectedSize, setSelectedSize,
-  isInCart, onAddToCart
+  isInCart, onAddToCart, description
 }: MobileProductSelectionProps) {
   return (
     <div className="space-y-6">
@@ -69,10 +70,14 @@ export function MobileProductSelection({
         </div>
       )}
 
-      <div className="flex gap-3 pt-4">
+      {description && (
+        <div className="prose prose-sm max-w-none text-charbon/80 pt-2 border-t border-charbon/5" dangerouslySetInnerHTML={{ __html: description }} />
+      )}
+
+      <div className="flex flex-col gap-3 pt-4">
         <Button 
           className={cn(
-            "flex-1 h-14 text-lg rounded-2xl transition-all duration-300", 
+            "w-full h-14 text-base rounded-2xl transition-all duration-300", 
             isInCart 
               ? "bg-charbon text-white" 
               : "bg-dore text-charbon hover:bg-dore/90"
@@ -86,19 +91,26 @@ export function MobileProductSelection({
           }}
         >
           {isInCart ? (
-            <div className="flex items-center">
+            <div className="flex items-center justify-center">
               <CheckCircle className="mr-2 w-5 h-5" />
               <span>Voir le panier</span>
             </div>
           ) : (
-            <div className="flex items-center">
+            <div className="flex items-center justify-center">
               <ShoppingBag className="mr-2 w-5 h-5" />
               <span>Ajouter au panier</span>
             </div>
           )}
         </Button>
-        <Button variant="outline" className="h-14 aspect-square rounded-2xl border-charbon/10 bg-white" onClick={() => onAddToCart(true)}>
-          <ShoppingCart className="w-6 h-6" />
+        <Button 
+          variant="outline" 
+          className="w-full h-14 text-base rounded-2xl border-charbon/20 bg-white hover:bg-charbon hover:text-white transition-all duration-300" 
+          onClick={() => onAddToCart(true)}
+        >
+          <div className="flex items-center justify-center">
+            <Zap className="mr-2 w-5 h-5" />
+            <span>Achat direct</span>
+          </div>
         </Button>
       </div>
     </div>

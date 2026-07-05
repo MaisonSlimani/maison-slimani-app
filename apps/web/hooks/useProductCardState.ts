@@ -53,7 +53,14 @@ export function useProductCardState(produit: Product) {
     hapticFeedback('light')
     if (inWishlist) { removeFromWishlist(produit.id) }
     else {
-      const item: CartItem = { ...produit, quantity: 1, image_url: imageUrl, size: null, color: null }
+      const item: CartItem = { 
+        ...produit, 
+        quantity: 1, 
+        image_url: imageUrl, 
+        image: imageUrl, 
+        size: null, 
+        color: null 
+      }
       addToWishlist(item)
       trackAddToWishlist({ content_name: produit.name, content_ids: [produit.id], content_type: 'product', value: produit.price, currency: 'MAD' })
       hapticFeedback('success')

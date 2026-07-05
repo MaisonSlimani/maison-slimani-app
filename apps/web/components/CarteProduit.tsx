@@ -73,7 +73,22 @@ const CarteProduit = ({ product: produit, showActions = false }: CarteProduitPro
           <p className="text-xl font-serif text-charbon mt-2">{produit.price.toLocaleString('fr-MA')} DH</p>
         </div>
       </Link>
-      {showActions && <CardActions isInCart={isInCart} inWishlist={inWishlist} onAdd={onAddToCart} onWish={onToggleWishlist} />}
+      {showActions && (
+        <CardActions 
+          isInCart={isInCart} 
+          inWishlist={inWishlist} 
+          onAdd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isInCart) {
+              window.dispatchEvent(new CustomEvent('openCartDrawer'));
+            } else {
+              onAddToCart(e);
+            }
+          }} 
+          onWish={onToggleWishlist} 
+        />
+      )}
       <ProductPurchaseDialog
         showModal={showModal} setShowModal={setShowModal} produit={produit} 
         selectedColor={selectedColor} setSelectedColor={setSelectedColor}
@@ -90,7 +105,18 @@ const CarteProduit = ({ product: produit, showActions = false }: CarteProduitPro
 function CardActions({ isInCart, inWishlist, onAdd, onWish }: { isInCart: boolean; inWishlist: boolean; onAdd: (e: React.MouseEvent) => void; onWish: (e: React.MouseEvent) => void }) {
   return (
     <div className="px-4 pb-4 flex gap-2">
-      <Button onClick={onAdd} className="flex-1 bg-dore text-charbon">{isInCart ? <ShoppingCart className="w-4 h-4 mr-2" /> : <ShoppingBag className="w-4 h-4 mr-2" />}{isInCart ? "Voir panier" : "Acheter"}</Button>
+      <Button 
+        onClick={onAdd} 
+        className={cn(
+          "flex-1 transition-all duration-300", 
+          isInCart 
+            ? "bg-charbon text-white hover:bg-charbon/95" 
+            : "bg-dore text-charbon hover:bg-dore/90"
+        )}
+      >
+        {isInCart ? <ShoppingCart className="w-4 h-4 mr-2" /> : <ShoppingBag className="w-4 h-4 mr-2" />}
+        {isInCart ? "Voir panier" : "Acheter"}
+      </Button>
       <Button variant="outline" onClick={onWish} className={cn(inWishlist && "text-dore border-dore")}><Heart className={cn("w-4 h-4", inWishlist && "fill-current")} /></Button>
     </div>
   )

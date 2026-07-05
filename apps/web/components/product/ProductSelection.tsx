@@ -19,12 +19,14 @@ interface ProductSelectionProps {
   inWishlist: boolean
   onAddToCart: (checkout: boolean) => void
   onToggleWishlist: () => void
+  description?: string | null
 }
 
 export function ProductSelection({ 
   hasColors, colors, selectedColor, setSelectedColor, 
   sizesData, selectedSize, setSelectedSize, 
-  isInCart, inWishlist, onAddToCart, onToggleWishlist 
+  isInCart, inWishlist, onAddToCart, onToggleWishlist,
+  description
 }: ProductSelectionProps) {
   return (
     <div className="space-y-8 pt-8 border-t border-charbon/5">
@@ -54,6 +56,13 @@ export function ProductSelection({
             ))}
           </div>
         </div>
+      )}
+
+      {description && (
+        <div 
+          className="prose prose-lg max-w-none text-charbon/80 leading-relaxed pt-6 border-t border-charbon/5"
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
       )}
 
       <SelectionButtons 
